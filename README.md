@@ -4,7 +4,7 @@ A desktop clock with **24 styles** that changes every hour. Chronograph, bubbles
 word clock, sun path, gauges and more.
 
 - **Shuffle**: hourly by default (or every 5 / 15 / 30 min, or daily). All styles appear in a random order that stays the same all day in a random order that stays the same all day.
-- **Adaptive colours**: black or white "ink" chosen from your wallpaper's brightness, or your Windows accent colour.
+- **Adaptive colours**: black or white "ink" chosen from the brightness of the wallpaper behind the skin, or your Windows accent colour.
 - **Daily quote**, 12/24 h clock, world-time with DST rules (US / EU / AU).
 
 ## Requirements
@@ -32,6 +32,8 @@ skip this style in future, show all styles again, re-check wallpaper brightness.
 | `SkipStyles` | e.g. `3,7,12` | Styles left out of the shuffle |
 | `HourFormat` | `%H` or `%I` | 24 h or 12 h |
 | `QuoteHidden` / `QuoteEveryHour` | `0` / `1` | Hide the quote / new quote every hour |
+| `FontText` / `FontLight` / `FontBold` | font names | Fonts used by all styles (default Segoe UI family) |
+| `QuoteSize` | e.g. `11` | Quote font size |
 | `Cities` | `NAME:offset:RULE\|...` | World-time cities (max 5) |
 
 ## Customise

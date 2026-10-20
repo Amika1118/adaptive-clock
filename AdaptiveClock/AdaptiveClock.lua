@@ -1,4 +1,4 @@
--- AdaptiveClock.lua  v3.2   (Rainmeter 4.x, Lua 5.1)
+-- AdaptiveClock.lua  v3.3   (Rainmeter 4.x, Lua 5.1)
 -- Author: Amika Alankara  (MIT License)
 --
 -- One file, several small jobs. Each Script measure in the .ini picks its job with  Mode=

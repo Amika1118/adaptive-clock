@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.3
+- Black/white ink now samples only the wallpaper area behind the skin (falls back to the whole wallpaper).
+- Fonts are variables (`FontText`, `FontLight`, `FontBold`) and the quote size is `QuoteSize`.
+- GitHub bug-report template.
+
 ## 3.2
 - Right-click menu reorganised into toggles and "next mode" cycles (12/24 h, quote, colours, shuffle speed, lock).
 - New colour modes: always white, always black (plus invert and accent).

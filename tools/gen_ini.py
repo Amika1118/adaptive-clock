@@ -309,7 +309,7 @@ txt(i, "Date", "[mDowS] [mDnum] [mMonS]", 220, 270, 16, "#ColorDim#")
 # ------------------------------------------------------------------ quotes (one per style)
 for n in range(1, 25):
     sec(n, "Quote", "String", var="Q", X=220, Y=458, W=400, H=44, Text="[mMain]",
-        FontFace="Segoe UI", FontSize=11, FontColor="#ColorDim#", StringAlign="CenterCenter",
+        FontFace="Segoe UI", FontSize="#QuoteSize#", FontColor="#ColorDim#", StringAlign="CenterCenter",
         ClipString=2, AntiAlias=1)
 
 # ------------------------------------------------------------------ header
@@ -357,7 +357,7 @@ ContextAction12=[!CommandMeasure mLum "Run"]
 [Metadata]
 Name=Adaptive Clock
 Author=Amika Alankara
-Version=3.2
+Version=3.3
 Description=24 clock styles that shuffle hourly, follow the Windows accent colour and show a daily quote.
 
 [Variables]
@@ -366,6 +366,10 @@ HourFormat=%H
 QuoteHidden=0
 QuoteEveryHour=0
 StyleNo=1
+FontText=Segoe UI
+FontLight=Segoe UI Light
+FontBold=Segoe UI Semibold
+QuoteSize=11
 StyleName=
 LockMark=
 ShuffleMinutes=60
@@ -398,7 +402,8 @@ RegValue=AccentColor
 Measure=Plugin
 Plugin=RunCommand
 Program=PowerShell
-Parameter=-NoProfile -ExecutionPolicy Bypass -File "#CURRENTPATH#WallpaperLuma.ps1"
+Parameter=-NoProfile -ExecutionPolicy Bypass -File "#CURRENTPATH#WallpaperLuma.ps1" -X #CURRENTCONFIGX# -Y #CURRENTCONFIGY# -W #CURRENTCONFIGWIDTH# -H #CURRENTCONFIGHEIGHT#
+DynamicVariables=1
 OutputType=ANSI
 State=Hide
 Timeout=20000
@@ -470,6 +475,11 @@ def inkify(t):
         t = re.sub(r"(?<![\d,])" + a + r"(?![\d,])", "#Ink#", t)
     t = t.replace("70,70,70", "#InkMid#").replace("120,120,120,110", "#InkSoft#")
     return t
-S[:] = [inkify(x) for x in S]
+def fontify(t):
+    t = t.replace("FontFace=Segoe UI Semibold", "FontFace=#FontBold#")
+    t = t.replace("FontFace=Segoe UI Semilight", "FontFace=#FontLight#")
+    t = t.replace("FontFace=Segoe UI Light", "FontFace=#FontLight#")
+    return re.sub(r"FontFace=Segoe UI(?=\n)", "FontFace=#FontText#", t)
+S[:] = [fontify(inkify(x)) for x in S]
 open("../AdaptiveClock/AdaptiveClock.ini", "w", encoding="utf-8").write(head + "\n\n".join(S) + "\n")
 print(len(S), "meters")
