@@ -3,7 +3,7 @@
 A desktop clock with **24 styles** that changes every hour. Chronograph, bubbles, world time,
 word clock, sun path, gauges and more.
 
-- **Hourly shuffle**: all 24 styles appear once a day in a random order that stays the same all day.
+- **Shuffle**: hourly by default (or every 5 / 15 / 30 min, or daily). All styles appear in a random order that stays the same all day in a random order that stays the same all day.
 - **Adaptive colours**: black or white "ink" chosen from your wallpaper's brightness, or your Windows accent colour.
 - **Daily quote**, 12/24 h clock, world-time with DST rules (US / EU / AU).
 
@@ -17,11 +17,22 @@ Windows 10/11, [Rainmeter 4.x](https://www.rainmeter.net/), PowerShell (built in
 Keep `AdaptiveClock.ini`, `AdaptiveClock.lua` and `WallpaperLuma.ps1` together in one folder.
 
 ## Mouse
-Double-click for the next style. Hover to see the current style number.
+Double-click for the next style. Hover to see the style name and number (and whether it is locked).
 
 ## Right-click menu
-Next style, random style, lock/unlock style, resume hourly shuffle, 12/24 h, show/hide quote, quote per hour/day,
-colour mode (invert to wallpaper or Windows accent), re-check wallpaper brightness.
+Next style, random style, resume shuffle, lock/unlock style, switch 12/24 h, show/hide quote,
+daily/hourly quote, colour mode (invert / accent / white / black), shuffle speed (60 / 30 / 15 / 5 min / daily),
+skip this style in future, show all styles again, re-check wallpaper brightness.
+
+## Options (`[Variables]` in `AdaptiveClock.ini`)
+| Variable | Values | Meaning |
+|---|---|---|
+| `ColorMode` | `Invert`, `Accent`, `White`, `Black` | Invert = black/white from wallpaper brightness |
+| `ShuffleMinutes` | `1` to `1440` | How long each style stays (60 = hourly, 1440 = daily) |
+| `SkipStyles` | e.g. `3,7,12` | Styles left out of the shuffle |
+| `HourFormat` | `%H` or `%I` | 24 h or 12 h |
+| `QuoteHidden` / `QuoteEveryHour` | `0` / `1` | Hide the quote / new quote every hour |
+| `Cities` | `NAME:offset:RULE\|...` | World-time cities (max 5) |
 
 ## Customise
 - **Cities**: edit the `Cities=` line in `AdaptiveClock.ini`, format `NAME:offset:RULE|...` (RULE is `US`, `EU`, `AU` or `-`; max 5).

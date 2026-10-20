@@ -1,4 +1,4 @@
--- AdaptiveClock.lua  v3.1   (Rainmeter 4.x, Lua 5.1)
+-- AdaptiveClock.lua  v3.2   (Rainmeter 4.x, Lua 5.1)
 -- Author: Amika Alankara  (MIT License)
 --
 -- One file, several small jobs. Each Script measure in the .ini picks its job with  Mode=
@@ -9,7 +9,13 @@
 
 local mode = 'main'
 local N = 24                       -- number of styles (the .ini sets StyleCount)
-local current, lastHour, lastYday, lastAccent
+local current, lastSlot, lastYday, lastAccent
+local pool = {}                   -- style numbers that take part in the shuffle (SkipStyles removes some)
+local interval = 60               -- minutes per style (ShuffleMinutes)
+local NAMES = { 'Chronograph', 'Grey bubbles', 'World time', 'Halo', 'Roman dial', 'Bubble rings', 'Words',
+  'Digital', 'Concentric rings', 'Orbit dots', 'Classic analog', 'Progress bars', 'Sun path', 'Stacked digits',
+  'Date card', 'Line tracks', 'Dash ring', 'Gauges', 'Neon', '24-hour dial', 'Split', 'Analog + digital',
+  'Phrase', 'Pulse' }
 local locked = false              -- true = keep the current style (no hourly change)
 
 local D  = '\226\128\148'          -- em dash   (UTF-8 written as escapes so the file encoding never matters)
@@ -104,10 +110,11 @@ local function accent()
 
   -- "ink": black on a bright wallpaper, white on a dark one (like the mouse cursor that inverts)
   local luma   = wallpaperLuma()
+  local cm     = SKIN:GetVariable('ColorMode', 'Invert')       -- Invert | Accent | White | Black
   local bright = (luma ~= nil and luma > 0.55)
-  local invert = (SKIN:GetVariable('ColorMode', 'Invert') == 'Invert')
+  if cm == 'White' then bright = false elseif cm == 'Black' then bright = true end
 
-  local key = v .. '|' .. tostring(bright) .. '|' .. tostring(invert)
+  local key = v .. '|' .. tostring(bright) .. '|' .. cm
   if key == lastKey then return end
   lastKey = key
 
@@ -117,8 +124,8 @@ local function accent()
   setv('InkMid',  ink .. ',120')
   setv('InkSoft', ink .. ',60')
 
-  local rgb = ink                               -- Invert mode: accent colour = ink
-  if not invert then                            -- Accent mode: Windows accent colour (ABGR DWORD)
+  local rgb = ink                               -- Invert / White / Black: accent colour = ink
+  if cm == 'Accent' then                        -- Windows accent colour (ABGR DWORD)
     local r, g, b = 255, 255, 255
     if v > 0 then
       r = v % 256
@@ -166,20 +173,24 @@ end
 local function shuffled(year, yday)
   local rnd = lcg(year * 400 + yday)
   local p = {}
-  for i = 1, N do p[i] = i end
-  for i = N, 2, -1 do
+  for i = 1, #pool do p[i] = pool[i] end
+  for i = #p, 2, -1 do
     local j = math.floor(rnd() * i) + 1
     p[i], p[j] = p[j], p[i]
   end
   return p
 end
 
+local function slot(t) return math.floor((t.hour * 60 + t.min) / interval) end
+
 local function styleFor(t)
+  local M = #pool
   local p = shuffled(t.year, t.yday)
   local y = os.date('*t', os.time({ year = t.year, month = t.month, day = t.day - 1, hour = 12 }))
   local q = shuffled(y.year, y.yday)
-  if p[1] == q[(23 % N) + 1] then p[1], p[2] = p[2], p[1] end
-  return p[(t.hour % N) + 1]
+  local last = ((math.ceil(1440 / interval) - 1) % M) + 1
+  if M > 1 and p[1] == q[last] then p[1], p[2] = p[2], p[1] end
+  return p[(slot(t) % M) + 1]
 end
 
 local function showStyle(n)
@@ -191,37 +202,82 @@ local function showStyle(n)
   end
   setv('H' .. n, 0)
   setv('StyleNo', n)
+  setv('StyleName', NAMES[n] or ('Style ' .. n))
   setv('Q' .. n, qh)
   current = n
 end
 
 -- Called from the right-click menu of the skin
+local function saveVar(name, value)
+  local path = SKIN:GetVariable('CURRENTPATH', '') .. SKIN:GetVariable('CURRENTFILE', '')
+  SKIN:Bang('!WriteKeyValue', 'Variables', name, tostring(value), path)
+end
+
+local function cycleVar(name, list, default)
+  local cur, idx = SKIN:GetVariable(name, default), 0
+  for i, v in ipairs(list) do if tostring(v) == cur then idx = i end end
+  saveVar(name, list[(idx % #list) + 1])
+  SKIN:Bang('!Refresh')
+end
+
 function Next()
-  showStyle(((current or 0) % N) + 1)
+  local idx = 0
+  for i, n in ipairs(pool) do if n == current then idx = i end end
+  showStyle(pool[(idx % #pool) + 1])
   refresh()
 end
 
 function RandomStyle()
   math.randomseed(os.time())
   math.random()
-  local n = math.random(N)
-  if n == current then n = (n % N) + 1 end
+  local n = pool[math.random(#pool)]
+  if n == current and #pool > 1 then
+    local idx = 1
+    for i, v in ipairs(pool) do if v == n then idx = i end end
+    n = pool[(idx % #pool) + 1]
+  end
   showStyle(n)
   refresh()
 end
 
+function ToggleHourFormat() cycleVar('HourFormat', { '%H', '%I' }, '%H') end
+function ToggleQuote()      cycleVar('QuoteHidden', { 0, 1 }, '0') end
+function ToggleQuoteRate()  cycleVar('QuoteEveryHour', { 0, 1 }, '0') end
+function CycleColors()      cycleVar('ColorMode', { 'Invert', 'Accent', 'White', 'Black' }, 'Invert') end
+function CycleShuffle()     cycleVar('ShuffleMinutes', { 60, 30, 15, 5, 1440 }, '60') end
+
+function SkipThisStyle()
+  if #pool <= 1 or not current then return end
+  local list = (SKIN:GetVariable('SkipStyles', '') ~= '' and (SKIN:GetVariable('SkipStyles', '') .. ',') or '') .. current
+  saveVar('SkipStyles', list)
+  SKIN:Bang('!Refresh')
+end
+
+function ShowAllStyles()
+  saveVar('SkipStyles', '')
+  SKIN:Bang('!Refresh')
+end
+
+function ToggleLock()
+  if locked then Unlock() else Lock() end
+end
+
 function Lock()
   locked = true
+  setv('LockMark', ' [locked]')
+  refresh()
 end
 
 function Unlock()
   locked = false
+  setv('LockMark', '')
   showStyle(styleFor(os.date('*t')))
   refresh()
 end
 
 function Resume()
   locked = false
+  setv('LockMark', '')
   showStyle(styleFor(os.date('*t')))
   refresh()
 end
@@ -385,6 +441,12 @@ local MODES = {
 function Initialize()
   mode = SELF:GetOption('Mode', 'main')
   N = tonumber(SKIN:GetVariable('StyleCount', '24')) or 24
+  interval = math.max(1, math.min(1440, tonumber(SKIN:GetVariable('ShuffleMinutes', '60')) or 60))
+  local skip = {}
+  for n in (SKIN:GetVariable('SkipStyles', '')):gmatch('%d+') do skip[tonumber(n)] = true end
+  pool = {}
+  for i = 1, N do if not skip[i] then pool[#pool + 1] = i end end
+  if #pool == 0 then for i = 1, N do pool[i] = i end end
   loadQuotes()
   loadCities()
 end
@@ -399,8 +461,8 @@ function Update()
   local t = os.date('*t')
   accent()
   angles(t)
-  if current == nil or (not locked and (t.hour ~= lastHour or t.yday ~= lastYday)) then
-    lastHour, lastYday = t.hour, t.yday
+  if current == nil or (not locked and (slot(t) ~= lastSlot or t.yday ~= lastYday)) then
+    lastSlot, lastYday = slot(t), t.yday
     showStyle(styleFor(t))
   end
   return quoteText(t)
