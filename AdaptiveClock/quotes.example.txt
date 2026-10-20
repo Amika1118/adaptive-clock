@@ -1,0 +1,4 @@
+# Rename this file to quotes.txt to replace the built-in quotes.
+# One quote per line:  text | author     (lines starting with # are ignored)
+The best way out is always through. | Robert Frost
+Well begun is half done. | Proverb

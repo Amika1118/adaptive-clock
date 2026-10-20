@@ -351,13 +351,17 @@ ContextTitle10=Colours: invert to wallpaper
 ContextAction10=[!WriteKeyValue Variables ColorMode "Invert" "#CURRENTPATH##CURRENTFILE#"][!Refresh]
 ContextTitle11=Colours: Windows accent
 ContextAction11=[!WriteKeyValue Variables ColorMode "Accent" "#CURRENTPATH##CURRENTFILE#"][!Refresh]
+ContextTitle13=Lock this style
+ContextAction13=[!CommandMeasure mMain "Lock()"]
+ContextTitle14=Unlock style
+ContextAction14=[!CommandMeasure mMain "Unlock()"]
 ContextTitle12=Re-check wallpaper brightness
 ContextAction12=[!CommandMeasure mLum "Run"]
 
 [Metadata]
 Name=Adaptive Clock
 Author=
-Version=3
+Version=3.1
 Description=24 clock styles that shuffle hourly, follow the Windows accent colour and show a daily quote.
 
 [Variables]
@@ -365,6 +369,8 @@ StyleCount=24
 HourFormat=%H
 QuoteHidden=0
 QuoteEveryHour=0
+StyleNo=1
+Cities=NEW YORK:-5:US|LONDON:0:EU|DUBAI:4:-|TOKYO:9:-|SYDNEY:10:AU
 Color=255,255,255
 ColorDim=255,255,255,190
 ColorMid=255,255,255,120
@@ -443,6 +449,9 @@ Formula=1
 ; ---------------------------------------------------------------- meters
 [Bg]
 Meter=Shape
+ToolTipText=Style #StyleNo# of #StyleCount#  (double-click: next style)
+LeftMouseDoubleClickAction=[!CommandMeasure mMain "Next()"]
+DynamicVariables=1
 X=0
 Y=0
 W={W}

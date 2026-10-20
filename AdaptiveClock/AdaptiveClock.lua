@@ -1,4 +1,4 @@
--- AdaptiveClock.lua  v3   (Rainmeter 4.x, Lua 5.1)
+-- AdaptiveClock.lua  v3.1   (Rainmeter 4.x, Lua 5.1)
 --
 -- One file, several small jobs. Each Script measure in the .ini picks its job with  Mode=
 --   main                          accent colour, hourly style shuffle, daily quote (its value is the quote text)
@@ -9,6 +9,7 @@
 local mode = 'main'
 local N = 24                       -- number of styles (the .ini sets StyleCount)
 local current, lastHour, lastYday, lastAccent
+local locked = false              -- true = keep the current style (no hourly change)
 
 local D  = '\226\128\148'          -- em dash   (UTF-8 written as escapes so the file encoding never matters)
 local LQ = '\226\128\156'          -- left curly quote
@@ -188,6 +189,7 @@ local function showStyle(n)
     setv('Q' .. current, 1)
   end
   setv('H' .. n, 0)
+  setv('StyleNo', n)
   setv('Q' .. n, qh)
   current = n
 end
@@ -207,9 +209,37 @@ function RandomStyle()
   refresh()
 end
 
-function Resume()
+function Lock()
+  locked = true
+end
+
+function Unlock()
+  locked = false
   showStyle(styleFor(os.date('*t')))
   refresh()
+end
+
+function Resume()
+  locked = false
+  showStyle(styleFor(os.date('*t')))
+  refresh()
+end
+
+-- Optional quotes.txt next to the skin: one quote per line, "text | author". Lines starting with # are ignored.
+local function loadQuotes()
+  local f = io.open(SKIN:GetVariable('CURRENTPATH', '') .. 'quotes.txt', 'r')
+  if not f then return end
+  local list = {}
+  for raw in f:lines() do
+    local line = raw:gsub('^\239\187\191', ''):gsub('\r', ''):match('^%s*(.-)%s*$')
+    if line ~= '' and line:sub(1, 1) ~= '#' then
+      local text, who = line:match('^(.-)%s*|%s*(.+)$')
+      if text and text ~= '' then list[#list + 1] = Q(text, who)
+      else list[#list + 1] = LQ .. line .. RQ end
+    end
+  end
+  f:close()
+  if #list > 0 then QUOTES = list end
 end
 
 -- ---------------------------------------------------------------- quote of the day
@@ -282,6 +312,21 @@ local CITIES = {
   { 'SYDNEY',   10, 'AU' },
 }
 
+-- Optional  Cities=  variable in the .ini:  NAME:offset:RULE|NAME:offset:RULE ...   (RULE = US, EU, AU or -)
+local function loadCities()
+  local v = SKIN:GetVariable('Cities', '')
+  if v == '' then return end
+  local list = {}
+  for item in v:gmatch('[^|]+') do
+    local name, off, rule = item:match('^%s*(.-)%s*:%s*(%-?[%d%.]+)%s*:%s*(%a*%-?)%s*$')
+    if name and name ~= '' then
+      list[#list + 1] = { string.upper(name), tonumber(off), (rule == 'US' or rule == 'EU' or rule == 'AU') and rule or nil }
+    end
+    if #list == 5 then break end
+  end
+  if #list > 0 then CITIES = list end
+end
+
 local function cityTime(c, utc)
   local off = c[2] + (isDST(c[3], c[2], utc) and 1 or 0)
   return utc + off * 3600
@@ -339,6 +384,8 @@ local MODES = {
 function Initialize()
   mode = SELF:GetOption('Mode', 'main')
   N = tonumber(SKIN:GetVariable('StyleCount', '24')) or 24
+  loadQuotes()
+  loadCities()
 end
 
 function Update()
@@ -351,7 +398,7 @@ function Update()
   local t = os.date('*t')
   accent()
   angles(t)
-  if current == nil or t.hour ~= lastHour or t.yday ~= lastYday then
+  if current == nil or (not locked and (t.hour ~= lastHour or t.yday ~= lastYday)) then
     lastHour, lastYday = t.hour, t.yday
     showStyle(styleFor(t))
   end
