@@ -1,4 +1,4 @@
--- AdaptiveClock.lua  v3.3   (Rainmeter 4.x, Lua 5.1)
+-- AdaptiveClock.lua  v3.3.1   (Rainmeter 4.x, Lua 5.1)
 -- Author: Amika Alankara  (MIT License)
 --
 -- One file, several small jobs. Each Script measure in the .ini picks its job with  Mode=
@@ -96,11 +96,16 @@ end
 
 local lastKey
 
-local function wallpaperLuma()                  -- 0..1 from the RunCommand measure [mLum] (nil until it has run)
+local lastLuma, wasBright
+
+local function wallpaperLuma()                  -- 0..1 from the RunCommand measure [mLum]; keeps the last good value
   local m = SKIN:GetMeasure('mLum')
-  if not m then return nil end
-  local s = (m:GetStringValue() or ''):gsub(',', '.')
-  return tonumber(s:match('%d+%.?%d*'))
+  if m then
+    local str = (m:GetStringValue() or ''):gsub(',', '.')
+    local n = tonumber(str:match('%d+%.?%d*'))
+    if n then lastLuma = n end
+  end
+  return lastLuma
 end
 
 local function accent()
@@ -111,7 +116,11 @@ local function accent()
   -- "ink": black on a bright wallpaper, white on a dark one (like the mouse cursor that inverts)
   local luma   = wallpaperLuma()
   local cm     = SKIN:GetVariable('ColorMode', 'Invert')       -- Invert | Accent | White | Black
-  local bright = (luma ~= nil and luma > 0.55)
+  local bright = wasBright or false             -- small hysteresis so a mid-grey wallpaper does not flicker
+  if luma then
+    if bright then bright = luma > 0.48 else bright = luma > 0.55 end
+  end
+  wasBright = bright
   if cm == 'White' then bright = false elseif cm == 'Black' then bright = true end
 
   local key = v .. '|' .. tostring(bright) .. '|' .. cm

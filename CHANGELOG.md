@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.3.1
+- Ink now follows wallpaper changes from Windows Personalization quickly: the wallpaper setting is watched, the
+  brightness is re-checked every 30 s (cached, so it is cheap) and a changed wallpaper file or slideshow image is noticed.
+- Solid-colour desktops are supported.
+- Small hysteresis and "keep last reading" so the ink does not flicker.
+
 ## 3.3
 - Black/white ink now samples only the wallpaper area behind the skin (falls back to the whole wallpaper).
 - Fonts are variables (`FontText`, `FontLight`, `FontBold`) and the quote size is `QuoteSize`.
