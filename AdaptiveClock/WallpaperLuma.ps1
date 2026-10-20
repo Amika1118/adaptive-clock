@@ -1,3 +1,4 @@
+# Author: Amika Alankara  (MIT License)
 # Prints the average brightness (0..1) of the current desktop wallpaper.
 Add-Type -AssemblyName System.Drawing
 $p = Join-Path $env:APPDATA 'Microsoft\Windows\Themes\TranscodedWallpaper'

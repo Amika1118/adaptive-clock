@@ -1,4 +1,5 @@
 -- AdaptiveClock.lua  v3.1   (Rainmeter 4.x, Lua 5.1)
+-- Author: Amika Alankara  (MIT License)
 --
 -- One file, several small jobs. Each Script measure in the .ini picks its job with  Mode=
 --   main                          accent colour, hourly style shuffle, daily quote (its value is the quote text)

@@ -322,7 +322,7 @@ def script(name, mode):
 def tm(name, fmt):
     return f"[{name}]\nMeasure=Time\nFormat={fmt}"
 
-head = f"""; AdaptiveClock.ini  -  24 clock styles driven by AdaptiveClock.lua (same folder)
+head = f"""; AdaptiveClock.ini  by Amika Alankara  -  24 clock styles driven by AdaptiveClock.lua (same folder)
 ; Right-click the skin: Next / Random style, resume hourly shuffle, 12/24h, quote options.
 
 [Rainmeter]
@@ -360,7 +360,7 @@ ContextAction12=[!CommandMeasure mLum "Run"]
 
 [Metadata]
 Name=Adaptive Clock
-Author=
+Author=Amika Alankara
 Version=3.1
 Description=24 clock styles that shuffle hourly, follow the Windows accent colour and show a daily quote.
 

@@ -33,6 +33,9 @@ colour mode (invert to wallpaper or Windows accent), re-check wallpaper brightne
 ## Packaging
 Open Rainmeter's **Manage > Create .rmskin package** and select the `AdaptiveClock` skin.
 
+## Author
+Created by Amika Alankara.
+
 ## Credits
 Style ideas inspired by popular Rainmeter clock skins. Quotes are attributed to commonly cited sources;
 verify before redistributing commercially.
