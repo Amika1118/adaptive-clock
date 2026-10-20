@@ -1,4 +1,13 @@
+# Adaptive Clock - example quotes file   (Author: Amika Alankara, MIT License)
+#
 # Rename this file to quotes.txt to replace the built-in quotes.
-# One quote per line:  text | author     (lines starting with # are ignored)
+# One quote per line:  text | author
+# A line without " | author" is shown as a plain quote.
+# Lines starting with # are ignored.
+
 The best way out is always through. | Robert Frost
 Well begun is half done. | Proverb
+Know thyself. | Delphic maxim
+Not all those who wander are lost. | J.R.R. Tolkien
+Make each day your masterpiece. | John Wooden
+Slow and steady wins the race. | Aesop
