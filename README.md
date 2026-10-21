@@ -1,47 +1,61 @@
 # Adaptive Clock for Rainmeter
 
-A desktop clock with **48 styles** that change on a schedule: chronograph, terminal, calendar, radar, flip clock and more.
+A desktop clock with **53 styles**, built for Rainmeter on Windows. By Amika Alankara.
 
-- **Profiles**: *All*, *Coder* (terminal, code editor, hex, binary, system monitor, git log...) or *Everyday* (greeting, calendar, year progress, sticky note, week strip). Neutral styles appear in every profile.
-- **Themes**: *Neutral*, *Girl* (pink / lilac, petals, heart, pastel pills, starlight) or *Boy* (blue / cyan, radar, planet, speedometer, scoreboard).
-- **Shuffle**: hourly by default (or every 5 / 15 / 30 min, or daily), in a random order that stays the same all day.
-- **Adaptive colours**: black or white text chosen from the brightness of the wallpaper behind the skin, or your Windows accent colour.
-- **Quotes**: a friendly serif quote card, or a code-comment style for the Coder profile. Daily, hourly, every 30 or 10 minutes.
-- 12/24 h clock, world time with DST rules (US / EU / AU), lock a style, skip styles you dislike.
+- **Styles for everyone**: chronograph, bubbles, world time, flip clock, radar, calendar, aurora and more.
+- **Profiles**: *All*, *Coder* (terminal, code editor, hex, binary, system monitor, git log...) or *Everyday* (greeting, calendar, year progress, sticky note, week strip).
+- **Themes**: *Neutral*, *Girl* (pink / lilac) or *Boy* (blue / cyan), each with its own styles.
+- **Languages**: Windows (follows your system for dates), English, Spanish, French, German, Portuguese, Italian, Sinhala, Tamil, Hindi, Japanese.
+- **Extras**: weather (optional), sunrise and sunset, now playing, battery, focus timer with alarm.
+- **Adaptive colours**: black or white text chosen from the wallpaper behind the skin, or your Windows accent colour.
+- **Quotes**: a friendly card, or a code-comment style for the Coder profile.
+- **Settings window** and **style gallery** so you rarely need the right-click menu.
 
 ## Requirements
 Windows 10/11, [Rainmeter 4.x](https://www.rainmeter.net/), PowerShell (built in).
 
 ## Install
-1. Copy the `AdaptiveClock` folder into `Documents\Rainmeter\Skins\`.
-2. Right-click the Rainmeter tray icon, choose **Refresh all**, then load `AdaptiveClock.ini`.
+**Easiest:** download `AdaptiveClock-<version>.rmskin` from the Releases page and double-click it.
 
-Keep `AdaptiveClock.ini`, `AdaptiveClock.lua` and `WallpaperLuma.ps1` together in one folder.
+**From source:** copy the `AdaptiveClock` folder into `Documents\Rainmeter\Skins\` (keep the folder name), choose **Refresh all**
+in Rainmeter, then load `AdaptiveClock\AdaptiveClock.ini`. Also available: `AdaptiveClock\Settings\Settings.ini` and
+`AdaptiveClock\Gallery\Gallery.ini` (or use the last two items of the right-click menu).
+
+Keep the `.ini`, `.lua`, `Languages.lua` and `WallpaperLuma.ps1` files together. Save `.lua` files as UTF-8.
 
 ## Mouse
 Double-click for the next style. Hover to see the style name and number (and whether it is locked).
 
 ## Right-click menu
-Next / random style, lock or unlock (kept after a refresh), resume shuffle and re-check wallpaper, profile, theme,
-colour mode, next quote, quote speed, show/hide quote, 12/24 h, shuffle speed, skip this style, show all styles again.
+Next / random style, lock or unlock (kept after a refresh), resume shuffle and re-check wallpaper, profile, theme, language,
+colour mode, next quote, show/hide quote, 12/24 h, skip this style, show all styles again, open settings, open style gallery.
+
+## Settings window
+Every option as a button (profile, theme, text colour, language, 12/24 h, week start, style and quote speed, quote design,
+smooth seconds, weather, temperature unit, focus and break length, timer beep). The active choice is highlighted.
 
 ## Options (`[Variables]` in `AdaptiveClock.ini`)
 | Variable | Values | Meaning |
 |---|---|---|
-| `Profile` | `All`, `Coder`, `Everyday` | Which styles and which quotes are used |
+| `Profile` | `All`, `Coder`, `Everyday` | Which styles and quotes are used |
 | `Theme` | `Neutral`, `Girl`, `Boy` | Accent palette; Girl / Boy also add their own styles |
-| `ColorMode` | `Invert`, `Accent`, `White`, `Black` | Text colour (Invert = black/white from the wallpaper) |
-| `ShuffleMinutes` | `1` to `1440` | How long each style stays (60 = hourly, 1440 = daily) |
-| `SkipStyles` | e.g. `3,7,12` | Styles left out of the shuffle |
-| `LockedStyle` | `0` or a style number | Keep one style (the menu sets this for you) |
+| `Language` | `Windows`, `English`, `Spanish`, `French`, `German`, `Portuguese`, `Italian`, `Sinhala`, `Tamil`, `Hindi`, `Japanese` | Date names, greetings and labels. The two word-clock styles need English or Windows |
+| `ColorMode` | `Invert`, `Accent`, `White`, `Black` | Text colour |
+| `ShuffleMinutes` | `1` to `1440` | How long each style stays |
+| `SkipStyles` / `LockedStyle` | `3,7,12` / `0` or a style number | Leave styles out / keep one style |
 | `HourFormat` | `%H` or `%#I` | 24 h or 12 h |
-| `QuoteHidden` | `0` / `1` | Hide the quote |
-| `QuoteMinutes` | `1440`, `60`, `30`, `10` | How often the quote changes |
-| `QuoteStyle` | `Auto`, `Friendly`, `Terminal` | Auto uses Terminal for the Coder profile |
-| `QuoteSize` | e.g. `11` | Quote font size |
+| `QuoteHidden`, `QuoteMinutes`, `QuoteStyle`, `QuoteSize` | see settings | Quote behaviour |
+| `Smooth` | `0` / `1` | Smooth seconds hand (updates 10x per second, uses more CPU) |
+| `Latitude`, `Longitude` | e.g. `51.5`, `-0.12` | Needed for sunrise / sunset and weather. You type them in; nothing is detected |
+| `WeatherOff` | `1` / `0` | Weather is off by default (no network use). On = asks open-meteo.com every 15 min |
+| `TempUnit` | `celsius`, `fahrenheit` | Weather units |
+| `PomoWork`, `PomoBreak`, `TimerBeep` | minutes / minutes / `1`,`0` | Timer style |
+| `AlarmTime`, `AlarmOn` | `07:00`, `0` / `1` | Alarm (use the timer style buttons) |
 | `WeekStart` | `0` Sunday, `1` Monday | Calendar and week strip |
-| `FontText` / `FontLight` / `FontBold` / `FontMono` | font names | Fonts used by all styles |
+| `FontText`, `FontLight`, `FontBold`, `FontMono` | font names | Fonts for all styles |
 | `Cities` | `NAME:offset:RULE\|...` | World-time cities (max 5) |
+
+Quotes stay in English. Weather descriptions are English.
 
 ## Customise
 - **Cities**: edit the `Cities=` line in `AdaptiveClock.ini`, format `NAME:offset:RULE|...` (RULE is `US`, `EU`, `AU` or `-`; max 5).
@@ -50,8 +64,12 @@ colour mode, next quote, quote speed, show/hide quote, 12/24 h, shuffle speed, s
   `python gen_ini.py`, or edit the `.ini` directly.
 - **Style count**: if you add or remove styles, update `StyleCount` in the `.ini`.
 
-## Packaging
-Open Rainmeter's **Manage > Create .rmskin package** and select the `AdaptiveClock` skin.
+## Developing
+`AdaptiveClock.ini`, `Settings.ini` and `Gallery.ini` are generated: edit `tools/gen_ini.py` / `tools/gen_skins.py`, then run
+`python gen_ini.py && python gen_skins.py && python check_ini.py` from the `tools` folder. `python build_rmskin.py` builds
+`dist/AdaptiveClock-<version>.rmskin`. To add a language, copy a block in `Languages.lua`, translate it, and add its name to
+`CycleLanguage` in `AdaptiveClock.lua` and to the language list in `tools/gen_skins.py`.
+GitHub Actions checks the generated files on every push and attaches the `.rmskin` to a release when you push a tag like `v4.1`.
 
 ## Author
 Created by Amika Alankara.

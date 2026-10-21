@@ -1,4 +1,4 @@
--- AdaptiveClock.lua  v4.0   (Rainmeter 4.x, Lua 5.1)
+-- AdaptiveClock.lua  v4.1   (Rainmeter 4.x, Lua 5.1)
 -- Author: Amika Alankara  (MIT License)
 --
 -- One file, many small jobs. Each Script measure in the .ini picks its job with  Mode=
@@ -12,13 +12,17 @@
 --   quoteBody quoteWho                the quote, split in two lines
 --   worldName worldDay worldTime      multi-line text for the "World time" style
 --   wordsA wordsB                     text for the "Words" style
+--   dow dowS mon monS lbl             date names and labels in the chosen Language
+--   sunRise sunSet sunF sunNote       sunrise / sunset (needs Latitude + Longitude)
+--   wxIcon wxTemp wxText npTitle batText   weather, now playing and battery text
 
 local mode = 'main'
-local N = 48                       -- number of styles (the .ini sets StyleCount)
+local N = 53                       -- number of styles (the .ini sets StyleCount)
 local current, lastSlot, lastYday, lastKey, lastLuma, wasBright, lastCalDay, lastQKey
 local pool = {}                    -- style numbers that take part in the shuffle
 local interval = 60               -- minutes per style (ShuffleMinutes)
 local locked, lockedStyle = false, 0
+local lblKey = ''
 local logIndex = 0
 local qpool
 
@@ -31,6 +35,7 @@ local NAMES = {
   'Petals', 'Heart', 'Pastel pills', 'Starlight',
   'Radar', 'Planet orbit', 'Speedometer', 'Scoreboard',
   'Flip clock', 'Minimal analog', 'Tiles', 'Aurora',
+  'Weather', 'Sun times', 'Now playing', 'Battery', 'Timer and alarm',
 }
 
 -- Styles that only appear for a profile / theme (all others always appear)
@@ -39,6 +44,7 @@ for i = 25, 31 do TAGS[i] = 'code' end      -- Profile: All or Coder
 for i = 32, 36 do TAGS[i] = 'easy' end      -- Profile: All or Everyday
 for i = 37, 40 do TAGS[i] = 'girl' end      -- Theme: Girl
 for i = 41, 44 do TAGS[i] = 'boy' end       -- Theme: Boy
+TAGS[7], TAGS[23] = 'en', 'en'              -- word clocks: English only
 
 local D  = '\226\128\148'          -- em dash   (UTF-8 written as escapes so the file encoding never matters)
 local LQ = '\226\128\156'          -- left curly quote
@@ -214,8 +220,15 @@ end
 
 -- ---------------------------------------------------------------- angles for the dash / marker meters
 
+local sLast, sTicks = -1, 0
+local function subSecond(sec)                   -- fraction of the current second (only with Smooth=1, Update=100)
+  if var('Smooth', '0') ~= '1' then return 0 end
+  if sec ~= sLast then sLast, sTicks = sec, 0 else sTicks = sTicks + 1 end
+  return math.min(sTicks * 0.1, 0.99)
+end
+
 local function angles(t)
-  local sec = t.sec
+  local sec = t.sec + subSecond(t.sec)
   local min = t.min + sec / 60
   local hr  = (t.hour % 12) + min / 60
   local day = t.hour + min / 60
@@ -239,6 +252,7 @@ local function allowed(i)
   if tag == 'easy' then return p ~= 'Coder' end
   if tag == 'girl' then return th == 'Girl' end
   if tag == 'boy'  then return th == 'Boy' end
+  if tag == 'en'   then local l = var('Language', 'Windows'); return l == 'English' or l == 'Windows' end
   return true
 end
 
@@ -325,6 +339,24 @@ function CycleColors()      cycleVar('ColorMode', { 'Invert', 'Accent', 'White',
 function CycleShuffle()     cycleVar('ShuffleMinutes', { 60, 30, 15, 5, 1440 }, '60') end
 function CycleProfile()     cycleVar('Profile', { 'All', 'Coder', 'Everyday' }, 'All') end
 function CycleTheme()       cycleVar('Theme', { 'Neutral', 'Girl', 'Boy' }, 'Neutral') end
+function CycleLanguage()    cycleVar('Language', { 'Windows', 'English', 'Spanish', 'French', 'German', 'Portuguese', 'Italian', 'Sinhala', 'Tamil', 'Hindi', 'Japanese' }, 'Windows') end
+
+-- Used by the Settings skin:  [!CommandMeasure mMain "Set('Theme','Girl')" "AdaptiveClock"]
+local SETTABLE = { Profile = 1, Theme = 1, ColorMode = 1, ShuffleMinutes = 1, QuoteMinutes = 1, QuoteHidden = 1,
+  QuoteStyle = 1, HourFormat = 1, Language = 1, WeekStart = 1, Smooth = 1, TempUnit = 1, WeatherOff = 1,
+  PomoWork = 1, PomoBreak = 1, TimerBeep = 1 }
+
+function Set(name, value)
+  if not SETTABLE[name] then return end
+  value = tostring(value)
+  if name == 'HourFormat' then value = (value == 'H12') and '%#I' or '%H' end
+  saveVar(name, value)
+  if name == 'Smooth' then
+    saveVar('UpdateMs', value == '1' and 100 or 1000)
+    saveVar('Div', value == '1' and 10 or 1)
+  end
+  SKIN:Bang('!Refresh')
+end
 
 function NextQuote()                              -- every quote measure reads this variable
   setv('QuoteBump', (tonumber(var('QuoteBump', '0')) or 0) + 1)
@@ -365,6 +397,13 @@ end
 
 function Resume()
   Unlock()
+end
+
+function GoTo(n)                                  -- used by the style gallery: show a style and keep it
+  n = tonumber(n)
+  if not n or n < 1 or n > N then return end
+  showStyle(n)
+  Lock()
 end
 
 -- ---------------------------------------------------------------- quotes
@@ -445,6 +484,61 @@ local function isLeap(y) return (y % 4 == 0 and y % 100 ~= 0) or y % 400 == 0 en
 local function daysInMonth(y, m)
   if m == 2 and isLeap(y) then return 29 end
   return DIM[m]
+end
+
+-- ---------------------------------------------------------------- language (Languages.lua holds the other languages)
+
+local EN = {
+  dow  = { 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday' },
+  dowS = { 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat' },
+  dowH = { 'Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa' },
+  mon  = { 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December' },
+  monS = { 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' },
+  greet = { night = 'Good night', morning = 'Good morning', afternoon = 'Good afternoon', evening = 'Good evening' },
+  t = { hour = 'HOUR', minute = 'MINUTE', second = 'SECOND', hours = 'HOURS', minutes = 'MINUTES', seconds = 'SECONDS',
+        world = 'World Time', daysLeft = '{n} days left', daysLeftYear = '{n} days left in {year}',
+        yearDone = 'of {year} is done', ofYear = 'of {year}', secondsLow = 'seconds', focus = 'FOCUS', rest = 'BREAK',
+        alarm = 'Alarm', ringing = 'ALARM!', sunrise = 'Sunrise', sunset = 'Sunset',
+        nothing = 'Nothing playing', battery = 'Battery', charging = 'Charging',
+        setLocation = 'Set Latitude and Longitude in the .ini', weatherOff = 'Weather is off (turn it on in Settings)',
+        loading = 'Loading...' },
+}
+local LANGS
+
+local function lang()                           -- returns the active language table and its name
+  local name = var('Language', 'Windows')
+  if name == 'English' or name == 'Windows' then return EN, name end
+  if not LANGS then
+    local ok, t = pcall(dofile, var('CURRENTPATH', '') .. 'Languages.lua')
+    LANGS = (ok and type(t) == 'table') and t or {}
+  end
+  return LANGS[name] or EN, name
+end
+
+local function tr(key)
+  local l = lang()
+  return (l.t and l.t[key]) or EN.t[key] or key
+end
+
+local function label(key)                         -- translated label with {n} and {year} filled in
+  local t = os.date('*t')
+  local s = tr(key)
+  s = s:gsub('{n}', function() return tostring((((t.year % 4 == 0 and t.year % 100 ~= 0) or t.year % 400 == 0) and 366 or 365) - t.yday) end)
+  s = s:gsub('{year}', tostring(t.year))
+  return s
+end
+
+local function windowsText(measure)               -- text of a Windows-language Time measure in the .ini
+  local m = SKIN:GetMeasure(measure)
+  return m and (m:GetStringValue() or '') or ''
+end
+
+local function dateName(kind, windowsMeasure)     -- kind = dow | dowS | mon | monS
+  local l, name = lang()
+  if name == 'Windows' then return windowsText(windowsMeasure) end
+  local t = os.date('*t')
+  local idx = (kind == 'dow' or kind == 'dowS') and t.wday or t.month
+  return (l[kind] and l[kind][idx]) or EN[kind][idx]
 end
 
 local function daysFromCivil(y, m, d)           -- days since 1970-01-01 (proleptic Gregorian)
@@ -528,7 +622,9 @@ local function world(kind)
     if kind == 'name' then
       out[i] = c[1]
     elseif kind == 'day' then
-      out[i] = string.upper(os.date('!%a', lt))
+      local u0 = os.date('!*t', lt)
+      local l = lang()
+      out[i] = string.upper((l.dowS or EN.dowS)[u0.wday] or EN.dowS[u0.wday])
     else
       local u = os.date('!*t', lt)
       if h12 then
@@ -544,7 +640,7 @@ end
 -- month grid for the calendar styles (variables CalH1..7, CalD1..42, CalToday, WeekIdx)
 local function calendar(t)
   local ws = tonumber(var('WeekStart', '1')) or 1             -- 0 = Sunday first, 1 = Monday first
-  local names = { 'Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa' }
+  local names = lang().dowH or EN.dowH
   for c = 1, 7 do setv('CalH' .. c, names[((c - 1 + ws) % 7) + 1]) end
   local first = os.date('*t', os.time({ year = t.year, month = t.month, day = 1, hour = 12 }))
   local off = (first.wday - 1 - ws) % 7
@@ -584,11 +680,12 @@ local function bits(n, w)
 end
 
 local function greeting(h)
-  if h < 5 then return 'Good night' end
-  if h < 12 then return 'Good morning' end
-  if h < 17 then return 'Good afternoon' end
-  if h < 21 then return 'Good evening' end
-  return 'Good night'
+  local g = lang().greet or EN.greet
+  if h < 5 then return g.night end
+  if h < 12 then return g.morning end
+  if h < 17 then return g.afternoon end
+  if h < 21 then return g.evening end
+  return g.night
 end
 
 local function yearFraction(t)
@@ -596,12 +693,195 @@ local function yearFraction(t)
   return ((t.yday - 1) * 86400 + t.hour * 3600 + t.min * 60 + t.sec) / (len * 86400)
 end
 
+
+-- ---------------------------------------------------------------- sunrise / sunset (needs Latitude and Longitude)
+
+local sunCache = {}
+
+local function sunTimes(t)                        -- unix times of sunrise and sunset, or nil without coordinates
+  local lat, lon = tonumber(var('Latitude', '')), tonumber(var('Longitude', ''))
+  if not lat or not lon then return nil end
+  local c = sunCache
+  if c.yday == t.yday and c.year == t.year and c.lat == lat and c.lon == lon then return c.rise, c.set end
+  local rad = math.pi / 180
+  local noon = os.time({ year = t.year, month = t.month, day = t.day, hour = 12 })
+  local n  = math.ceil(noon / 86400 + 2440587.5 - 2451545.0 + 0.0008)
+  local js = n - lon / 360
+  local M  = (357.5291 + 0.98560028 * js) % 360
+  local C  = 1.9148 * math.sin(M * rad) + 0.0200 * math.sin(2 * M * rad) + 0.0003 * math.sin(3 * M * rad)
+  local lam = (M + C + 180 + 102.9372) % 360
+  local jt = 2451545.0 + js + 0.0053 * math.sin(M * rad) - 0.0069 * math.sin(2 * lam * rad)
+  local sd = math.sin(lam * rad) * math.sin(23.4397 * rad)
+  local cd = math.cos(math.asin(sd))
+  local cw = (math.sin(-0.833 * rad) - math.sin(lat * rad) * sd) / (math.cos(lat * rad) * cd)
+  local rise, set
+  if cw >= -1 and cw <= 1 then
+    local w = math.acos(cw) / rad
+    rise = (jt - w / 360 - 2440587.5) * 86400
+    set  = (jt + w / 360 - 2440587.5) * 86400
+  end
+  sunCache = { yday = t.yday, year = t.year, lat = lat, lon = lon, rise = rise, set = set }
+  return rise, set
+end
+
+local function sunPair(t)                         -- falls back to 06:00 / 18:00 so the style still looks alive
+  local r, s = sunTimes(t)
+  if r and s then return r, s, true end
+  return os.time({ year = t.year, month = t.month, day = t.day, hour = 6 }),
+         os.time({ year = t.year, month = t.month, day = t.day, hour = 18 }), false
+end
+
+local function sunFraction(t)
+  local r, s = sunPair(t)
+  return math.max(0, math.min(1, (os.time() - r) / (s - r)))
+end
+
+local function fmtClock(unix)
+  local u = os.date('*t', math.floor(unix + 0.5))
+  if is12h() then
+    return string.format('%d:%02d %s', (u.hour % 12 == 0) and 12 or (u.hour % 12), u.min, u.hour < 12 and 'AM' or 'PM')
+  end
+  return string.format('%02d:%02d', u.hour, u.min)
+end
+
+-- ---------------------------------------------------------------- weather text (data comes from the WebParser measures)
+
+local WX = { [0] = 'Clear sky', [1] = 'Mainly clear', [2] = 'Partly cloudy', [3] = 'Overcast', [45] = 'Fog', [48] = 'Rime fog',
+  [51] = 'Light drizzle', [53] = 'Drizzle', [55] = 'Heavy drizzle', [56] = 'Freezing drizzle', [57] = 'Freezing drizzle',
+  [61] = 'Light rain', [63] = 'Rain', [65] = 'Heavy rain', [66] = 'Freezing rain', [67] = 'Freezing rain',
+  [71] = 'Light snow', [73] = 'Snow', [75] = 'Heavy snow', [77] = 'Snow grains', [80] = 'Rain showers', [81] = 'Rain showers',
+  [82] = 'Violent showers', [85] = 'Snow showers', [86] = 'Snow showers', [95] = 'Thunderstorm', [96] = 'Thunderstorm, hail',
+  [99] = 'Thunderstorm, hail' }
+
+local function wxCode()
+  local m = SKIN:GetMeasure('mWxC')
+  return m and tonumber((m:GetStringValue() or ''):match('%d+')) or nil
+end
+
+local function wxIcon()
+  local c = wxCode()
+  if c == nil then return '\226\152\129' end
+  if c <= 1 then return SUN end
+  if c == 2 then return '\226\155\133' end
+  if c == 3 or c == 45 or c == 48 then return '\226\152\129' end
+  if (c >= 51 and c <= 67) or (c >= 80 and c <= 82) then return '\226\152\130' end
+  if (c >= 71 and c <= 77) or c == 85 or c == 86 then return '\226\157\132' end
+  if c >= 95 then return '\226\154\161' end
+  return '\226\152\129'
+end
+
+local function wxTemp()
+  local m = SKIN:GetMeasure('mWxT')
+  local n = m and tonumber((m:GetStringValue() or ''):match('%-?%d+%.?%d*')) or nil
+  if not n then return '--' end
+  return string.format('%d', math.floor(n + 0.5)) .. '\194\176' .. (var('TempUnit', 'celsius') == 'fahrenheit' and 'F' or 'C')
+end
+
+local function wxText()
+  if var('WeatherOff', '1') == '1' then return tr('weatherOff') end
+  if not (tonumber(var('Latitude', '')) and tonumber(var('Longitude', ''))) then return tr('setLocation') end
+  local c = wxCode()
+  if c == nil then return tr('loading') end
+  return WX[c] or ''
+end
+
+-- ---------------------------------------------------------------- timer (pomodoro) and alarm - run by the main script
+
+local pomo = { mode = 'focus', running = false, remaining = nil, last = nil }
+local alarmFired, ringing, ringCount, lastRingT, pubKey = nil, false, 0, 0, nil
+
+local function pomoLen(m)
+  if m == 'focus' then return (tonumber(var('PomoWork', '25')) or 25) * 60 end
+  return (tonumber(var('PomoBreak', '5')) or 5) * 60
+end
+
+local function beep()
+  if var('TimerBeep', '1') == '1' then
+    SKIN:Bang('!Run', 'PowerShell -NoProfile -WindowStyle Hidden -Command [console]::beep(880,350)')
+  end
+end
+
+function PomoToggle()
+  if not pomo.remaining then pomo.remaining = pomoLen(pomo.mode) end
+  pomo.running = not pomo.running
+  pomo.last = os.time()
+  pubKey = nil
+end
+
+function PomoReset()
+  pomo.mode, pomo.running, pomo.remaining = 'focus', false, pomoLen('focus')
+  pubKey = nil
+end
+
+function PomoSkip()
+  pomo.mode = (pomo.mode == 'focus') and 'break' or 'focus'
+  pomo.remaining = pomoLen(pomo.mode)
+  pubKey = nil
+end
+
+function AlarmToggle()
+  local v = (var('AlarmOn', '0') == '1') and '0' or '1'
+  setv('AlarmOn', v)
+  saveVar('AlarmOn', v)
+  pubKey = nil
+end
+
+function AlarmStop() ringing = false; pubKey = nil end
+
+function AlarmClick() if ringing then AlarmStop() else AlarmToggle() end end
+
+function AlarmAdd(minutes)
+  local h, m = (var('AlarmTime', '07:00')):match('^(%d+):(%d+)$')
+  local total = ((tonumber(h) or 7) * 60 + (tonumber(m) or 0) + (tonumber(minutes) or 0)) % 1440
+  local v = string.format('%02d:%02d', math.floor(total / 60), total % 60)
+  setv('AlarmTime', v)
+  saveVar('AlarmTime', v)
+  pubKey = nil
+end
+
+local function tickTimers(t)
+  if pomo.remaining == nil then pomo.remaining = pomoLen('focus') end
+  local nowT = os.time()
+  if pomo.running then
+    pomo.remaining = pomo.remaining - (nowT - (pomo.last or nowT))
+    pomo.last = nowT
+    if pomo.remaining <= 0 then
+      pomo.mode = (pomo.mode == 'focus') and 'break' or 'focus'
+      pomo.remaining = pomoLen(pomo.mode)
+      beep()
+    end
+  end
+  local stamp = t.yday * 100000 + t.hour * 60 + t.min
+  if var('AlarmOn', '0') == '1' and string.format('%02d:%02d', t.hour, t.min) == var('AlarmTime', '07:00') and alarmFired ~= stamp then
+    alarmFired, ringing, ringCount = stamp, true, 0
+  end
+  if ringing and nowT ~= lastRingT then
+    lastRingT = nowT
+    ringCount = ringCount + 1
+    if ringCount % 2 == 1 then beep() end
+    if ringCount > 30 then ringing = false end
+  end
+
+  local rem = math.max(0, pomo.remaining)
+  local text = string.format('%02d:%02d', math.floor(rem / 60), rem % 60)
+  local label2 = (pomo.mode == 'focus') and tr('focus') or tr('rest')
+  local alarmText = ringing and tr('ringing') or (tr('alarm') .. ' ' .. var('AlarmTime', '07:00') .. ((var('AlarmOn', '0') == '1') and '  ON' or '  OFF'))
+  local key = text .. label2 .. alarmText .. tostring(pomo.running)
+  if key == pubKey then return end
+  pubKey = key
+  setv('PomoText', text)
+  setnum('PomoFrac', rem / math.max(1, pomoLen(pomo.mode)))
+  setv('PomoLabel', label2)
+  setv('PomoBtn', pomo.running and '||' or '>')
+  setv('AlarmText', alarmText)
+end
+
 -- ---------------------------------------------------------------- measure entry points
 
 local function now() return os.date('*t') end
 
 local MODES = {
-  secF  = function() local t = now(); return t.sec / 60 end,
+  secF  = function() local t = now(); return (t.sec + subSecond(t.sec)) / 60 end,
   minF  = function() local t = now(); return (t.min * 60 + t.sec) / 3600 end,
   hrF   = function() local t = now(); return ((t.hour % 12) * 3600 + t.min * 60 + t.sec) / 43200 end,
   dayF  = function() local t = now(); return (t.hour * 3600 + t.min * 60 + t.sec) / 86400 end,
@@ -631,6 +911,25 @@ local MODES = {
   qmark  = function() return LQ end,
   quoteBody = quoteBody,
   quoteWho  = quoteWho,
+  dow  = function() return dateName('dow',  'mDowW') end,
+  dowS = function() return dateName('dowS', 'mDowSW') end,
+  mon  = function() return dateName('mon',  'mMonW') end,
+  monS = function() return dateName('monS', 'mMonSW') end,
+  lbl  = function() return label(lblKey) end,
+  sunRise = function() local r = sunPair(now()); return fmtClock(r) end,
+  sunSet  = function() local _, s = sunPair(now()); return fmtClock(s) end,
+  sunF    = function() return sunFraction(now()) end,
+  sunNote = function() local _, _, real = sunPair(now()); return real and '' or tr('setLocation') end,
+  wxIcon = wxIcon, wxTemp = wxTemp, wxText = wxText,
+  npTitle = function()
+    local m = SKIN:GetMeasure('mNPTitle')
+    local s = m and m:GetStringValue() or ''
+    return (s ~= '') and s or tr('nothing')
+  end,
+  batText = function()
+    local m = SKIN:GetMeasure('mBatAC')
+    return (m and m:GetValue() == 1) and tr('charging') or tr('battery')
+  end,
   worldName = function() return world('name') end,
   worldDay  = function() return world('day') end,
   worldTime = function() return world('time') end,
@@ -640,7 +939,8 @@ local MODES = {
 
 function Initialize()
   mode = SELF:GetOption('Mode', 'main')
-  N = tonumber(var('StyleCount', '48')) or 48
+  N = tonumber(var('StyleCount', '53')) or 53
+  lblKey = SELF:GetOption('Key', '')
   logIndex = tonumber(SELF:GetOption('Index', '0')) or 0
 
   if mode == 'main' or mode == 'quoteBody' or mode == 'quoteWho' then
@@ -673,6 +973,11 @@ function Update()
   accent()
   angles(t)
   quoteFlags()
+  tickTimers(t)
+  do
+    local f = sunFraction(t)
+    setnum('SunRad', math.pi + f * math.pi)
+  end
   if t.yday ~= lastCalDay then
     lastCalDay = t.yday
     calendar(t)

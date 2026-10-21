@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.1
+- **Language** setting (Windows, English, Spanish, French, German, Portuguese, Italian, Sinhala, Tamil, Hindi, Japanese):
+  date names, greeting, calendar headers and labels. The word-clock styles only appear for English / Windows.
+- **Settings window** and **style gallery** (new skins) so the right-click menu is short; "Language: next" in the menu.
+- New styles: Weather (optional, off by default), Sun times, Now playing, Battery, Timer and alarm. 53 styles in total.
+- Smooth seconds option, longer update dividers for slow-changing text (lower CPU use).
+- One-click `.rmskin` builder, CI that checks the generated files, release workflow.
+
 ## 4.0
 - 24 new styles (48 total): Terminal, Code editor, Hex clock, Binary dots, System monitor, Epoch and ISO, Git log (coder);
   Greeting, Month calendar, Year progress, Sticky note, Week strip (everyday); Petals, Heart, Pastel pills, Starlight (girl);

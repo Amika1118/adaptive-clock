@@ -93,7 +93,7 @@ txt(i, "Date", "[mDnum]  [mMonS]", 240, 100, 44, "245,245,245", align="Left")
 i = 3
 shp(i, "Ring", [circle(220, 220, 170, sw=2, stroke="#ColorMid#"),
                 mdot(220, 220, 170, "#HourRad#", 6, "#Color#")])
-txt(i, "Title", "World Time", 220, 140, 36, "245,245,245", face="Segoe UI Semibold")
+txt(i, "Title", "[mLblWorld]", 220, 140, 36, "245,245,245", face="Segoe UI Semibold")
 txt(i, "Names", "[mWName]", 100, 235, 13, "235,235,235", align="LeftCenter", face="Segoe UI")
 txt(i, "Days", "[mWDay]", 220, 235, 13, "#ColorDim#", align="CenterCenter", face="Segoe UI")
 txt(i, "Times", "[mWTime]", 340, 235, 13, "235,235,235", align="RightCenter", face="Segoe UI")
@@ -185,9 +185,9 @@ shp(i, "Hub", [circle(220, 220, 7, "#Color#")])
 # ------------------------------------------------------------------ 12  Bars
 i = 12
 txt(i, "Time", "[mH]:[mM]", 220, 140, 80, "245,245,245")
-for n, (lab, m, y, c) in enumerate((("HOUR", "mHrF", 235, "#Color#"),
-                                    ("MINUTE", "mMinF", 285, "#ColorDim#"),
-                                    ("SECOND", "mSecF", 335, "#ColorMid#"))):
+for n, (lab, m, y, c) in enumerate((("[mLblHour]", "mHrF", 235, "#Color#"),
+                                    ("[mLblMinute]", "mMinF", 285, "#ColorDim#"),
+                                    ("[mLblSecond]", "mSecF", 335, "#ColorMid#"))):
     txt(i, f"L{n}", lab, 70, y - 14, 10, "#ColorDim#", align="Left", face="Segoe UI")
     sec(i, f"Bar{n}", "Bar", X=70, Y=y, W=300, H=8, MeasureName=m, BarColor=c,
         SolidColor="#ColorSoft#", BarOrientation="Horizontal")
@@ -220,11 +220,11 @@ txt(i, "Time", "[mH]:[mM]", 220, 375, 40, "#ColorDim#")
 i = 16
 txt(i, "Time", "[mH]:[mM]", 220, 110, 56, "245,245,245")
 sh = []
-for n, (lab, m, y) in enumerate((("HOUR", "mHrF", 190), ("MINUTE", "mMinF", 240), ("SECOND", "mSecF", 290))):
+for n, (lab, m, y) in enumerate((("[mLblHour]", "mHrF", 190), ("[mLblMinute]", "mMinF", 240), ("[mLblSecond]", "mSecF", 290))):
     sh.append(f"Line 40,{y},400,{y} | StrokeWidth 2 | Stroke Color #ColorMid#")
     sh.append(f"Ellipse (40+360*[{m}]),{y},{9-2*n} | Fill Color #Color# | StrokeWidth 0")
 shp(i, "Tracks", sh)
-for n, lab in enumerate(("HOUR", "MINUTE", "SECOND")):
+for n, lab in enumerate(("[mLblHour]", "[mLblMinute]", "[mLblSecond]")):
     txt(i, f"L{n}", lab, 40, 190 + 50 * n - 20, 10, "#ColorDim#", align="Left", face="Segoe UI")
 txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 350, 18, "#ColorDim#")
 
@@ -243,8 +243,8 @@ txt(i, "Date", "[mDowS] [mDnum]", 220, 252, 15, "#ColorDim#")
 # ------------------------------------------------------------------ 18  Gauges
 i = 18
 g0, gr = 2.3562, 4.7124
-for n, (x, m, lab, t) in enumerate(((80, "mHrF", "HOURS", "[mH]"), (220, "mMinF", "MINUTES", "[mM]"),
-                                    (360, "mSecF", "SECONDS", "[mS]"))):
+for n, (x, m, lab, t) in enumerate(((80, "mHrF", "[mLblHours]", "[mH]"), (220, "mMinF", "[mLblMinutes]", "[mM]"),
+                                    (360, "mSecF", "[mLblSeconds]", "[mS]"))):
     hand(i, f"T{n}", x, 215, 62, "mOne", 1, "#ColorSoft#", start=g0, rot=gr, lstart=54, solid=1)
     hand(i, f"A{n}", x, 215, 62, m, 1, "#Color#", start=g0, rot=gr, lstart=54, solid=1)
     txt(i, f"V{n}", t, x, 215, 34, "245,245,245")
@@ -470,10 +470,10 @@ txt(i, "Time", "[mH]:[mM]", 220, 418, 16, DIM)
 # ---- 34 Year progress (everyday)
 i = 34
 txt(i, "Pct", "[mYearPct]", 220, 160, 112, INK, face="Segoe UI Semibold")
-txt(i, "Of", "of [mYear] is done", 220, 242, 20, DIM)
+txt(i, "Of", "[mLblYearDone]", 220, 242, 20, DIM)
 sec(i, "Bar", "Bar", X=70, Y=274, W=300, H=12, MeasureName="mYearF", BarColor="#Color#",
     SolidColor="#InkSoft#", BarOrientation="Horizontal")
-txt(i, "Left", "[mDaysLeft] days left", 220, 322, 22, "#Color#")
+txt(i, "Left", "[mLblDaysLeft]", 220, 322, 22, "#Color#")
 txt(i, "Date", "[mDow], [mDnum] [mMon]  -  [mH]:[mM]", 220, 372, 16, DIM)
 
 # ---- 35 Sticky note (everyday)
@@ -493,7 +493,7 @@ for c in range(7):
     shp(i, f"Ring{c}", [circle(60 + c * 53, 262, 22, sw=1, stroke="#InkSoft#")])
     txt(i, f"D{c}", f"#CalH{c+1}#", 60 + c * 53, 262, 15, INK)
 txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 328, 20, DIM)
-txt(i, "Left", "[mDaysLeft] days left in [mYear]", 220, 366, 15, "#Color#")
+txt(i, "Left", "[mLblDaysLeftYear]", 220, 366, 15, "#Color#")
 
 # ---- 37 Petals (girl)
 i = 37
@@ -520,8 +520,8 @@ txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 262, 16, DIM)
 # ---- 39 Pastel pills (girl)
 i = 39
 txt(i, "Time", "[mH]:[mM]", 220, 120, 68, INK)
-for n, (lab, m, val, col) in enumerate((("HOURS", "mHrF", "[mH]", "#Color#"), ("MINUTES", "mMinF", "[mM]", "#Color2#"),
-                                        ("SECONDS", "mSecF", "[mS]", "#Color#"))):
+for n, (lab, m, val, col) in enumerate((("[mLblHours]", "mHrF", "[mH]", "#Color#"), ("[mLblMinutes]", "mMinF", "[mM]", "#Color2#"),
+                                        ("[mLblSeconds]", "mSecF", "[mS]", "#Color#"))):
     y = 200 + n * 62
     shp(i, f"Track{n}", [rrect(60, y, 320, 26, 13, "#InkSoft#"),
                          rrect(60, y, f"(26+294*[{m}])", 26, 13, col)])
@@ -632,9 +632,9 @@ txt(i, "D2", "[mDnum]", 355, 188, 64, INK, face="Segoe UI Semibold")
 txt(i, "G1", "[mGreetIcon]", 92, 300, 36, "#Color#", face="Segoe UI Symbol")
 txt(i, "G2", "[mGreet]", 92, 352, 13, INK)
 txt(i, "Y1", "[mYearPct]", 227, 305, 34, INK, face="Segoe UI Semibold")
-txt(i, "Y2", "of [mYear]", 227, 348, 13, DIM)
+txt(i, "Y2", "[mLblOfYear]", 227, 348, 13, DIM)
 txt(i, "S1", "[mS]", 355, 305, 46, INK)
-txt(i, "S2", "seconds", 355, 348, 13, DIM)
+txt(i, "S2", "[mLblSecondsLow]", 355, 348, 13, DIM)
 
 # ---- 48 Aurora
 i = 48
@@ -644,6 +644,93 @@ txt(i, "Time", "[mH]:[mM]", 220, 225, 112, "250,250,250", face="Segoe UI Semibol
     StringEffect="Shadow", FontEffectColor="0,0,0,60")
 txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 312, 20, "250,250,250")
 shp(i, "Bar", [rrect(80, 346, 280, 6, 3, "250,250,250,70"), rrect(80, 346, "(6+274*[mSecF])", 6, 3, "250,250,250,230")])
+
+# ---- 49-53: weather, sun times, now playing, battery, timer and alarm
+meas("mWxRaw", "WebParser",
+     URL="https://api.open-meteo.com/v1/forecast?latitude=#Latitude#&longitude=#Longitude#&current=temperature_2m,weather_code&temperature_unit=#TempUnit#",
+     UpdateRate="(900*#Div#)", Disabled="#WeatherOff#",
+     RegExp='(?siU)"current":\\{.*"temperature_2m":(.*),"weather_code":(.*)\\}')
+meas("mWxT", "WebParser", URL="[mWxRaw]", StringIndex=1)
+meas("mWxC", "WebParser", URL="[mWxRaw]", StringIndex=2)
+for _nm, _md in [("mWxIcon", "wxIcon"), ("mWxTempTxt", "wxTemp"), ("mWxText", "wxText"), ("mSunRise", "sunRise"),
+                 ("mSunSet", "sunSet"), ("mSunF", "sunF"), ("mSunNote", "sunNote"), ("mNPTitleTxt", "npTitle"),
+                 ("mBatTxt", "batText")]:
+    lmeas(_nm, _md)
+meas("mNPTitle", "Plugin", Plugin="NowPlaying", PlayerName="*", PlayerType="TITLE")
+for _nm, _ty in [("mNPArtist", "ARTIST"), ("mNPAlbum", "ALBUM"), ("mNPCover", "COVER")]:
+    meas(_nm, "Plugin", Plugin="NowPlaying", PlayerName="[mNPTitle]", PlayerType=_ty)
+meas("mNPProg", "Plugin", Plugin="NowPlaying", PlayerName="[mNPTitle]", PlayerType="PROGRESS", MinValue=0, MaxValue=100)
+meas("mBatPct", "Plugin", Plugin="PowerPlugin", PowerState="Percent", MinValue=0, MaxValue=100)
+meas("mBatAC", "Plugin", Plugin="PowerPlugin", PowerState="ACLine")
+meas("mPomoF", "Calc", Formula="#PomoFrac#", DynamicVariables=1)
+
+def button(i, name, cx, cy, r, text, action, fs=16):
+    sec(i, name + "B", "Shape", X=cx - r, Y=cy - r, W=2 * r, H=2 * r,
+        Shape=f"Ellipse {r},{r},{r-1} | Fill Color #ColorSoft# | StrokeWidth 2 | Stroke Color #Color#",
+        LeftMouseUpAction=action)
+    txt(i, name + "T", text, cx, cy, fs, INK, face="Segoe UI Semibold")
+
+# 49 Weather
+i = 49
+txt(i, "Icon", "[mWxIcon]", 220, 125, 72, "#Color#", face="Segoe UI Symbol")
+txt(i, "Temp", "[mWxTempTxt]", 220, 215, 88, INK, face="Segoe UI Semibold")
+txt(i, "Text", "[mWxText]", 220, 285, 20, DIM, W=380, ClipString=2, H=48)
+txt(i, "Time", "[mH]:[mM]", 220, 342, 40, INK)
+txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 385, 16, DIM)
+
+# 50 Sun times
+i = 50
+hand(i, "Track", 220, 310, 165, "mOne", 1, "#InkSoft#", start=PI, rot=PI, lstart=161, solid=1)
+hand(i, "Prog", 220, 310, 165, "mSunF", 1, "#ColorDim#", start=PI, rot=PI, lstart=157, solid=1)
+shp(i, "Sun", ["Line 40,310,400,310 | StrokeWidth 1 | Stroke Color #ColorMid#",
+               mdot(220, 310, 161, "#SunRad#", 20, "#ColorSoft#"), mdot(220, 310, 161, "#SunRad#", 10, "#Color#")])
+txt(i, "Time", "[mH]:[mM]", 220, 240, 60, INK, face="Segoe UI Semibold")
+txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 282, 15, DIM)
+txt(i, "L1", "[mLblSunrise]", 95, 338, 13, DIM)
+txt(i, "T1", "[mSunRise]", 95, 362, 24, INK, face="Segoe UI Semibold")
+txt(i, "L2", "[mLblSunset]", 345, 338, 13, DIM)
+txt(i, "T2", "[mSunSet]", 345, 362, 24, INK, face="Segoe UI Semibold")
+txt(i, "Note", "[mSunNote]", 220, 405, 12, "#Color#")
+
+# 51 Now playing
+i = 51
+shp(i, "CoverBg", [rrect(50, 130, 120, 120, 10, "#InkSoft#")])
+sec(i, "Cover", "Image", X=50, Y=130, W=120, H=120, MeasureName="mNPCover", PreserveAspectRatio=1,
+    LeftMouseUpAction='[!CommandMeasure mNPTitle "PlayPause"]')
+txt(i, "Title", "[mNPTitleTxt]", 190, 128, 18, INK, align="LeftTop", face="Segoe UI Semibold", W=215, H=48, ClipString=2)
+txt(i, "Artist", "[mNPArtist]", 190, 186, 14, DIM, align="LeftTop", W=215, ClipString=1)
+txt(i, "Album", "[mNPAlbum]", 190, 210, 12, DIM, align="LeftTop", W=215, ClipString=1)
+sec(i, "Bar", "Bar", X=190, Y=242, W=215, H=6, MeasureName="mNPProg", BarColor="#Color#",
+    SolidColor="#InkSoft#", BarOrientation="Horizontal")
+button(i, "Prev", 215, 288, 17, "<<", '[!CommandMeasure mNPTitle "Previous"]', 11)
+button(i, "Play", 295, 288, 20, "||", '[!CommandMeasure mNPTitle "PlayPause"]', 12)
+button(i, "Next", 375, 288, 17, ">>", '[!CommandMeasure mNPTitle "Next"]', 11)
+txt(i, "Time", "[mH]:[mM]", 220, 350, 56, INK)
+txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 398, 15, DIM)
+
+# 52 Battery
+i = 52
+hand(i, "Track", 220, 215, 160, "mOne", 1, "#InkSoft#", lstart=145, solid=1)
+hand(i, "Prog", 220, 215, 160, "mBatPct", 1, "#Color#", lstart=145, solid=1)
+txt(i, "Pct", "[mBatPct:0]%", 220, 205, 84, INK, face="Segoe UI Semibold")
+txt(i, "State", "[mBatTxt]", 220, 270, 18, "#Color#")
+txt(i, "Time", "[mH]:[mM]", 220, 330, 44, INK)
+txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 378, 15, DIM)
+
+# 53 Timer and alarm (click the buttons)
+i = 53
+hand(i, "Track", 220, 195, 152, "mOne", 1, "#InkSoft#", lstart=138, solid=1)
+hand(i, "Prog", 220, 195, 152, "mPomoF", 1, "#Color#", lstart=138, solid=1)
+txt(i, "Label", "#PomoLabel#", 220, 118, 16, "#Color#", face="Segoe UI Semibold")
+txt(i, "Left", "#PomoText#", 220, 195, 76, INK)
+button(i, "Reset", 165, 262, 17, "R", '[!CommandMeasure mMain "PomoReset()"]', 12)
+button(i, "Go", 220, 262, 26, "#PomoBtn#", '[!CommandMeasure mMain "PomoToggle()"]', 16)
+button(i, "Skip", 275, 262, 17, ">>", '[!CommandMeasure mMain "PomoSkip()"]', 11)
+txt(i, "Alarm", "#AlarmText#", 220, 352, 17, INK, face="Segoe UI Semibold",
+    LeftMouseUpAction='[!CommandMeasure mMain "AlarmClick()"]')
+button(i, "Minus", 150, 392, 17, "-15", '[!CommandMeasure mMain "AlarmAdd(-15)"]', 11)
+button(i, "Plus", 290, 392, 17, "+15", '[!CommandMeasure mMain "AlarmAdd(15)"]', 11)
+txt(i, "Time", "[mH]:[mM]", 220, 392, 16, DIM)
 
 # ---- extras for older styles: AM/PM markers for the 12-hour clock
 txt(8, "AP", "[mAmPm]", 392, 130, 18, "#ColorDim#")
@@ -679,20 +766,29 @@ qsec("QC_Who", "String", "QHc", X=36, Y=504, Text="[mQWho]", FontFace="Consolas"
 EXTRA_M = "\n\n".join(EXTRA)
 
 # ------------------------------------------------------------------ header
-HV = "\n".join(f"H{n}=1" for n in range(1, 49)) + "\nQHf=1\nQHc=1\n" + "\n".join(f"CalH{n}=" for n in range(1, 8)) + "\n" + "\n".join(f"CalD{n}=" for n in range(1, 43))
 SCRIPT = "ScriptFile=#CURRENTPATH#AdaptiveClock.lua"
 
 def script(name, mode):
     return f"[{name}]\nMeasure=Script\n{SCRIPT}\nMode={mode}"
 
+def lbl(name, key):
+    return f"[{name}]\nMeasure=Script\n{SCRIPT}\nMode=lbl\nKey={key}"
+
+_LBL = [("mLblHour", "hour"), ("mLblMinute", "minute"), ("mLblSecond", "second"), ("mLblHours", "hours"),
+        ("mLblMinutes", "minutes"), ("mLblSeconds", "seconds"), ("mLblWorld", "world"), ("mLblDaysLeft", "daysLeft"),
+        ("mLblDaysLeftYear", "daysLeftYear"), ("mLblYearDone", "yearDone"), ("mLblOfYear", "ofYear"),
+        ("mLblSecondsLow", "secondsLow"), ("mLblSunrise", "sunrise"), ("mLblSunset", "sunset")]
+DATE_M = "\n\n".join([script("mDow", "dow"), script("mDowS", "dowS"), script("mMon", "mon"), script("mMonS", "monS")]
+                      + [lbl(n, k) for n, k in _LBL])
+HV = "\n".join(f"H{n}=1" for n in range(1, 54)) + "\nQHf=1\nQHc=1\n" + "\n".join(f"CalH{n}=" for n in range(1, 8)) + "\n" + "\n".join(f"CalD{n}=" for n in range(1, 43))
 def tm(name, fmt):
     return f"[{name}]\nMeasure=Time\nFormat={fmt}"
 
-head = f"""; AdaptiveClock.ini  by Amika Alankara  -  48 clock styles driven by AdaptiveClock.lua (same folder)
+head = f"""; AdaptiveClock.ini  by Amika Alankara  -  53 clock styles driven by AdaptiveClock.lua (same folder)
 ; Right-click the skin: Next / Random style, resume hourly shuffle, 12/24h, quote options.
 
 [Rainmeter]
-Update=1000
+Update=#UpdateMs#
 AccurateText=1
 DynamicWindowSize=0
 ContextTitle=Next style
@@ -707,31 +803,33 @@ ContextTitle5=Profile: next (all / coder / everyday)
 ContextAction5=[!CommandMeasure mMain "CycleProfile()"]
 ContextTitle6=Theme: next (neutral / girl / boy)
 ContextAction6=[!CommandMeasure mMain "CycleTheme()"]
-ContextTitle7=Colours: next mode (invert / accent / white / black)
-ContextAction7=[!CommandMeasure mMain "CycleColors()"]
-ContextTitle8=Next quote
-ContextAction8=[!CommandMeasure mMain "NextQuote()"]
-ContextTitle9=Quote speed: next (daily / hourly / 30 / 10 min)
-ContextAction9=[!CommandMeasure mMain "CycleQuoteRate()"]
+ContextTitle7=Language: next
+ContextAction7=[!CommandMeasure mMain "CycleLanguage()"]
+ContextTitle8=Colours: next mode (invert / accent / white / black)
+ContextAction8=[!CommandMeasure mMain "CycleColors()"]
+ContextTitle9=Next quote
+ContextAction9=[!CommandMeasure mMain "NextQuote()"]
 ContextTitle10=Show / hide quote
 ContextAction10=[!CommandMeasure mMain "ToggleQuote()"]
 ContextTitle11=Switch 12 / 24-hour
 ContextAction11=[!CommandMeasure mMain "ToggleHourFormat()"]
-ContextTitle12=Shuffle speed: next (60 / 30 / 15 / 5 min / daily)
-ContextAction12=[!CommandMeasure mMain "CycleShuffle()"]
-ContextTitle13=Skip this style in future
-ContextAction13=[!CommandMeasure mMain "SkipThisStyle()"]
-ContextTitle14=Show all styles again
-ContextAction14=[!CommandMeasure mMain "ShowAllStyles()"]
+ContextTitle12=Skip this style in future
+ContextAction12=[!CommandMeasure mMain "SkipThisStyle()"]
+ContextTitle13=Show all styles again
+ContextAction13=[!CommandMeasure mMain "ShowAllStyles()"]
+ContextTitle14=Open settings
+ContextAction14=[!ActivateConfig "#CURRENTCONFIG#\\Settings" "Settings.ini"]
+ContextTitle15=Open style gallery
+ContextAction15=[!ActivateConfig "#CURRENTCONFIG#\\Gallery" "Gallery.ini"]
 
 [Metadata]
 Name=Adaptive Clock
 Author=Amika Alankara
-Version=4.0
-Description=48 clock styles with coder / everyday profiles, girl / boy themes, wallpaper-aware colours and a daily quote.
+Version=4.1
+Description=53 clock styles, coder / everyday profiles, girl / boy themes, 10 languages, weather, timer and more.
 
 [Variables]
-StyleCount=48
+StyleCount=53
 HourFormat=%H
 QuoteHidden=0
 QuoteMinutes=1440
@@ -748,6 +846,25 @@ Color2Soft=255,255,255,70
 GradA=120,140,255
 GradB=255,130,200
 FontMono=Consolas
+Language=Windows
+Smooth=0
+UpdateMs=1000
+Div=1
+Latitude=
+Longitude=
+TempUnit=celsius
+WeatherOff=1
+PomoWork=25
+PomoBreak=5
+TimerBeep=1
+AlarmTime=07:00
+AlarmOn=0
+PomoText=25:00
+PomoFrac=1.00000
+PomoLabel=FOCUS
+PomoBtn=>
+AlarmText=Alarm 07:00  OFF
+SunRad=3.14159
 StyleNo=1
 FontText=Segoe UI
 FontLight=Segoe UI Light
@@ -790,14 +907,14 @@ DynamicVariables=1
 OutputType=ANSI
 State=Hide
 Timeout=20000
-UpdateDivider=30
+UpdateDivider=(30*#Div#)
 
 [mWall]
 Measure=Registry
 RegHKey=HKEY_CURRENT_USER
 RegSubKey=Control Panel\\Desktop
 RegValue=WallPaper
-UpdateDivider=2
+UpdateDivider=(2*#Div#)
 OnChangeAction=[!CommandMeasure mLum "Run"]
 
 {script('mMain', 'main')}
@@ -832,17 +949,19 @@ Formula=1
 
 {tm('mS', '%S')}
 
-{tm('mDow', '%A')}
+{tm('mDowW', '%A')}
 
-{tm('mDowS', '%a')}
+{tm('mDowSW', '%a')}
 
 {tm('mDnum', '%#d')}
 
-{tm('mMon', '%B')}
+{tm('mMonW', '%B')}
 
-{tm('mMonS', '%b')}
+{tm('mMonSW', '%b')}
 
 {tm('mYear', '%Y')}
+
+{DATE_M}
 
 ; ---------------------------------------------------------------- meters
 [Bg]
@@ -875,5 +994,18 @@ def fontify(t):
     t = re.sub(r"FontFace=Consolas(?=\n)", "FontFace=#FontMono#", t)
     return re.sub(r"FontFace=Segoe UI(?=\n)", "FontFace=#FontText#", t)
 S[:] = [fontify(inkify(x)) for x in S]
-open("../AdaptiveClock/AdaptiveClock.ini", "w", encoding="utf-8").write(head + "\n\n".join(S) + "\n")
+FAST = {"mAccent", "mMain", "mSecF", "mMinF", "mHrF", "mDayF", "mOne", "mWxRaw"}
+SLOW = ("mGreet", "mGreetIcon", "mYearPct", "mYearF", "mDaysLeft", "mLbl", "mDow", "mDowS", "mMon", "mMonS", "mDowW",
+        "mDowSW", "mMonW", "mMonSW", "mSunRise", "mSunSet", "mSunNote")
+def with_dividers(text):
+    out = []
+    for block in text.split("\n\n"):
+        m = re.match(r"\[(m\w+)\]", block)
+        if m and "UpdateDivider" not in block and m.group(1) not in FAST:
+            name = m.group(1)
+            div = "(30*#Div#)" if name.startswith(SLOW) else "#Div#"
+            block = block.rstrip("\n") + f"\nUpdateDivider={div}"
+        out.append(block)
+    return "\n\n".join(out)
+open("../AdaptiveClock/AdaptiveClock.ini", "w", encoding="utf-8").write(with_dividers(head + "\n\n".join(S) + "\n"))
 print(len(S), "meters")
