@@ -1,80 +1,130 @@
--- AdaptiveClock.lua  v3.3.1   (Rainmeter 4.x, Lua 5.1)
+-- AdaptiveClock.lua  v4.0   (Rainmeter 4.x, Lua 5.1)
 -- Author: Amika Alankara  (MIT License)
 --
--- One file, several small jobs. Each Script measure in the .ini picks its job with  Mode=
---   main                          accent colour, hourly style shuffle, daily quote (its value is the quote text)
---   secF minF hrF dayF            numbers 0..1 that drive the rings, arcs and hands
---   worldName worldDay worldTime  multi-line text for the "World Time" style
---   wordsA wordsB                 text for the "Words" style ("quarter past" / "three")
+-- One file, many small jobs. Each Script measure in the .ini picks its job with  Mode=
+--   main            colours (ink / theme palette), style shuffle, calendar variables, quote flags (value = full quote)
+--   secF minF hrF dayF yearF          numbers 0..1 that drive rings, arcs, bars and hands
+--   dHT dHU dMT dMU dST dSU           single digits (binary clock)
+--   hexH hexM hexS binH binM binS     hex / binary text
+--   epoch sha logHash logTime         unix time, short commit-like hashes
+--   greet greetIcon yearPct daysLeft  friendly text
+--   ampm cursor qmark                 small helpers
+--   quoteBody quoteWho                the quote, split in two lines
+--   worldName worldDay worldTime      multi-line text for the "World time" style
+--   wordsA wordsB                     text for the "Words" style
 
 local mode = 'main'
-local N = 24                       -- number of styles (the .ini sets StyleCount)
-local current, lastSlot, lastYday, lastAccent
-local pool = {}                   -- style numbers that take part in the shuffle (SkipStyles removes some)
+local N = 48                       -- number of styles (the .ini sets StyleCount)
+local current, lastSlot, lastYday, lastKey, lastLuma, wasBright, lastCalDay, lastQKey
+local pool = {}                    -- style numbers that take part in the shuffle
 local interval = 60               -- minutes per style (ShuffleMinutes)
-local NAMES = { 'Chronograph', 'Grey bubbles', 'World time', 'Halo', 'Roman dial', 'Bubble rings', 'Words',
-  'Digital', 'Concentric rings', 'Orbit dots', 'Classic analog', 'Progress bars', 'Sun path', 'Stacked digits',
-  'Date card', 'Line tracks', 'Dash ring', 'Gauges', 'Neon', '24-hour dial', 'Split', 'Analog + digital',
-  'Phrase', 'Pulse' }
-local locked = false              -- true = keep the current style (no hourly change)
+local locked, lockedStyle = false, 0
+local logIndex = 0
+local qpool
+
+local NAMES = {
+  'Chronograph', 'Grey bubbles', 'World time', 'Halo', 'Roman dial', 'Bubble rings', 'Words', 'Digital',
+  'Concentric rings', 'Orbit dots', 'Classic analog', 'Progress bars', 'Sun path', 'Stacked digits', 'Date card',
+  'Line tracks', 'Dash ring', 'Gauges', 'Neon', '24-hour dial', 'Split', 'Analog + digital', 'Phrase', 'Pulse',
+  'Terminal', 'Code editor', 'Hex clock', 'Binary dots', 'System monitor', 'Epoch and ISO', 'Git log',
+  'Greeting', 'Month calendar', 'Year progress', 'Sticky note', 'Week strip',
+  'Petals', 'Heart', 'Pastel pills', 'Starlight',
+  'Radar', 'Planet orbit', 'Speedometer', 'Scoreboard',
+  'Flip clock', 'Minimal analog', 'Tiles', 'Aurora',
+}
+
+-- Styles that only appear for a profile / theme (all others always appear)
+local TAGS = {}
+for i = 25, 31 do TAGS[i] = 'code' end      -- Profile: All or Coder
+for i = 32, 36 do TAGS[i] = 'easy' end      -- Profile: All or Everyday
+for i = 37, 40 do TAGS[i] = 'girl' end      -- Theme: Girl
+for i = 41, 44 do TAGS[i] = 'boy' end       -- Theme: Boy
 
 local D  = '\226\128\148'          -- em dash   (UTF-8 written as escapes so the file encoding never matters)
 local LQ = '\226\128\156'          -- left curly quote
 local RQ = '\226\128\157'          -- right curly quote
+local SUN, MOON = '\226\152\128', '\226\152\190'
 
-local function Q(text, who) return LQ .. text .. RQ .. ' ' .. D .. ' ' .. who end
+-- kind: 'b' = both profiles, 'c' = coder, 'e' = everyday
+local function Q(kind, text, who) return { text, who, kind } end
 
 local QUOTES = {
-  Q('The best way out is always through.', 'Robert Frost'),
-  Q('We suffer more often in imagination than in reality.', 'Seneca'),
-  Q('A journey of a thousand miles begins with a single step.', 'Lao Tzu'),
-  Q('The unexamined life is not worth living.', 'Socrates'),
-  Q('Fortune favors the bold.', 'Virgil'),
-  Q('The only thing we have to fear is fear itself.', 'Franklin D. Roosevelt'),
-  Q('I think, therefore I am.', 'Rene Descartes'),
-  Q('Stay hungry, stay foolish.', 'Steve Jobs'),
-  Q('Genius is one percent inspiration and ninety-nine percent perspiration.', 'Thomas Edison'),
-  Q('Imagination is more important than knowledge.', 'Albert Einstein'),
-  Q('Do what you can, with what you have, where you are.', 'Theodore Roosevelt'),
-  Q('The only way to do great work is to love what you do.', 'Steve Jobs'),
-  Q('It does not matter how slowly you go as long as you do not stop.', 'Confucius'),
-  Q('Waste no more time arguing what a good man should be. Be one.', 'Marcus Aurelius'),
-  Q('Fall seven times, stand up eight.', 'Japanese proverb'),
-  Q('Energy and persistence conquer all things.', 'Benjamin Franklin'),
-  Q('Lost time is never found again.', 'Benjamin Franklin'),
-  Q('Time is what we want most, but what we use worst.', 'William Penn'),
-  Q('Well done is better than well said.', 'Benjamin Franklin'),
-  Q('We are what we repeatedly do. Excellence, then, is not an act, but a habit.', 'Will Durant'),
-  Q('Make each day your masterpiece.', 'John Wooden'),
-  Q('Failure is simply the opportunity to begin again, this time more intelligently.', 'Henry Ford'),
-  Q('Premature optimization is the root of all evil.', 'Donald Knuth'),
-  Q('Talk is cheap. Show me the code.', 'Linus Torvalds'),
-  Q('Programs must be written for people to read, and only incidentally for machines to execute.', 'Harold Abelson'),
-  Q('Simplicity is prerequisite for reliability.', 'Edsger Dijkstra'),
-  Q('The best way to predict the future is to invent it.', 'Alan Kay'),
-  Q('Any sufficiently advanced technology is indistinguishable from magic.', 'Arthur C. Clarke'),
-  Q('We can only see a short distance ahead, but we can see plenty there that needs to be done.', 'Alan Turing'),
-  Q('All models are wrong, but some are useful.', 'George Box'),
-  Q('Make it work, make it right, make it fast.', 'Kent Beck'),
-  Q('Strive not to be a success, but rather to be of value.', 'Albert Einstein'),
-  Q('Life is like riding a bicycle. To keep your balance, you must keep moving.', 'Albert Einstein'),
-  Q('Nothing in life is to be feared, it is only to be understood.', 'Marie Curie'),
-  Q('Slow and steady wins the race.', 'Aesop'),
-  Q('A year from now you may wish you had started today.', 'Karen Lamb'),
-  Q('Light tomorrow with today.', 'Elizabeth Barrett Browning'),
-  Q('Hope is being able to see that there is light despite all of the darkness.', 'Desmond Tutu'),
-  Q('Small deeds done are better than great deeds planned.', 'Peter Marshall'),
-  Q("Don't count the days, make the days count.", 'Muhammad Ali'),
-  Q('The best time to plant a tree was twenty years ago. The second best time is now.', 'Proverb'),
-  Q('A smooth sea never made a skilled sailor.', 'Proverb'),
-  Q('Courage is grace under pressure.', 'Ernest Hemingway'),
-  Q('Machines take me by surprise with great frequency.', 'Alan Turing'),
-  Q('Dwell on the beauty of life.', 'Marcus Aurelius'),
-  Q('An investment in knowledge pays the best interest.', 'Benjamin Franklin'),
-  Q('Well begun is half done.', 'Proverb'),
-  Q('Know thyself.', 'Delphic maxim'),
-  Q('Not all those who wander are lost.', 'J.R.R. Tolkien'),
-  Q('Learn from yesterday, live for today, hope for tomorrow.', 'Albert Einstein'),
+  Q('b', 'The best way out is always through.', 'Robert Frost'),
+  Q('b', 'We suffer more often in imagination than in reality.', 'Seneca'),
+  Q('b', 'A journey of a thousand miles begins with a single step.', 'Lao Tzu'),
+  Q('b', 'The unexamined life is not worth living.', 'Socrates'),
+  Q('b', 'Fortune favors the bold.', 'Virgil'),
+  Q('b', 'The only thing we have to fear is fear itself.', 'Franklin D. Roosevelt'),
+  Q('b', 'I think, therefore I am.', 'Rene Descartes'),
+  Q('b', 'Stay hungry, stay foolish.', 'Steve Jobs'),
+  Q('b', 'Genius is one percent inspiration and ninety-nine percent perspiration.', 'Thomas Edison'),
+  Q('b', 'Imagination is more important than knowledge.', 'Albert Einstein'),
+  Q('b', 'Do what you can, with what you have, where you are.', 'Theodore Roosevelt'),
+  Q('b', 'The only way to do great work is to love what you do.', 'Steve Jobs'),
+  Q('b', 'It does not matter how slowly you go as long as you do not stop.', 'Confucius'),
+  Q('b', 'Waste no more time arguing what a good man should be. Be one.', 'Marcus Aurelius'),
+  Q('b', 'Fall seven times, stand up eight.', 'Japanese proverb'),
+  Q('b', 'Energy and persistence conquer all things.', 'Benjamin Franklin'),
+  Q('b', 'Lost time is never found again.', 'Benjamin Franklin'),
+  Q('b', 'Time is what we want most, but what we use worst.', 'William Penn'),
+  Q('b', 'Well done is better than well said.', 'Benjamin Franklin'),
+  Q('b', 'We are what we repeatedly do. Excellence, then, is not an act, but a habit.', 'Will Durant'),
+  Q('b', 'Make each day your masterpiece.', 'John Wooden'),
+  Q('b', 'Failure is simply the opportunity to begin again, this time more intelligently.', 'Henry Ford'),
+  Q('b', 'Any sufficiently advanced technology is indistinguishable from magic.', 'Arthur C. Clarke'),
+  Q('b', 'We can only see a short distance ahead, but we can see plenty there that needs to be done.', 'Alan Turing'),
+  Q('b', 'Strive not to be a success, but rather to be of value.', 'Albert Einstein'),
+  Q('b', 'Life is like riding a bicycle. To keep your balance, you must keep moving.', 'Albert Einstein'),
+  Q('b', 'Nothing in life is to be feared, it is only to be understood.', 'Marie Curie'),
+  Q('b', 'Slow and steady wins the race.', 'Aesop'),
+  Q('b', 'A year from now you may wish you had started today.', 'Karen Lamb'),
+  Q('b', 'Light tomorrow with today.', 'Elizabeth Barrett Browning'),
+  Q('b', 'Hope is being able to see that there is light despite all of the darkness.', 'Desmond Tutu'),
+  Q('b', 'Small deeds done are better than great deeds planned.', 'Peter Marshall'),
+  Q('b', "Don't count the days, make the days count.", 'Muhammad Ali'),
+  Q('b', 'The best time to plant a tree was twenty years ago. The second best time is now.', 'Proverb'),
+  Q('b', 'A smooth sea never made a skilled sailor.', 'Proverb'),
+  Q('b', 'Courage is grace under pressure.', 'Ernest Hemingway'),
+  Q('b', 'Dwell on the beauty of life.', 'Marcus Aurelius'),
+  Q('b', 'An investment in knowledge pays the best interest.', 'Benjamin Franklin'),
+  Q('b', 'Well begun is half done.', 'Proverb'),
+  Q('b', 'Know thyself.', 'Delphic maxim'),
+  Q('b', 'Not all those who wander are lost.', 'J.R.R. Tolkien'),
+  Q('b', 'Learn from yesterday, live for today, hope for tomorrow.', 'Albert Einstein'),
+  -- everyday
+  Q('e', 'Be kind whenever possible. It is always possible.', 'Dalai Lama'),
+  Q('e', 'Every day may not be good, but there is something good in every day.', 'Alice Morse Earle'),
+  Q('e', 'Happiness is not by chance, but by choice.', 'Jim Rohn'),
+  Q('e', 'Do something today that your future self will thank you for.', 'Sean Patrick Flanery'),
+  Q('e', 'The secret of getting ahead is getting started.', 'Attributed to Mark Twain'),
+  Q('e', 'What we think, we become.', 'Attributed to Buddha'),
+  Q('e', 'Today is a good day to have a good day.', 'Anonymous'),
+  Q('e', 'Small steps every day add up to big things.', 'Anonymous'),
+  Q('e', 'Kindness is a language everyone understands.', 'Anonymous'),
+  Q('e', 'Dream big. Start small. Begin today.', 'Anonymous'),
+  Q('e', 'Breathe. You have got this.', 'Anonymous'),
+  Q('e', 'Be the reason someone smiles today.', 'Anonymous'),
+  Q('e', 'Progress, not perfection.', 'Anonymous'),
+  Q('e', 'Rest is part of the work.', 'Anonymous'),
+  -- coder
+  Q('c', 'Premature optimization is the root of all evil.', 'Donald Knuth'),
+  Q('c', 'Talk is cheap. Show me the code.', 'Linus Torvalds'),
+  Q('c', 'Programs must be written for people to read, and only incidentally for machines to execute.', 'Harold Abelson'),
+  Q('c', 'Simplicity is prerequisite for reliability.', 'Edsger Dijkstra'),
+  Q('c', 'The best way to predict the future is to invent it.', 'Alan Kay'),
+  Q('c', 'All models are wrong, but some are useful.', 'George Box'),
+  Q('c', 'Make it work, make it right, make it fast.', 'Kent Beck'),
+  Q('c', 'Machines take me by surprise with great frequency.', 'Alan Turing'),
+  Q('c', 'Any fool can write code that a computer can understand. Good programmers write code that humans can understand.', 'Martin Fowler'),
+  Q('c', 'Debugging is twice as hard as writing the code in the first place.', 'Brian Kernighan'),
+  Q('c', 'The function of good software is to make the complex appear to be simple.', 'Grady Booch'),
+  Q('c', 'There are only two hard things in computer science: cache invalidation and naming things.', 'Attributed to Phil Karlton'),
+  Q('c', 'Deleted code is debugged code.', 'Jeff Sickel'),
+  Q('c', 'Good code is its own best documentation.', 'Steve McConnell'),
+  Q('c', 'First, solve the problem. Then, write the code.', 'John Johnson'),
+  Q('c', 'Before software can be reusable it first has to be usable.', 'Ralph Johnson'),
+  Q('c', 'Code never lies, comments sometimes do.', 'Ron Jeffries'),
+  Q('c', 'Simplicity is the soul of efficiency.', 'Austin Freeman'),
 }
 
 -- ---------------------------------------------------------------- helpers
@@ -92,11 +142,16 @@ local function refresh()
   SKIN:Bang('!Redraw')
 end
 
--- ---------------------------------------------------------------- colours (black/white ink from the wallpaper, or Windows accent)
+local function var(name, default) return SKIN:GetVariable(name, default) end
+local function profile() return var('Profile', 'All') end
+local function is12h() return var('HourFormat', '%H') ~= '%H' end
 
-local lastKey
+-- ---------------------------------------------------------------- colours
 
-local lastLuma, wasBright
+local PAL = {
+  Girl = { c = '255,105,180', c2 = '187,134,252' },
+  Boy  = { c = '56,152,255',  c2 = '0,224,208' },
+}
 
 local function wallpaperLuma()                  -- 0..1 from the RunCommand measure [mLum]; keeps the last good value
   local m = SKIN:GetMeasure('mLum')
@@ -113,17 +168,18 @@ local function accent()
   local v = m and (tonumber(m:GetValue()) or 0) or 0
   if v < 0 then v = v + 4294967296 end
 
-  -- "ink": black on a bright wallpaper, white on a dark one (like the mouse cursor that inverts)
   local luma   = wallpaperLuma()
-  local cm     = SKIN:GetVariable('ColorMode', 'Invert')       -- Invert | Accent | White | Black
-  local bright = wasBright or false             -- small hysteresis so a mid-grey wallpaper does not flicker
+  local cm     = var('ColorMode', 'Invert')            -- Invert | Accent | White | Black   (text / ink colour)
+  local th     = var('Theme', 'Neutral')               -- Neutral | Girl | Boy               (accent palette)
+  local pal    = PAL[th]
+  local bright = wasBright or false                    -- small hysteresis so a mid-grey wallpaper does not flicker
   if luma then
     if bright then bright = luma > 0.48 else bright = luma > 0.55 end
   end
   wasBright = bright
   if cm == 'White' then bright = false elseif cm == 'Black' then bright = true end
 
-  local key = v .. '|' .. tostring(bright) .. '|' .. cm
+  local key = v .. '|' .. tostring(bright) .. '|' .. cm .. '|' .. th
   if key == lastKey then return end
   lastKey = key
 
@@ -134,7 +190,9 @@ local function accent()
   setv('InkSoft', ink .. ',60')
 
   local rgb = ink                               -- Invert / White / Black: accent colour = ink
-  if cm == 'Accent' then                        -- Windows accent colour (ABGR DWORD)
+  if pal then
+    rgb = pal.c
+  elseif cm == 'Accent' then                    -- Windows accent colour (ABGR DWORD)
     local r, g, b = 255, 255, 255
     if v > 0 then
       r = v % 256
@@ -143,10 +201,15 @@ local function accent()
     end
     rgb = string.format('%d,%d,%d', r, g, b)
   end
-  setv('Color',     rgb)
-  setv('ColorDim',  rgb .. ',190')
-  setv('ColorMid',  rgb .. ',120')
-  setv('ColorSoft', rgb .. ',60')
+  local rgb2 = pal and pal.c2 or rgb
+  setv('Color',      rgb)
+  setv('ColorDim',   rgb .. ',190')
+  setv('ColorMid',   rgb .. ',120')
+  setv('ColorSoft',  rgb .. ',60')
+  setv('Color2',     rgb2)
+  setv('Color2Soft', rgb2 .. ',70')
+  setv('GradA', pal and pal.c  or '120,140,255')
+  setv('GradB', pal and pal.c2 or '255,130,200')
 end
 
 -- ---------------------------------------------------------------- angles for the dash / marker meters
@@ -164,10 +227,20 @@ local function angles(t)
   setnum('DayF',    day / 24)
 end
 
--- ---------------------------------------------------------------- hourly style shuffle
--- Every day the N styles are shuffled once; hour 0 uses the 1st, hour 1 the 2nd ... so all 24 styles
--- appear exactly once per day, in a random order that is the same all day long (a skin refresh will not
--- change the current style), and the last style of yesterday never repeats as the first of today.
+-- ---------------------------------------------------------------- style shuffle
+-- Every day the styles in the pool are shuffled once; slot 0 uses the 1st, slot 1 the 2nd ... in an order that is the
+-- same all day long (a skin refresh will not change it). The last style of yesterday never repeats as the first of today.
+
+local function allowed(i)
+  local tag = TAGS[i]
+  if not tag then return true end
+  local p, th = profile(), var('Theme', 'Neutral')
+  if tag == 'code' then return p ~= 'Everyday' end
+  if tag == 'easy' then return p ~= 'Coder' end
+  if tag == 'girl' then return th == 'Girl' end
+  if tag == 'boy'  then return th == 'Boy' end
+  return true
+end
 
 local function lcg(seed)
   local s = seed % 4294967296
@@ -204,26 +277,22 @@ end
 
 local function showStyle(n)
   if n == current then return end
-  local qh = tonumber(SKIN:GetVariable('QuoteHidden', '0')) or 0
-  if current then
-    setv('H' .. current, 1)
-    setv('Q' .. current, 1)
-  end
+  if current then setv('H' .. current, 1) end
   setv('H' .. n, 0)
   setv('StyleNo', n)
   setv('StyleName', NAMES[n] or ('Style ' .. n))
-  setv('Q' .. n, qh)
   current = n
 end
 
--- Called from the right-click menu of the skin
+-- ---------------------------------------------------------------- menu actions
+
 local function saveVar(name, value)
-  local path = SKIN:GetVariable('CURRENTPATH', '') .. SKIN:GetVariable('CURRENTFILE', '')
+  local path = var('CURRENTPATH', '') .. var('CURRENTFILE', '')
   SKIN:Bang('!WriteKeyValue', 'Variables', name, tostring(value), path)
 end
 
 local function cycleVar(name, list, default)
-  local cur, idx = SKIN:GetVariable(name, default), 0
+  local cur, idx = var(name, default), 0
   for i, v in ipairs(list) do if tostring(v) == cur then idx = i end end
   saveVar(name, list[(idx % #list) + 1])
   SKIN:Bang('!Refresh')
@@ -249,16 +318,23 @@ function RandomStyle()
   refresh()
 end
 
-function ToggleHourFormat() cycleVar('HourFormat', { '%H', '%I' }, '%H') end
+function ToggleHourFormat() cycleVar('HourFormat', { '%H', '%#I' }, '%H') end
 function ToggleQuote()      cycleVar('QuoteHidden', { 0, 1 }, '0') end
-function ToggleQuoteRate()  cycleVar('QuoteEveryHour', { 0, 1 }, '0') end
+function CycleQuoteRate()   cycleVar('QuoteMinutes', { 1440, 60, 30, 10 }, '1440') end
 function CycleColors()      cycleVar('ColorMode', { 'Invert', 'Accent', 'White', 'Black' }, 'Invert') end
 function CycleShuffle()     cycleVar('ShuffleMinutes', { 60, 30, 15, 5, 1440 }, '60') end
+function CycleProfile()     cycleVar('Profile', { 'All', 'Coder', 'Everyday' }, 'All') end
+function CycleTheme()       cycleVar('Theme', { 'Neutral', 'Girl', 'Boy' }, 'Neutral') end
+
+function NextQuote()                              -- every quote measure reads this variable
+  setv('QuoteBump', (tonumber(var('QuoteBump', '0')) or 0) + 1)
+  refresh()
+end
 
 function SkipThisStyle()
   if #pool <= 1 or not current then return end
-  local list = (SKIN:GetVariable('SkipStyles', '') ~= '' and (SKIN:GetVariable('SkipStyles', '') .. ',') or '') .. current
-  saveVar('SkipStyles', list)
+  local cur = var('SkipStyles', '')
+  saveVar('SkipStyles', (cur ~= '' and (cur .. ',') or '') .. current)
   SKIN:Bang('!Refresh')
 end
 
@@ -267,61 +343,107 @@ function ShowAllStyles()
   SKIN:Bang('!Refresh')
 end
 
-function ToggleLock()
-  if locked then Unlock() else Lock() end
-end
-
 function Lock()
-  locked = true
+  if not current then return end
+  locked, lockedStyle = true, current
+  saveVar('LockedStyle', current)                 -- survives a refresh
   setv('LockMark', ' [locked]')
   refresh()
 end
 
 function Unlock()
-  locked = false
+  locked, lockedStyle = false, 0
+  saveVar('LockedStyle', 0)
   setv('LockMark', '')
   showStyle(styleFor(os.date('*t')))
   refresh()
+end
+
+function ToggleLock()
+  if locked then Unlock() else Lock() end
 end
 
 function Resume()
-  locked = false
-  setv('LockMark', '')
-  showStyle(styleFor(os.date('*t')))
-  refresh()
+  Unlock()
 end
+
+-- ---------------------------------------------------------------- quotes
 
 -- Optional quotes.txt next to the skin: one quote per line, "text | author". Lines starting with # are ignored.
 local function loadQuotes()
-  local f = io.open(SKIN:GetVariable('CURRENTPATH', '') .. 'quotes.txt', 'r')
+  local f = io.open(var('CURRENTPATH', '') .. 'quotes.txt', 'r')
   if not f then return end
   local list = {}
   for raw in f:lines() do
     local line = raw:gsub('^\239\187\191', ''):gsub('\r', ''):match('^%s*(.-)%s*$')
     if line ~= '' and line:sub(1, 1) ~= '#' then
       local text, who = line:match('^(.-)%s*|%s*(.+)$')
-      if text and text ~= '' then list[#list + 1] = Q(text, who)
-      else list[#list + 1] = LQ .. line .. RQ end
+      if text and text ~= '' then list[#list + 1] = Q('b', text, who)
+      else list[#list + 1] = Q('b', line, '') end
     end
   end
   f:close()
   if #list > 0 then QUOTES = list end
 end
 
--- ---------------------------------------------------------------- quote of the day
-
-local function quoteText(t)
-  local idx = t.year * 366 + t.yday
-  if SKIN:GetVariable('QuoteEveryHour', '0') == '1' then idx = idx * 24 + t.hour end
-  return QUOTES[idx % #QUOTES + 1]
+local function buildQuotePool()
+  local p = profile()
+  qpool = {}
+  for _, q in ipairs(QUOTES) do
+    if q[3] == 'b' or p == 'All' or (p == 'Coder' and q[3] == 'c') or (p == 'Everyday' and q[3] == 'e') then
+      qpool[#qpool + 1] = q
+    end
+  end
+  if #qpool == 0 then qpool = QUOTES end
 end
 
--- ---------------------------------------------------------------- world time (with daylight saving rules)
+local function quoteEntry(t)
+  local qm = math.max(1, math.min(1440, tonumber(var('QuoteMinutes', '1440')) or 1440))
+  local per = math.ceil(1440 / qm)
+  local sl = (qm >= 1440) and 0 or math.floor((t.hour * 60 + t.min) / qm)
+  local bump = tonumber(var('QuoteBump', '0')) or 0
+  return qpool[((t.year * 366 + t.yday) * per + sl + bump) % #qpool + 1]
+end
+
+local function quoteMode()
+  local qs = var('QuoteStyle', 'Auto')
+  if qs == 'Terminal' then return 'terminal' end
+  if qs == 'Friendly' then return 'friendly' end
+  return (profile() == 'Coder') and 'terminal' or 'friendly'
+end
+
+local function quoteFlags()                       -- which of the two quote designs is visible
+  local hidden = (var('QuoteHidden', '0') == '1')
+  local m = quoteMode()
+  local key = tostring(hidden) .. m
+  if key == lastQKey then return end
+  lastQKey = key
+  setv('QHf', (hidden or m ~= 'friendly') and 1 or 0)
+  setv('QHc', (hidden or m ~= 'terminal') and 1 or 0)
+end
+
+local function quoteBody()
+  local q = quoteEntry(os.date('*t'))
+  if quoteMode() == 'terminal' then return '// ' .. q[1] end
+  return LQ .. q[1] .. RQ
+end
+
+local function quoteWho()
+  local q = quoteEntry(os.date('*t'))
+  if quoteMode() == 'terminal' then
+    return '-- ' .. q[2] .. (os.date('*t').sec % 2 == 0 and '_' or ' ')
+  end
+  return (q[2] ~= '') and (D .. ' ' .. q[2]) or ''
+end
+
+-- ---------------------------------------------------------------- calendar maths + world time (with daylight saving rules)
 
 local DIM = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
 
+local function isLeap(y) return (y % 4 == 0 and y % 100 ~= 0) or y % 400 == 0 end
+
 local function daysInMonth(y, m)
-  if m == 2 and ((y % 4 == 0 and y % 100 ~= 0) or y % 400 == 0) then return 29 end
+  if m == 2 and isLeap(y) then return 29 end
   return DIM[m]
 end
 
@@ -369,7 +491,6 @@ local function isDST(rule, std, utc)
 end
 
 -- { name, standard UTC offset in hours, daylight-saving rule: 'US' | 'EU' | 'AU' | nil }
--- Edit this list to change the cities (keep it to 5 rows so it fits the style).
 local CITIES = {
   { 'NEW YORK', -5, 'US' },
   { 'LONDON',    0, 'EU' },
@@ -380,7 +501,7 @@ local CITIES = {
 
 -- Optional  Cities=  variable in the .ini:  NAME:offset:RULE|NAME:offset:RULE ...   (RULE = US, EU, AU or -)
 local function loadCities()
-  local v = SKIN:GetVariable('Cities', '')
+  local v = var('Cities', '')
   if v == '' then return end
   local list = {}
   for item in v:gmatch('[^|]+') do
@@ -400,7 +521,7 @@ end
 
 local function world(kind)
   local utc = os.time()
-  local h12 = (SKIN:GetVariable('HourFormat', '%H') == '%I')
+  local h12 = is12h()
   local out = {}
   for i, c in ipairs(CITIES) do
     local lt = cityTime(c, utc)
@@ -409,10 +530,31 @@ local function world(kind)
     elseif kind == 'day' then
       out[i] = string.upper(os.date('!%a', lt))
     else
-      out[i] = os.date(h12 and '!%I:%M %p' or '!%H:%M', lt)
+      local u = os.date('!*t', lt)
+      if h12 then
+        out[i] = string.format('%d:%02d %s', (u.hour % 12 == 0) and 12 or (u.hour % 12), u.min, u.hour < 12 and 'AM' or 'PM')
+      else
+        out[i] = string.format('%02d:%02d', u.hour, u.min)
+      end
     end
   end
   return table.concat(out, '\n')
+end
+
+-- month grid for the calendar styles (variables CalH1..7, CalD1..42, CalToday, WeekIdx)
+local function calendar(t)
+  local ws = tonumber(var('WeekStart', '1')) or 1             -- 0 = Sunday first, 1 = Monday first
+  local names = { 'Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa' }
+  for c = 1, 7 do setv('CalH' .. c, names[((c - 1 + ws) % 7) + 1]) end
+  local first = os.date('*t', os.time({ year = t.year, month = t.month, day = 1, hour = 12 }))
+  local off = (first.wday - 1 - ws) % 7
+  local dim = daysInMonth(t.year, t.month)
+  for i = 1, 42 do
+    local d = i - off
+    setv('CalD' .. i, (d >= 1 and d <= dim) and tostring(d) or '')
+  end
+  setv('CalToday', off + t.day)
+  setv('WeekIdx', ((t.wday - 1 - ws) % 7) + 1)
 end
 
 -- ---------------------------------------------------------------- word clock
@@ -433,13 +575,62 @@ local function words()
   return PHRASE[m5], HOURS[(h % 12) + 1]
 end
 
+-- ---------------------------------------------------------------- small helpers for the new styles
+
+local function bits(n, w)
+  local s = ''
+  for i = w - 1, 0, -1 do s = s .. ((math.floor(n / 2 ^ i) % 2 == 1) and '1' or '0') end
+  return s
+end
+
+local function greeting(h)
+  if h < 5 then return 'Good night' end
+  if h < 12 then return 'Good morning' end
+  if h < 17 then return 'Good afternoon' end
+  if h < 21 then return 'Good evening' end
+  return 'Good night'
+end
+
+local function yearFraction(t)
+  local len = isLeap(t.year) and 366 or 365
+  return ((t.yday - 1) * 86400 + t.hour * 3600 + t.min * 60 + t.sec) / (len * 86400)
+end
+
 -- ---------------------------------------------------------------- measure entry points
 
+local function now() return os.date('*t') end
+
 local MODES = {
-  secF  = function() local t = os.date('*t'); return t.sec / 60 end,
-  minF  = function() local t = os.date('*t'); return (t.min * 60 + t.sec) / 3600 end,
-  hrF   = function() local t = os.date('*t'); return ((t.hour % 12) * 3600 + t.min * 60 + t.sec) / 43200 end,
-  dayF  = function() local t = os.date('*t'); return (t.hour * 3600 + t.min * 60 + t.sec) / 86400 end,
+  secF  = function() local t = now(); return t.sec / 60 end,
+  minF  = function() local t = now(); return (t.min * 60 + t.sec) / 3600 end,
+  hrF   = function() local t = now(); return ((t.hour % 12) * 3600 + t.min * 60 + t.sec) / 43200 end,
+  dayF  = function() local t = now(); return (t.hour * 3600 + t.min * 60 + t.sec) / 86400 end,
+  yearF = function() return yearFraction(now()) end,
+  dHT = function() return math.floor(now().hour / 10) end,
+  dHU = function() return now().hour % 10 end,
+  dMT = function() return math.floor(now().min / 10) end,
+  dMU = function() return now().min % 10 end,
+  dST = function() return math.floor(now().sec / 10) end,
+  dSU = function() return now().sec % 10 end,
+  hexH = function() return string.format('0x%02X', now().hour) end,
+  hexM = function() return string.format('0x%02X', now().min) end,
+  hexS = function() return string.format('0x%02X', now().sec) end,
+  binH = function() return bits(now().hour, 5) end,
+  binM = function() return bits(now().min, 6) end,
+  binS = function() return bits(now().sec, 6) end,
+  epoch = function() return string.format('%d', os.time()) end,
+  sha   = function() return string.format('%07x', (math.floor(os.time() / 60) * 40503 + 2654435) % 268435456) end,
+  logHash = function() return string.format('%07x', ((math.floor(os.time() / 60) - logIndex) * 40503 + 2654435) % 268435456) end,
+  logTime = function() local u = os.date('*t', os.time() - logIndex * 60); return string.format('%02d:%02d', u.hour, u.min) end,
+  greet     = function() return greeting(now().hour) end,
+  greetIcon = function() local h = now().hour; return (h >= 6 and h < 18) and SUN or MOON end,
+  yearPct   = function() return string.format('%d%%', math.floor(yearFraction(now()) * 100)) end,
+  daysLeft  = function() local t = now(); return (isLeap(t.year) and 366 or 365) - t.yday end,
+  ampm   = function() if not is12h() then return '' end; return now().hour < 12 and 'AM' or 'PM' end,
+  cursor = function() return (now().sec % 2 == 0) and '_' or ' ' end,
+  qmark  = function() return LQ end,
+  quoteBody = quoteBody,
+  quoteWho  = quoteWho,
   worldName = function() return world('name') end,
   worldDay  = function() return world('day') end,
   worldTime = function() return world('time') end,
@@ -449,15 +640,26 @@ local MODES = {
 
 function Initialize()
   mode = SELF:GetOption('Mode', 'main')
-  N = tonumber(SKIN:GetVariable('StyleCount', '24')) or 24
-  interval = math.max(1, math.min(1440, tonumber(SKIN:GetVariable('ShuffleMinutes', '60')) or 60))
-  local skip = {}
-  for n in (SKIN:GetVariable('SkipStyles', '')):gmatch('%d+') do skip[tonumber(n)] = true end
-  pool = {}
-  for i = 1, N do if not skip[i] then pool[#pool + 1] = i end end
-  if #pool == 0 then for i = 1, N do pool[i] = i end end
-  loadQuotes()
-  loadCities()
+  N = tonumber(var('StyleCount', '48')) or 48
+  logIndex = tonumber(SELF:GetOption('Index', '0')) or 0
+
+  if mode == 'main' or mode == 'quoteBody' or mode == 'quoteWho' then
+    loadQuotes()
+    buildQuotePool()
+  end
+  if mode:match('^world') then loadCities() end
+
+  if mode == 'main' then
+    interval = math.max(1, math.min(1440, tonumber(var('ShuffleMinutes', '60')) or 60))
+    local skip = {}
+    for n in (var('SkipStyles', '')):gmatch('%d+') do skip[tonumber(n)] = true end
+    pool = {}
+    for i = 1, N do if not skip[i] and allowed(i) then pool[#pool + 1] = i end end
+    if #pool == 0 then for i = 1, N do pool[i] = i end end
+    lockedStyle = tonumber(var('LockedStyle', '0')) or 0
+    locked = (lockedStyle >= 1 and lockedStyle <= N)
+    if locked then setv('LockMark', ' [locked]') end
+  end
 end
 
 function Update()
@@ -470,9 +672,19 @@ function Update()
   local t = os.date('*t')
   accent()
   angles(t)
-  if current == nil or (not locked and (slot(t) ~= lastSlot or t.yday ~= lastYday)) then
+  quoteFlags()
+  if t.yday ~= lastCalDay then
+    lastCalDay = t.yday
+    calendar(t)
+  end
+  if current == nil then
+    showStyle(locked and lockedStyle or styleFor(t))
+    lastSlot, lastYday = slot(t), t.yday
+  elseif not locked and (slot(t) ~= lastSlot or t.yday ~= lastYday) then
     lastSlot, lastYday = slot(t), t.yday
     showStyle(styleFor(t))
   end
-  return quoteText(t)
+
+  local q = quoteEntry(t)
+  return LQ .. q[1] .. RQ .. ((q[2] ~= '') and (' ' .. D .. ' ' .. q[2]) or '')
 end
