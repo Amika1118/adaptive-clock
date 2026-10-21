@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.0
+- 24 new styles (48 total): Terminal, Code editor, Hex clock, Binary dots, System monitor, Epoch and ISO, Git log (coder);
+  Greeting, Month calendar, Year progress, Sticky note, Week strip (everyday); Petals, Heart, Pastel pills, Starlight (girl);
+  Radar, Planet orbit, Speedometer, Scoreboard (boy); Flip clock, Minimal analog, Tiles, Aurora (everyone).
+- Profiles (All / Coder / Everyday) and themes (Neutral / Girl / Boy), both in the right-click menu.
+- New quote card: serif quote mark, italic text and accent author, or a terminal comment with a blinking cursor.
+  More quotes (coder and everyday sets), "Next quote", and quote speed (daily / hourly / 30 / 10 min).
+- Fixes: 12-hour clock no longer shows a leading zero and shows AM/PM; a locked style survives a refresh;
+  one shared quote block instead of one per style; quote text wraps and clips cleanly.
+
 ## 3.3.1
 - Ink now follows wallpaper changes from Windows Personalization quickly: the wallpaper setting is watched, the
   brightness is re-checked every 30 s (cached, so it is cheap) and a changed wallpaper file or slideshow image is noticed.
