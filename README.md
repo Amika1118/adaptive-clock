@@ -1,15 +1,19 @@
 # Adaptive Clock for Rainmeter
 
-A desktop clock with **53 styles**, built for Rainmeter on Windows. By Amika Alankara.
+A desktop clock with **91 styles**, built for Rainmeter on Windows. By Amika Alankara.
 
-- **Styles for everyone**: chronograph, bubbles, world time, flip clock, radar, calendar, aurora and more.
-- **Profiles**: *All*, *Coder* (terminal, code editor, hex, binary, system monitor, git log...) or *Everyday* (greeting, calendar, year progress, sticky note, week strip).
-- **Themes**: *Neutral*, *Girl* (pink / lilac) or *Boy* (blue / cyan), each with its own styles.
+- **Coder clocks**: a terminal, a git log, system monitor, hex / binary / epoch clocks and **19 code-editor clocks, one per language**
+  (Python, JavaScript, TypeScript, Java, C, C++, C#, Go, Rust, PHP, Ruby, Swift, Kotlin, SQL, HTML, Bash, PowerShell, Lua, Dart),
+  with four editor colour themes (Dark, Dracula, Monokai, Light).
+- **Everyday clocks**: greeting, month calendar, year progress, sticky note, week strip.
+- **Girl and boy themes**: pink / lilac (petals, heart, butterfly, bow, rainbow, moonlight...) or blue / cyan (radar, rocket, pitch,
+  synthwave, game HUD, race lights, shield...), each with its own accent colours and clocks.
+- **For everyone**: chronograph, flip clock, nixie, vinyl, compass, moon phase, skyline, aurora and many more.
 - **Languages**: Windows (follows your system for dates), English, Spanish, French, German, Portuguese, Italian, Sinhala, Tamil, Hindi, Japanese.
-- **Extras**: weather (optional), sunrise and sunset, now playing, battery, focus timer with alarm.
+- **Extras**: weather (optional), sunrise and sunset, battery, focus timer with alarm.
 - **Adaptive colours**: black or white text chosen from the wallpaper behind the skin, or your Windows accent colour.
 - **Quotes**: a friendly card, or a code-comment style for the Coder profile.
-- **Settings window** and **style gallery** so you rarely need the right-click menu.
+- **Settings window** (5 pages, always shows where you are) and a **style gallery** that highlights the style on screen.
 
 ## Requirements
 Windows 10/11, [Rainmeter 4.x](https://www.rainmeter.net/), PowerShell (built in).
@@ -31,14 +35,17 @@ Next / random style, lock or unlock (kept after a refresh), resume shuffle and r
 colour mode, next quote, show/hide quote, 12/24 h, skip this style, show all styles again, open settings, open style gallery.
 
 ## Settings window
-Every option as a button (profile, theme, text colour, language, 12/24 h, week start, style and quote speed, quote design,
-smooth seconds, weather, temperature unit, focus and break length, timer beep). The active choice is highlighted.
+Five pages: **Style** (profile, theme, code colours, text colour, how often the style changes), **Language** (language, 12/24 h,
+week start), **Quote**, **Extras** (smooth seconds, weather, timer) and **Actions** (next / random / lock / skip, open gallery).
+The top of the window shows the page you are on (`Settings > Style`) and the clock style currently on screen. On every row the
+active choice is highlighted and its name is written next to the setting.
 
 ## Options (`[Variables]` in `AdaptiveClock.ini`)
 | Variable | Values | Meaning |
 |---|---|---|
 | `Profile` | `All`, `Coder`, `Everyday` | Which styles and quotes are used |
 | `Theme` | `Neutral`, `Girl`, `Boy` | Accent palette; Girl / Boy also add their own styles |
+| `CodeTheme` | `Dark`, `Dracula`, `Monokai`, `Light` | Colours of the editor / terminal clocks |
 | `Language` | `Windows`, `English`, `Spanish`, `French`, `German`, `Portuguese`, `Italian`, `Sinhala`, `Tamil`, `Hindi`, `Japanese` | Date names, greetings and labels. The two word-clock styles need English or Windows |
 | `ColorMode` | `Invert`, `Accent`, `White`, `Black` | Text colour |
 | `ShuffleMinutes` | `1` to `1440` | How long each style stays |

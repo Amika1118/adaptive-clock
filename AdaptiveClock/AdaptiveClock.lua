@@ -1,4 +1,4 @@
--- AdaptiveClock.lua  v4.1   (Rainmeter 4.x, Lua 5.1)
+-- AdaptiveClock.lua  v4.3   (Rainmeter 4.x, Lua 5.1)
 -- Author: Amika Alankara  (MIT License)
 --
 -- One file, many small jobs. Each Script measure in the .ini picks its job with  Mode=
@@ -12,12 +12,13 @@
 --   quoteBody quoteWho                the quote, split in two lines
 --   worldName worldDay worldTime      multi-line text for the "World time" style
 --   wordsA wordsB                     text for the "Words" style
+--   moonIcon moonName moonPct moonF   moon phase
 --   dow dowS mon monS lbl             date names and labels in the chosen Language
 --   sunRise sunSet sunF sunNote       sunrise / sunset (needs Latitude + Longitude)
---   wxIcon wxTemp wxText npTitle batText   weather, now playing and battery text
+--   wxIcon wxTemp wxText batText     weather and battery text
 
 local mode = 'main'
-local N = 53                       -- number of styles (the .ini sets StyleCount)
+local N = 91                       -- number of styles (the .ini sets StyleCount)
 local current, lastSlot, lastYday, lastKey, lastLuma, wasBright, lastCalDay, lastQKey
 local pool = {}                    -- style numbers that take part in the shuffle
 local interval = 60               -- minutes per style (ShuffleMinutes)
@@ -35,15 +36,23 @@ local NAMES = {
   'Petals', 'Heart', 'Pastel pills', 'Starlight',
   'Radar', 'Planet orbit', 'Speedometer', 'Scoreboard',
   'Flip clock', 'Minimal analog', 'Tiles', 'Aurora',
-  'Weather', 'Sun times', 'Now playing', 'Battery', 'Timer and alarm',
+  'Weather', 'Sun times', 'Battery', 'Timer and alarm',
+  'Python', 'JavaScript', 'TypeScript', 'Java', 'C', 'C++', 'C#', 'Go', 'Rust', 'PHP', 'Ruby', 'Swift', 'Kotlin',
+  'SQL', 'HTML', 'Bash', 'PowerShell', 'Lua', 'Dart',
+  'Butterfly', 'Cloud', 'Daisy', 'Bow', 'Rainbow', 'Moonlight',
+  'Rocket', 'Pitch', 'Synthwave', 'Game HUD', 'Race lights', 'Shield',
+  'Nixie', 'Vinyl', 'Compass', 'Waves', 'Zen circle', 'Day bar', 'Moon phase', 'Skyline',
 }
 
 -- Styles that only appear for a profile / theme (all others always appear)
 local TAGS = {}
 for i = 25, 31 do TAGS[i] = 'code' end      -- Profile: All or Coder
+for i = 53, 71 do TAGS[i] = 'code' end      -- one editor window per programming language
 for i = 32, 36 do TAGS[i] = 'easy' end      -- Profile: All or Everyday
 for i = 37, 40 do TAGS[i] = 'girl' end      -- Theme: Girl
+for i = 72, 77 do TAGS[i] = 'girl' end
 for i = 41, 44 do TAGS[i] = 'boy' end       -- Theme: Boy
+for i = 78, 83 do TAGS[i] = 'boy' end
 TAGS[7], TAGS[23] = 'en', 'en'              -- word clocks: English only
 
 local D  = '\226\128\148'          -- em dash   (UTF-8 written as escapes so the file encoding never matters)
@@ -159,6 +168,17 @@ local PAL = {
   Boy  = { c = '56,152,255',  c2 = '0,224,208' },
 }
 
+local CODE = {                                  -- role colours of the editor / terminal windows
+  Dark    = { bg = '30,30,30,240',   bar = '37,37,38',   num = '110,110,110', comment = '106,153,85',  keyword = '86,156,214',
+              string = '206,145,120', func = '220,220,170', type = '78,201,176',   number = '181,206,168', text = '204,204,204', status = '0,122,204' },
+  Dracula = { bg = '40,42,54,240',   bar = '33,34,44',   num = '98,114,164',  comment = '98,114,164',  keyword = '255,121,198',
+              string = '241,250,140', func = '80,250,123',  type = '139,233,253', number = '189,147,249', text = '248,248,242', status = '189,147,249' },
+  Monokai = { bg = '39,40,34,240',   bar = '30,31,26',   num = '144,144,138', comment = '117,113,94',  keyword = '249,38,114',
+              string = '230,219,116', func = '166,226,46',  type = '102,217,239', number = '174,129,255', text = '248,248,242', status = '73,72,62' },
+  Light   = { bg = '255,255,255,245', bar = '236,236,236', num = '160,160,160', comment = '106,115,125', keyword = '215,58,73',
+              string = '3,47,98',     func = '111,66,193',  type = '0,92,197',    number = '0,92,197',    text = '36,41,46',    status = '0,92,197' },
+}
+
 local function wallpaperLuma()                  -- 0..1 from the RunCommand measure [mLum]; keeps the last good value
   local m = SKIN:GetMeasure('mLum')
   if m then
@@ -185,7 +205,8 @@ local function accent()
   wasBright = bright
   if cm == 'White' then bright = false elseif cm == 'Black' then bright = true end
 
-  local key = v .. '|' .. tostring(bright) .. '|' .. cm .. '|' .. th
+  local ct  = var('CodeTheme', 'Dark')
+  local key = v .. '|' .. tostring(bright) .. '|' .. cm .. '|' .. th .. '|' .. ct
   if key == lastKey then return end
   lastKey = key
 
@@ -214,6 +235,7 @@ local function accent()
   setv('ColorSoft',  rgb .. ',60')
   setv('Color2',     rgb2)
   setv('Color2Soft', rgb2 .. ',70')
+  for role, col in pairs(CODE[ct] or CODE.Dark) do setv('CT' .. role, col) end
   setv('GradA', pal and pal.c  or '120,140,255')
   setv('GradB', pal and pal.c2 or '255,130,200')
 end
@@ -289,6 +311,14 @@ local function styleFor(t)
   return p[(slot(t) % M) + 1]
 end
 
+local function writeState()                       -- read by the Settings window and the gallery
+  local f = io.open(var('CURRENTPATH', '') .. 'state.txt', 'w')
+  if not f then return end
+  f:write('StyleNo=', tostring(current or 0), '\nStyleName=', NAMES[current or 0] or '', '\nStyleTotal=', tostring(N),
+          '\nLocked=', locked and '1' or '0', '\n')
+  f:close()
+end
+
 local function showStyle(n)
   if n == current then return end
   if current then setv('H' .. current, 1) end
@@ -296,6 +326,7 @@ local function showStyle(n)
   setv('StyleNo', n)
   setv('StyleName', NAMES[n] or ('Style ' .. n))
   current = n
+  writeState()
 end
 
 -- ---------------------------------------------------------------- menu actions
@@ -344,7 +375,7 @@ function CycleLanguage()    cycleVar('Language', { 'Windows', 'English', 'Spanis
 -- Used by the Settings skin:  [!CommandMeasure mMain "Set('Theme','Girl')" "AdaptiveClock"]
 local SETTABLE = { Profile = 1, Theme = 1, ColorMode = 1, ShuffleMinutes = 1, QuoteMinutes = 1, QuoteHidden = 1,
   QuoteStyle = 1, HourFormat = 1, Language = 1, WeekStart = 1, Smooth = 1, TempUnit = 1, WeatherOff = 1,
-  PomoWork = 1, PomoBreak = 1, TimerBeep = 1 }
+  PomoWork = 1, PomoBreak = 1, TimerBeep = 1, CodeTheme = 1 }
 
 function Set(name, value)
   if not SETTABLE[name] then return end
@@ -380,6 +411,7 @@ function Lock()
   locked, lockedStyle = true, current
   saveVar('LockedStyle', current)                 -- survives a refresh
   setv('LockMark', ' [locked]')
+  writeState()
   refresh()
 end
 
@@ -388,6 +420,7 @@ function Unlock()
   saveVar('LockedStyle', 0)
   setv('LockMark', '')
   showStyle(styleFor(os.date('*t')))
+  writeState()
   refresh()
 end
 
@@ -876,6 +909,17 @@ local function tickTimers(t)
   setv('AlarmText', alarmText)
 end
 
+-- ---------------------------------------------------------------- moon phase
+
+local MOON_NAMES = { 'New moon', 'Waxing crescent', 'First quarter', 'Waxing gibbous', 'Full moon', 'Waning gibbous',
+                     'Last quarter', 'Waning crescent' }
+local MOON_ICONS = { '\240\159\140\145', '\240\159\140\146', '\240\159\140\147', '\240\159\140\148',
+                     '\240\159\140\149', '\240\159\140\150', '\240\159\140\151', '\240\159\140\152' }
+local SYNODIC = 29.530588853
+
+local function moonAge() return ((os.time() - 947182440) / 86400) % SYNODIC end   -- new moon: 2000-01-06 18:14 UTC
+local function moonIndex() return math.floor(moonAge() / SYNODIC * 8 + 0.5) % 8 + 1 end
+
 -- ---------------------------------------------------------------- measure entry points
 
 local function now() return os.date('*t') end
@@ -911,6 +955,10 @@ local MODES = {
   qmark  = function() return LQ end,
   quoteBody = quoteBody,
   quoteWho  = quoteWho,
+  moonIcon = function() return MOON_ICONS[moonIndex()] end,
+  moonName = function() return MOON_NAMES[moonIndex()] end,
+  moonPct  = function() return string.format('%d%%', math.floor((1 - math.cos(2 * math.pi * moonAge() / SYNODIC)) / 2 * 100 + 0.5)) end,
+  moonF    = function() return moonAge() / SYNODIC end,
   dow  = function() return dateName('dow',  'mDowW') end,
   dowS = function() return dateName('dowS', 'mDowSW') end,
   mon  = function() return dateName('mon',  'mMonW') end,
@@ -921,11 +969,6 @@ local MODES = {
   sunF    = function() return sunFraction(now()) end,
   sunNote = function() local _, _, real = sunPair(now()); return real and '' or tr('setLocation') end,
   wxIcon = wxIcon, wxTemp = wxTemp, wxText = wxText,
-  npTitle = function()
-    local m = SKIN:GetMeasure('mNPTitle')
-    local s = m and m:GetStringValue() or ''
-    return (s ~= '') and s or tr('nothing')
-  end,
   batText = function()
     local m = SKIN:GetMeasure('mBatAC')
     return (m and m:GetValue() == 1) and tr('charging') or tr('battery')
@@ -939,7 +982,7 @@ local MODES = {
 
 function Initialize()
   mode = SELF:GetOption('Mode', 'main')
-  N = tonumber(var('StyleCount', '53')) or 53
+  N = tonumber(var('StyleCount', '91')) or 91
   lblKey = SELF:GetOption('Key', '')
   logIndex = tonumber(SELF:GetOption('Index', '0')) or 0
 

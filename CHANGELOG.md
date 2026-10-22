@@ -1,5 +1,16 @@
 # Changelog
 
+## 4.3
+- The Now Playing widget and its settings were removed.
+- The pop-up tooltip over the clock is gone (double-click for the next style still works).
+- **39 new clocks (91 in total)**: 19 code-editor clocks, one per programming language; 6 girl clocks (Butterfly, Cloud, Daisy,
+  Bow, Rainbow, Moonlight); 6 boy clocks (Rocket, Pitch, Synthwave, Game HUD, Race lights, Shield); 8 for everyone (Nixie, Vinyl,
+  Compass, Waves, Zen circle, Day bar, Moon phase, Skyline).
+- **Code colours** setting (Dark, Dracula, Monokai, Light) for all editor, terminal and git-log clocks.
+- **Settings window redesigned**: five pages with a tab bar and a `Settings > page` breadcrumb, the current value written next to every
+  setting, the active choice highlighted, and the clock style currently on screen shown at the top.
+- The style gallery highlights the style that is on screen.
+
 ## 4.1
 - **Language** setting (Windows, English, Spanish, French, German, Portuguese, Italian, Sinhala, Tamil, Hindi, Japanese):
   date names, greeting, calendar headers and labels. The word-clock styles only appear for English / Windows.

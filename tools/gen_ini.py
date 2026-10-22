@@ -353,8 +353,8 @@ def star_path(x, y, ro, ri):
     return s + " | ClosePath 1"
 
 INK, DIM, SOFT, MID = "#Ink#", "#InkDim#", "#InkSoft#", "#InkMid#"
-TBG, TBAR = "13,17,23,235", "33,38,45"           # terminal-style windows keep their own dark colours
-TXT, GREY, GREEN, BLUE, AMBER = "201,209,218", "139,148,158", "63,185,80", "88,166,255", "210,153,34"
+TBG, TBAR = "#CTbg#", "#CTbar#"           # terminal-style windows keep their own dark colours
+TXT, GREY, GREEN, BLUE, AMBER = "#CTtext#", "#CTcomment#", "#CTfunc#", "#CTtype#", "#CTkeyword#"
 
 def window(i, x, y, w, h, title, bg=TBG):
     shp(i, "Win", [rrect(x, y, w, h, 10, bg, 1, "#InkSoft#"),
@@ -375,16 +375,16 @@ txt(i, "L6", "user@clock:~$ [mCursor]", 48, 322, 13, GREEN, align="LeftCenter", 
 
 # ---- 26 Code editor (coder)
 i = 26
-shp(i, "Win", [rrect(30, 95, 380, 255, 10, "30,30,30,240", 1, "#InkSoft#"), rrect(30, 95, 380, 30, 10, "37,37,38"),
-               rrect(30, 110, 380, 15, 0, "37,37,38"), rrect(40, 95, 92, 30, 0, "30,30,30"),
-               "Line 40,96,132,96 | StrokeWidth 2 | Stroke Color 0,122,204"])
-txt(i, "Tab", "clock.js", 86, 111, 11, "204,204,204", face="Segoe UI")
-code = [("// clock.js", "106,153,85"), ('const time = "[mH]:[mM]";', "156,220,254"),
-        ('const date = "[mDowS] [mDnum] [mMonS]";', "206,145,120"), ("let focus = true;", "86,156,214"),
-        ("tick(); // [mS]s", "220,220,170"), ("export default time;", "197,134,192")]
+shp(i, "Win", [rrect(30, 95, 380, 255, 10, "#CTbg#", 1, "#InkSoft#"), rrect(30, 95, 380, 30, 10, "#CTbar#"),
+               rrect(30, 110, 380, 15, 0, "#CTbar#"), rrect(40, 95, 92, 30, 0, "#CTbg#"),
+               "Line 40,96,132,96 | StrokeWidth 2 | Stroke Color #CTstatus#"])
+txt(i, "Tab", "clock.js", 86, 111, 11, "#CTtext#", face="Segoe UI")
+code = [("// clock.js", "#CTcomment#"), ('const time = "[mH]:[mM]";', "#CTtype#"),
+        ('const date = "[mDowS] [mDnum] [mMonS]";', "#CTstring#"), ("let focus = true;", "#CTkeyword#"),
+        ("tick(); // [mS]s", "#CTfunc#"), ("export default time;", "#CTnumber#")]
 for n, (line, col) in enumerate(code):
     y = 150 + n * 30
-    txt(i, f"N{n}", str(n + 1), 62, y, 13, "110,110,110", align="RightCenter", face="Consolas")
+    txt(i, f"N{n}", str(n + 1), 62, y, 13, "#CTnum#", align="RightCenter", face="Consolas")
     txt(i, f"C{n}", line, 76, y, 14, col, align="LeftCenter", face="Consolas")
 
 # ---- 27 Hex clock (coder)
@@ -653,13 +653,8 @@ meas("mWxRaw", "WebParser",
 meas("mWxT", "WebParser", URL="[mWxRaw]", StringIndex=1)
 meas("mWxC", "WebParser", URL="[mWxRaw]", StringIndex=2)
 for _nm, _md in [("mWxIcon", "wxIcon"), ("mWxTempTxt", "wxTemp"), ("mWxText", "wxText"), ("mSunRise", "sunRise"),
-                 ("mSunSet", "sunSet"), ("mSunF", "sunF"), ("mSunNote", "sunNote"), ("mNPTitleTxt", "npTitle"),
-                 ("mBatTxt", "batText")]:
+                 ("mSunSet", "sunSet"), ("mSunF", "sunF"), ("mSunNote", "sunNote"), ("mBatTxt", "batText")]:
     lmeas(_nm, _md)
-meas("mNPTitle", "Plugin", Plugin="NowPlaying", PlayerName="*", PlayerType="TITLE")
-for _nm, _ty in [("mNPArtist", "ARTIST"), ("mNPAlbum", "ALBUM"), ("mNPCover", "COVER")]:
-    meas(_nm, "Plugin", Plugin="NowPlaying", PlayerName="[mNPTitle]", PlayerType=_ty)
-meas("mNPProg", "Plugin", Plugin="NowPlaying", PlayerName="[mNPTitle]", PlayerType="PROGRESS", MinValue=0, MaxValue=100)
 meas("mBatPct", "Plugin", Plugin="PowerPlugin", PowerState="Percent", MinValue=0, MaxValue=100)
 meas("mBatAC", "Plugin", Plugin="PowerPlugin", PowerState="ACLine")
 meas("mPomoF", "Calc", Formula="#PomoFrac#", DynamicVariables=1)
@@ -692,24 +687,8 @@ txt(i, "L2", "[mLblSunset]", 345, 338, 13, DIM)
 txt(i, "T2", "[mSunSet]", 345, 362, 24, INK, face="Segoe UI Semibold")
 txt(i, "Note", "[mSunNote]", 220, 405, 12, "#Color#")
 
-# 51 Now playing
+# 51 Battery
 i = 51
-shp(i, "CoverBg", [rrect(50, 130, 120, 120, 10, "#InkSoft#")])
-sec(i, "Cover", "Image", X=50, Y=130, W=120, H=120, MeasureName="mNPCover", PreserveAspectRatio=1,
-    LeftMouseUpAction='[!CommandMeasure mNPTitle "PlayPause"]')
-txt(i, "Title", "[mNPTitleTxt]", 190, 128, 18, INK, align="LeftTop", face="Segoe UI Semibold", W=215, H=48, ClipString=2)
-txt(i, "Artist", "[mNPArtist]", 190, 186, 14, DIM, align="LeftTop", W=215, ClipString=1)
-txt(i, "Album", "[mNPAlbum]", 190, 210, 12, DIM, align="LeftTop", W=215, ClipString=1)
-sec(i, "Bar", "Bar", X=190, Y=242, W=215, H=6, MeasureName="mNPProg", BarColor="#Color#",
-    SolidColor="#InkSoft#", BarOrientation="Horizontal")
-button(i, "Prev", 215, 288, 17, "<<", '[!CommandMeasure mNPTitle "Previous"]', 11)
-button(i, "Play", 295, 288, 20, "||", '[!CommandMeasure mNPTitle "PlayPause"]', 12)
-button(i, "Next", 375, 288, 17, ">>", '[!CommandMeasure mNPTitle "Next"]', 11)
-txt(i, "Time", "[mH]:[mM]", 220, 350, 56, INK)
-txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 398, 15, DIM)
-
-# 52 Battery
-i = 52
 hand(i, "Track", 220, 215, 160, "mOne", 1, "#InkSoft#", lstart=145, solid=1)
 hand(i, "Prog", 220, 215, 160, "mBatPct", 1, "#Color#", lstart=145, solid=1)
 txt(i, "Pct", "[mBatPct:0]%", 220, 205, 84, INK, face="Segoe UI Semibold")
@@ -717,8 +696,8 @@ txt(i, "State", "[mBatTxt]", 220, 270, 18, "#Color#")
 txt(i, "Time", "[mH]:[mM]", 220, 330, 44, INK)
 txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 378, 15, DIM)
 
-# 53 Timer and alarm (click the buttons)
-i = 53
+# 52 Timer and alarm (click the buttons)
+i = 52
 hand(i, "Track", 220, 195, 152, "mOne", 1, "#InkSoft#", lstart=138, solid=1)
 hand(i, "Prog", 220, 195, 152, "mPomoF", 1, "#Color#", lstart=138, solid=1)
 txt(i, "Label", "#PomoLabel#", 220, 118, 16, "#Color#", face="Segoe UI Semibold")
@@ -731,6 +710,308 @@ txt(i, "Alarm", "#AlarmText#", 220, 352, 17, INK, face="Segoe UI Semibold",
 button(i, "Minus", 150, 392, 17, "-15", '[!CommandMeasure mMain "AlarmAdd(-15)"]', 11)
 button(i, "Plus", 290, 392, 17, "+15", '[!CommandMeasure mMain "AlarmAdd(15)"]', 11)
 txt(i, "Time", "[mH]:[mM]", 220, 392, 16, DIM)
+
+# ================================================================== v4.3: more clocks (53-91)
+for _nm, _md in [("mMoonIcon", "moonIcon"), ("mMoonName", "moonName"), ("mMoonPct", "moonPct"), ("mMoonF", "moonF")]:
+    lmeas(_nm, _md)
+
+SEQ = [52]
+def nxt():
+    SEQ[0] += 1
+    return SEQ[0]
+
+# ---- coder styles: one editor window per programming language (colours come from the CodeTheme setting)
+CODE = [
+ ("Python", "clock.py", [("# clock.py", "comment"), ("import time", "keyword"), ('now = "[mH]:[mM]:[mS]"', "string"),
+                         ('day = "[mDowS] [mDnum] [mMonS]"', "string"), ("print(now)", "func"), ("while True: tick()", "text")]),
+ ("JavaScript", "clock.js", [("// clock.js", "comment"), ('const time = "[mH]:[mM]";', "string"), ("let sec = [mS];", "number"),
+                             ("console.log(time);", "func"), ("setInterval(tick, 1000);", "func"), ("export default time;", "keyword")]),
+ ("TypeScript", "clock.ts", [("// clock.ts", "comment"), ("type Time = string;", "type"), ('const now: Time = "[mH]:[mM]";', "string"),
+                             ("let sec: number = [mS];", "number"), ("console.log(now);", "func"), ("export { now };", "keyword")]),
+ ("Java", "Clock.java", [("// Clock.java", "comment"), ("public class Clock {", "keyword"), ('  String time = "[mH]:[mM]";', "string"),
+                         ("  int sec = [mS];", "number"), ("  void tick() { sec++; }", "func"), ("}", "keyword")]),
+ ("C", "clock.c", [("/* clock.c */", "comment"), ("#include <time.h>", "keyword"), ('char *t = "[mH]:[mM]";', "string"),
+                   ("int sec = [mS];", "number"), ("puts(t);", "func"), ("return 0;", "keyword")]),
+ ("C++", "clock.cpp", [("// clock.cpp", "comment"), ("#include <iostream>", "keyword"), ('auto t = "[mH]:[mM]";', "string"),
+                       ("int s = [mS];", "number"), ("std::cout << t;", "func"), ("return 0;", "keyword")]),
+ ("C#", "Clock.cs", [("// Clock.cs", "comment"), ("using System;", "keyword"), ('var time = "[mH]:[mM]";', "string"),
+                     ("int sec = [mS];", "number"), ("Console.WriteLine(time);", "func"), ("// [mDowS] [mDnum] [mMonS]", "comment")]),
+ ("Go", "clock.go", [("// clock.go", "comment"), ("package main", "keyword"), ('t := "[mH]:[mM]"', "string"),
+                     ("s := [mS]", "number"), ("fmt.Println(t)", "func"), ("func main() {}", "keyword")]),
+ ("Rust", "clock.rs", [("// clock.rs", "comment"), ("fn main() {", "keyword"), ('    let t = "[mH]:[mM]";', "string"),
+                       ("    let s = [mS];", "number"), ("    println!(t);", "func"), ("}", "keyword")]),
+ ("PHP", "clock.php", [("<?php // clock.php", "keyword"), ('$time = "[mH]:[mM]";', "string"), ("$sec = [mS];", "number"),
+                       ("echo $time;", "func"), ('echo date("D j M");', "func"), ("?>", "keyword")]),
+ ("Ruby", "clock.rb", [("# clock.rb", "comment"), ('time = "[mH]:[mM]"', "string"), ("sec = [mS]", "number"),
+                       ("puts time", "func"), ("sleep 1", "func"), ("# [mDowS] [mDnum] [mMonS]", "comment")]),
+ ("Swift", "Clock.swift", [("// Clock.swift", "comment"), ("import Foundation", "keyword"), ('let time = "[mH]:[mM]"', "string"),
+                           ("var sec = [mS]", "number"), ("print(time)", "func"), ("sec += 1", "text")]),
+ ("Kotlin", "clock.kt", [("// clock.kt", "comment"), ("fun main() {", "keyword"), ('    val t = "[mH]:[mM]"', "string"),
+                         ("    var s = [mS]", "number"), ("    println(t)", "func"), ("}", "keyword")]),
+ ("SQL", "clock.sql", [("-- clock.sql", "comment"), ("SELECT '[mH]:[mM]' AS time,", "keyword"), ("       [mS] AS seconds,", "number"),
+                       ("       '[mDowS] [mDnum]' AS day", "string"), ("FROM clock;", "keyword"), ("-- 1 row", "comment")]),
+ ("HTML", "index.html", [("<!-- index.html -->", "comment"), ('<h1 class="time">', "keyword"), ("  [mH]:[mM]", "string"),
+                         ("</h1>", "keyword"), ("<p>[mDowS] [mDnum] [mMonS]</p>", "text"), ("<span>[mS]s</span>", "number")]),
+ ("Bash", "clock.sh", [("#!/bin/bash", "comment"), ('time="[mH]:[mM]"', "string"), ("sec=[mS]", "number"),
+                       ("echo $time", "func"), ("sleep 1", "func"), ("# [mDowS] [mDnum]", "comment")]),
+ ("PowerShell", "clock.ps1", [("# clock.ps1", "comment"), ('$time = "[mH]:[mM]"', "string"), ("$sec = [mS]", "number"),
+                              ("Write-Host $time", "func"), ("Start-Sleep 1", "func"), ("# [mDowS] [mDnum]", "comment")]),
+ ("Lua", "clock.lua", [("-- clock.lua", "comment"), ('local t = "[mH]:[mM]"', "string"), ("local s = [mS]", "number"),
+                       ("print(t, s)", "func"), ("return t", "keyword"), ("-- [mDowS] [mDnum]", "comment")]),
+ ("Dart", "clock.dart", [("// clock.dart", "comment"), ("void main() {", "keyword"), ('  var t = "[mH]:[mM]";', "string"),
+                         ("  var s = [mS];", "number"), ("  print(t);", "func"), ("}", "keyword")]),
+]
+for lang_name, fname, lines in CODE:
+    i = nxt()
+    x0, y0, w = 30, 92, 380
+    h = 30 + len(lines) * 30 + 14 + 26
+    shp(i, "Win", [rrect(x0, y0, w, h, 10, "#CTbg#", 1, "#InkSoft#"), rrect(x0, y0, w, 30, 10, "#CTbar#"),
+                   rrect(x0, y0 + 15, w, 15, 0, "#CTbar#"), rrect(x0 + 10, y0, 36 + 9 * len(fname), 30, 0, "#CTbg#"),
+                   f"Line {x0+10},{y0+1},{x0+46+9*len(fname)},{y0+1} | StrokeWidth 2 | Stroke Color #CTstatus#",
+                   rrect(x0, y0 + h - 26, w, 26, 10, "#CTstatus#"), rrect(x0, y0 + h - 26, w, 13, 0, "#CTstatus#")])
+    txt(i, "Tab", fname, x0 + 28 + 4.5 * len(fname), y0 + 15, 11, "#CTtext#", face="Segoe UI")
+    for n, (line, role) in enumerate(lines):
+        y = y0 + 30 + 22 + n * 30
+        indent = len(line) - len(line.lstrip(" "))
+        txt(i, f"N{n}", str(n + 1), x0 + 32, y, 13, "#CTnum#", align="RightCenter", face="Consolas")
+        txt(i, f"C{n}", line.strip(), x0 + 46 + indent * 8, y, 14, f"#CT{role}#", align="LeftCenter", face="Consolas")
+    txt(i, "Lang", lang_name, x0 + 14, y0 + h - 13, 11, "250,250,250", align="LeftCenter", face="Segoe UI", style="Bold")
+    txt(i, "Pos", "Ln [mS], Col [mM]   UTF-8", x0 + w - 14, y0 + h - 13, 11, "250,250,250", align="RightCenter", face="Segoe UI")
+
+# ---- girl styles (Theme: Girl)
+i = nxt()   # 72 Butterfly
+sh = ["Ellipse 150,178,72,50 | Fill Color #ColorSoft# | StrokeWidth 3 | Stroke Color #Color# | Rotate -28,150,178",
+      "Ellipse 290,178,72,50 | Fill Color #ColorSoft# | StrokeWidth 3 | Stroke Color #Color# | Rotate 28,290,178",
+      "Ellipse 166,258,50,38 | Fill Color #Color2Soft# | StrokeWidth 3 | Stroke Color #Color2# | Rotate 25,166,258",
+      "Ellipse 274,258,50,38 | Fill Color #Color2Soft# | StrokeWidth 3 | Stroke Color #Color2# | Rotate -25,274,258",
+      circle(142, 172, 10, "#Color2Soft#"), circle(298, 172, 10, "#Color2Soft#"),
+      circle(168, 262, 7, "#ColorSoft#"), circle(272, 262, 7, "#ColorSoft#"),
+      "Rectangle 213,150,14,130,7 | Fill Color #Color2# | StrokeWidth 0", circle(220, 144, 11, "#Color2#"),
+      "Line 216,136,200,104 | StrokeWidth 2 | Stroke Color #Color2#", "Line 224,136,240,104 | StrokeWidth 2 | Stroke Color #Color2#"]
+shp(i, "Butterfly", sh)
+txt(i, "Time", "[mH]:[mM]", 220, 338, 54, INK, face="Segoe UI Semibold")
+txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 384, 15, DIM)
+
+i = nxt()   # 73 Cloud
+sh = [circle(x, y, r, "#Color2Soft#", 2, "#Color#") for x, y, r in ((135, 232, 46), (200, 195, 62), (278, 212, 54), (238, 252, 52), (170, 258, 42))]
+sh += [circle(x, y, r, "#Color2Soft#") for x, y, r in ((135, 232, 44), (200, 195, 60), (278, 212, 52), (238, 252, 50), (170, 258, 40))]
+for k, (x, y) in enumerate(((120, 330), (165, 345), (215, 335), (265, 348), (315, 332))):
+    sh.append(f"Line {x},{y},{x-8},{y+22} | StrokeWidth 3 | Stroke Color #Color2#")
+for x, y, r in ((90, 130, 9), (340, 120, 12), (380, 200, 7), (70, 215, 7)):
+    sh.append("Path S%d%d | Fill Color #Color# | StrokeWidth 0" % (x, y))
+stars = {f"S{x}{y}": star_path(x, y, r, r * 0.42) for x, y, r in ((90, 130, 9), (340, 120, 12), (380, 200, 7), (70, 215, 7))}
+shpx(i, "Cloud", sh, **stars)
+txt(i, "Time", "[mH]:[mM]", 220, 228, 48, INK, face="Segoe UI Semibold")
+txt(i, "Date", "[mDowS] [mDnum] [mMonS]", 220, 392, 15, DIM)
+
+i = nxt()   # 74 Daisy
+sh = [circle(220, 215, 150, sw=1, stroke="#ColorSoft#")]
+for k in range(12):
+    a = k * PI / 6
+    px, py = 220 + 82 * cos(a), 215 + 82 * sin(a)
+    sh.append(f"Ellipse {px:.1f},{py:.1f},44,15 | Fill Color #ColorSoft# | StrokeWidth 2 | Stroke Color #Color# | Rotate {k*30},{px:.1f},{py:.1f}")
+sh += [circle(220, 215, 50, "#Color2Soft#", 3, "#Color2#"), mdot(220, 215, 150, "#SecRad#", 7, "#Color2#")]
+shp(i, "Daisy", sh)
+txt(i, "Time", "[mH]:[mM]", 220, 208, 30, INK, face="Segoe UI Semibold")
+txt(i, "Date", "[mDowS] [mDnum]", 220, 236, 12, DIM)
+
+i = nxt()   # 75 Bow
+shpx(i, "Bow", ["Ellipse 158,190,66,46 | Fill Color #ColorSoft# | StrokeWidth 4 | Stroke Color #Color# | Rotate -16,158,190",
+                "Ellipse 282,190,66,46 | Fill Color #ColorSoft# | StrokeWidth 4 | Stroke Color #Color# | Rotate 16,282,190",
+                "Ellipse 158,190,36,20 | Fill Color 0,0,0,0 | StrokeWidth 2 | Stroke Color #Color2# | Rotate -16,158,190",
+                "Ellipse 282,190,36,20 | Fill Color 0,0,0,0 | StrokeWidth 2 | Stroke Color #Color2# | Rotate 16,282,190",
+                "Path Tail1 | Fill Color #Color2Soft# | StrokeWidth 3 | Stroke Color #Color2#",
+                "Path Tail2 | Fill Color #Color2Soft# | StrokeWidth 3 | Stroke Color #Color2#",
+                circle(220, 198, 25, "#Color#", 3, "#Color2#")],
+     Tail1="206,218 | LineTo 162,302 | LineTo 194,290 | LineTo 210,316 | ClosePath 1",
+     Tail2="234,218 | LineTo 278,302 | LineTo 246,290 | LineTo 230,316 | ClosePath 1")
+txt(i, "Time", "[mH]:[mM]", 220, 352, 54, INK, face="Segoe UI Semibold")
+txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 396, 15, DIM)
+
+i = nxt()   # 76 Rainbow
+for k, (r, col) in enumerate(zip((165, 150, 135, 120, 105, 90), ("255,120,140", "255,180,110", "255,230,120", "140,215,150", "130,185,250", "185,150,240"))):
+    hand(i, f"B{k}", 220, 290, r, "mOne", 1, col, start=PI, rot=PI, lstart=r - 14, solid=1)
+shp(i, "Sky", [mdot(220, 290, 128, "#DayRad#", 10, "250,250,250"),
+               circle(62, 300, 24, "250,250,250,210"), circle(92, 290, 28, "250,250,250,210"), circle(120, 304, 22, "250,250,250,210"),
+               circle(320, 304, 22, "250,250,250,210"), circle(348, 290, 28, "250,250,250,210"), circle(378, 300, 24, "250,250,250,210")])
+txt(i, "Time", "[mH]:[mM]", 220, 215, 52, INK, face="Segoe UI Semibold")
+txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 350, 16, DIM)
+
+i = nxt()   # 77 Moonlight
+sh = ["Path Moon | Fill Color #Color2# | StrokeWidth 0"]
+stars = {"Moon": "182,100 | CurveTo 182,330,46,125,46,300 | CurveTo 182,100,118,310,112,140 | ClosePath 1"}
+for k, (x, y, r) in enumerate(((250, 120, 10), (370, 140, 8), (330, 330, 9), (60, 70, 8), (300, 90, 6), (390, 260, 6))):
+    sh.append(f"Path St{k} | Fill Color #Color# | StrokeWidth 0")
+    stars[f"St{k}"] = star_path(x, y, r, r * 0.42)
+shpx(i, "Night", sh, **stars)
+txt(i, "Time", "[mH]:[mM]", 300, 205, 56, INK, face="Segoe UI Semibold")
+txt(i, "Date", "[mDow], [mDnum]", 300, 252, 16, DIM)
+txt(i, "Mon", "[mMon]", 300, 276, 16, "#Color#")
+
+# ---- boy styles (Theme: Boy)
+i = nxt()   # 78 Rocket
+ox = -95
+shpx(i, "Rocket", [circle(60, 120, 2, "#InkMid#"), circle(150, 80, 3, "#InkMid#"), circle(40, 260, 2, "#InkMid#"),
+                   circle(160, 340, 3, "#InkMid#"), circle(100, 370, 2, "#InkMid#"), circle(30, 170, 3, "#InkMid#"),
+                   "Ellipse %d,334,16,32 | Fill Color 255,140,40 | StrokeWidth 0" % (220 + ox),
+                   "Ellipse %d,326,9,20 | Fill Color 255,225,100 | StrokeWidth 0" % (220 + ox),
+                   "Path FinL | Fill Color 226,60,60 | StrokeWidth 3 | Stroke Color 120,30,30",
+                   "Path FinR | Fill Color 226,60,60 | StrokeWidth 3 | Stroke Color 120,30,30",
+                   "Ellipse %d,215,42,100 | Fill Color 236,239,246 | StrokeWidth 3 | Stroke Color 90,96,112" % (220 + ox),
+                   "Path Nose | Fill Color 226,60,60 | StrokeWidth 3 | Stroke Color 120,30,30",
+                   circle(220 + ox, 205, 18, "100,190,255", 4, "70,80,100")],
+     FinL=f"{182+ox},262 | LineTo {140+ox},322 | LineTo {184+ox},306 | ClosePath 1",
+     FinR=f"{258+ox},262 | LineTo {300+ox},322 | LineTo {256+ox},306 | ClosePath 1",
+     Nose=f"{180+ox},150 | CurveTo {260+ox},150,{198+ox},72,{242+ox},72 | ClosePath 1")
+txt(i, "Time", "[mH]:[mM]", 310, 200, 56, INK, face="Segoe UI Semibold")
+txt(i, "Date", "[mDow], [mDnum] [mMon]", 310, 250, 15, DIM)
+txt(i, "Sec", "T+ [mS]s", 310, 280, 15, "#Color#", face="Consolas")
+
+i = nxt()   # 79 Pitch
+sh = [rrect(40, 120, 360, 240, 8, "28,110,60,210", 3, "250,250,250,190"),
+      "Line 220,120,220,360 | StrokeWidth 2 | Stroke Color 250,250,250,190",
+      circle(220, 240, 38, sw=2, stroke="250,250,250,190"),
+      rrect(40, 185, 62, 110, 0, "0,0,0,0", 2, "250,250,250,190"), rrect(338, 185, 62, 110, 0, "0,0,0,0", 2, "250,250,250,190"),
+      rrect(40, 215, 22, 50, 0, "0,0,0,0", 2, "250,250,250,190"), rrect(378, 215, 22, 50, 0, "0,0,0,0", 2, "250,250,250,190"),
+      "Ellipse (50+340*[mDayF]),(240+34*Sin([mDayF]*18.85)),9 | Fill Color 250,250,250 | StrokeWidth 2 | Stroke Color 40,40,40"]
+shp(i, "Pitch", sh)
+txt(i, "Time", "[mH]:[mM]", 220, 70, 58, INK, face="Segoe UI Semibold")
+txt(i, "Mid", "[mS]", 220, 240, 24, "250,250,250", face="Consolas", style="Bold")
+txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 392, 15, DIM)
+
+i = nxt()   # 80 Synthwave
+sh = [rrect(30, 100, 380, 280, 14, "18,6,40"), "Ellipse 220,290,78 | Fill LinearGradient SunGrad | StrokeWidth 0",
+      rrect(30, 290, 380, 90, 0, "18,6,40")]
+for k in range(1, 6):
+    y = 290 + k * k * 3.4
+    sh.append(f"Line 30,{y:.1f},410,{y:.1f} | StrokeWidth 2 | Stroke Color 255,60,200,{230 - k * 25}")
+for k in range(-7, 8):
+    sh.append(f"Line 220,290,{220 + k * 64},380 | StrokeWidth 1 | Stroke Color 255,60,200,200")
+shpx(i, "Grid", sh, SunGrad="90 | 255,210,70 ; 0.0 | 255,60,150 ; 1.0")
+txt(i, "Date", "[mDow]  [mDnum]  [mMon]", 220, 126, 13, "100,230,255", face="Consolas", StringCase="Upper")
+txt(i, "Time", "[mH]:[mM]", 220, 190, 70, "250,250,250", face="Consolas", style="Bold",
+    StringEffect="Border", FontEffectColor="255,60,200,230")
+
+i = nxt()   # 81 Game HUD
+txt(i, "Name", "PLAYER 1", 40, 100, 12, "#Color#", align="LeftCenter", face="Consolas", style="Bold")
+txt(i, "Lvl", "LVL [mDnum]", 400, 100, 12, "#Color2#", align="RightCenter", face="Consolas", style="Bold")
+txt(i, "Time", "[mH]:[mM]", 220, 160, 74, INK, face="Consolas", style="Bold")
+for n, (lab, m, val, col) in enumerate((("HP", "mHrF", "[mH]", "#Color#"), ("MP", "mMinF", "[mM]", "#Color2#"), ("XP", "mSecF", "[mS]", "#Color#"))):
+    y = 250 + n * 42
+    sh = [rrect(90, y - 11, 270, 22, 4, "0,0,0,130", 2, "#ColorMid#"), rrect(90, y - 11, f"(8+262*[{m}])", 22, 4, col)]
+    sh += [f"Line {90 + k * 27},{y-11},{90 + k * 27},{y+11} | StrokeWidth 2 | Stroke Color 0,0,0,170" for k in range(1, 10)]
+    shp(i, f"Bar{n}", sh)
+    txt(i, f"L{n}", lab, 50, y, 15, INK, align="LeftCenter", face="Consolas", style="Bold")
+    txt(i, f"V{n}", val, 392, y, 15, INK, align="RightCenter", face="Consolas")
+
+i = nxt()   # 82 Race lights
+sh = [rrect(40, 105, 360, 90, 14, "20,20,24,235", 2, "#ColorMid#")]
+for k in range(5):
+    x = 90 + k * 65
+    sh.append(circle(x, 150, 24, "50,10,10", 3, "90,90,96"))
+    sh.append(f"Ellipse {x},150,(([mSecF]*60)>={(k + 1) * 12 - 11} ? 20 : 0) | Fill Color 255,40,40 | StrokeWidth 0")
+shp(i, "Lights", sh)
+txt(i, "Lap", "LAP TIME", 220, 232, 12, "#Color#", face="Consolas", style="Bold")
+txt(i, "Time", "[mH]:[mM]:[mS]", 220, 285, 64, INK, face="Consolas", style="Bold")
+sec(i, "Bar", "Bar", X=70, Y=335, W=300, H=10, MeasureName="mMinF", BarColor="#Color#", SolidColor="#InkSoft#", BarOrientation="Horizontal")
+txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 375, 15, DIM)
+
+i = nxt()   # 83 Shield
+shpx(i, "Shield", ["Path Shield | Fill Color #ColorSoft# | StrokeWidth 6 | Stroke Color #Color#",
+                   "Path Inner | Fill Color 0,0,0,0 | StrokeWidth 2 | Stroke Color #Color2#",
+                   "Path Star | Fill Color #Color2# | StrokeWidth 0"],
+     Shield="95,100 | LineTo 345,100 | LineTo 345,225 | CurveTo 220,376,345,312,288,348 | CurveTo 95,225,152,348,95,312 | ClosePath 1",
+     Inner="115,120 | LineTo 325,120 | LineTo 325,222 | CurveTo 220,350,325,300,278,326 | CurveTo 115,222,162,326,115,300 | ClosePath 1",
+     Star=star_path(220, 158, 20, 8))
+txt(i, "Time", "[mH]:[mM]", 220, 222, 58, INK, face="Segoe UI Semibold")
+txt(i, "Date", "[mDow], [mDnum]", 220, 272, 16, DIM)
+txt(i, "Mon", "[mMon]", 220, 296, 16, "#Color#")
+
+# ---- everyone: more neutral clocks
+i = nxt()   # 84 Nixie
+shp(i, "Tubes", [rrect(x, 130, 72, 140, 34, "26,14,8,240", 3, "255,150,50,170") for x in (40, 122, 246, 328)] +
+    [circle(220, 175, 6, "255,150,50"), circle(220, 225, 6, "255,150,50")])
+for x, m in ((76, "mDHT"), (158, "mDHU"), (282, "mDMT"), (364, "mDMU")):
+    txt(i, f"D{x}", f"[{m}]", x, 200, 96, "255,166,60", face="Consolas", style="Bold", StringEffect="Border", FontEffectColor="255,90,20,120")
+txt(i, "Sec", "[mS]", 220, 310, 28, "#Color#", face="Consolas")
+txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 352, 16, DIM)
+
+i = nxt()   # 85 Vinyl
+sh = [circle(220, 215, 170, "18,18,20")] + [circle(220, 215, r, sw=1, stroke="55,55,60") for r in (150, 132, 114, 96, 78)]
+sh += [circle(220, 215, 62, "230,90,70"), circle(220, 215, 6, "18,18,20"), mdot(220, 215, 48, "#SecRad#", 4, "250,250,250"),
+       "Line 392,70,(220+(165-110*[mDayF])*0.82),(215-(165-110*[mDayF])*0.57) | StrokeWidth 6 | Stroke Color 205,205,210",
+       circle(392, 70, 14, "60,60,66", 3, "205,205,210")]
+shp(i, "Record", sh)
+txt(i, "Time", "[mH]:[mM]", 220, 215, 24, "250,250,250", face="Segoe UI Semibold")
+txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 412, 15, DIM)
+
+i = nxt()   # 86 Compass
+sh = [circle(220, 215, 170, sw=3, stroke="#InkMid#"), circle(220, 215, 120, sw=1, stroke="#InkSoft#")]
+sh += dial_ticks(220, 215, 158, 168, "#InkMid#", n=72, w1=1, w2=2)
+shp(i, "Dial", sh)
+for t, a in (("N", 0), ("E", 1), ("S", 2), ("W", 3)):
+    ang = a * PI / 2 - PI / 2
+    txt(i, f"N{t}", t, f"{220+138*cos(ang):.1f}", f"{215+138*sin(ang):.1f}", 22, "#Color#" if t == "N" else INK, face="Segoe UI Semibold")
+hand(i, "Min", 220, 215, 118, "mMinF", 2, "#Ink#")
+hand(i, "Needle", 220, 215, 104, "mHrF", 7, "220,60,60")
+hand(i, "Tail", 220, 215, 74, "mHrF", 7, "#Ink#", start=PI / 2)
+shp(i, "Hub", [circle(220, 215, 9, "#Ink#")])
+txt(i, "Time", "[mH]:[mM]", 220, 410, 22, DIM)
+
+i = nxt()   # 87 Waves
+sh = []
+for k, (y, a) in enumerate(((268, 255), (292, 190), (316, 130))):
+    sh.append(f"Path W{k} | Fill Color 0,0,0,0 | StrokeWidth {4 - k} | Stroke Color #Color#,{a}")
+paths = {}
+for k, y in enumerate((268, 292, 316)):
+    seg = f"30,{y}"
+    for j in range(4):
+        x = 30 + j * 95
+        seg += f" | CurveTo {x+95},{y},{x+32},{y-26},{x+63},{y-26}"
+        seg = seg.replace(f"CurveTo {x+95},{y},{x+32},{y-26},{x+63},{y-26}", f"CurveTo {x+95},{y},{x+30},{y-24},{x+65},{y+24}")
+    paths[f"W{k}"] = seg
+shpx(i, "Waves", sh, **paths)
+txt(i, "Time", "[mH]:[mM]", 220, 150, 92, INK)
+txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 222, 17, DIM)
+txt(i, "Sec", "[mS]", 220, 360, 20, "#Color#")
+
+i = nxt()   # 88 Zen circle
+hand(i, "Ensou", 220, 215, 152, "mOne", 1, "#InkDim#", start=-1.15, rot=5.2, lstart=134, solid=1)
+shp(i, "Dot", [mdot(220, 215, 143, "#MinRad#", 8, "#Color#")])
+txt(i, "Time", "[mH]:[mM]", 220, 215, 62, INK)
+txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 268, 15, DIM)
+
+i = nxt()   # 89 Day bar
+segs = [(40, "#InkSoft#"), (130, "#ColorSoft#"), (220, "#Color2Soft#"), (310, "#ColorSoft#")]
+shp(i, "Day", [rrect(x, 250, 90, 26, 0, c) for x, c in segs] +
+    [rrect(40, 250, 360, 26, 6, "0,0,0,0", 2, "#ColorMid#"),
+     "Line (40+360*[mDayF]),238,(40+360*[mDayF]),288 | StrokeWidth 3 | Stroke Color #Color#",
+     "Ellipse (40+360*[mDayF]),238,8 | Fill Color #Color# | StrokeWidth 0"])
+for k, hh in enumerate(("00", "06", "12", "18", "24")):
+    txt(i, f"H{k}", hh, 40 + k * 90, 300, 11, DIM, face="Segoe UI")
+txt(i, "Time", "[mH]:[mM]", 220, 140, 90, INK)
+txt(i, "Pct", "[mDayF:%]% of today", 220, 205, 16, "#Color#")
+txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 352, 16, DIM)
+
+i = nxt()   # 90 Moon phase
+hand(i, "Track", 220, 175, 112, "mOne", 1, "#InkSoft#", lstart=106, solid=1)
+hand(i, "Prog", 220, 175, 112, "mMoonF", 1, "#Color#", lstart=106, solid=1)
+txt(i, "Icon", "[mMoonIcon]", 220, 175, 110, INK, face="Segoe UI Emoji")
+txt(i, "Name", "[mMoonName]", 220, 270, 22, INK, face="Segoe UI Semibold")
+txt(i, "Pct", "[mMoonPct] lit", 220, 300, 15, "#Color#")
+txt(i, "Time", "[mH]:[mM]", 220, 352, 44, INK)
+txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 396, 15, DIM)
+
+i = nxt()   # 91 Skyline
+sh = [f"Ellipse 220,360,150 | Fill Color 0,0,0,0 | StrokeWidth 1 | Stroke Color #InkSoft#", mdot(220, 360, 150, "#DayRad#", 20, "#ColorSoft#"),
+      mdot(220, 360, 150, "#DayRad#", 11, "#Color#")]
+for x, w, hh in ((30, 40, 70), (72, 34, 105), (108, 46, 60), (156, 30, 125), (188, 50, 85), (240, 36, 140), (278, 44, 75), (324, 32, 110), (358, 52, 62)):
+    sh.append(f"Rectangle {x},{360-hh},{w},{hh} | Fill Color #InkDim# | StrokeWidth 0")
+sh.append("Line 20,360,420,360 | StrokeWidth 2 | Stroke Color #InkDim#")
+shp(i, "Sky", sh)
+txt(i, "Time", "[mH]:[mM]", 220, 120, 74, INK, face="Segoe UI Semibold")
+txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 178, 17, DIM)
+assert SEQ[0] == 91, SEQ[0]
 
 # ---- extras for older styles: AM/PM markers for the 12-hour clock
 txt(8, "AP", "[mAmPm]", 392, 130, 18, "#ColorDim#")
@@ -780,11 +1061,11 @@ _LBL = [("mLblHour", "hour"), ("mLblMinute", "minute"), ("mLblSecond", "second")
         ("mLblSecondsLow", "secondsLow"), ("mLblSunrise", "sunrise"), ("mLblSunset", "sunset")]
 DATE_M = "\n\n".join([script("mDow", "dow"), script("mDowS", "dowS"), script("mMon", "mon"), script("mMonS", "monS")]
                       + [lbl(n, k) for n, k in _LBL])
-HV = "\n".join(f"H{n}=1" for n in range(1, 54)) + "\nQHf=1\nQHc=1\n" + "\n".join(f"CalH{n}=" for n in range(1, 8)) + "\n" + "\n".join(f"CalD{n}=" for n in range(1, 43))
+HV = "\n".join(f"H{n}=1" for n in range(1, 92)) + "\nQHf=1\nQHc=1\n" + "\n".join(f"CalH{n}=" for n in range(1, 8)) + "\n" + "\n".join(f"CalD{n}=" for n in range(1, 43))
 def tm(name, fmt):
     return f"[{name}]\nMeasure=Time\nFormat={fmt}"
 
-head = f"""; AdaptiveClock.ini  by Amika Alankara  -  53 clock styles driven by AdaptiveClock.lua (same folder)
+head = f"""; AdaptiveClock.ini  by Amika Alankara  -  91 clock styles driven by AdaptiveClock.lua (same folder)
 ; Right-click the skin: Next / Random style, resume hourly shuffle, 12/24h, quote options.
 
 [Rainmeter]
@@ -825,11 +1106,11 @@ ContextAction15=[!ActivateConfig "#CURRENTCONFIG#\\Gallery" "Gallery.ini"]
 [Metadata]
 Name=Adaptive Clock
 Author=Amika Alankara
-Version=4.1
-Description=53 clock styles, coder / everyday profiles, girl / boy themes, 10 languages, weather, timer and more.
+Version=4.3
+Description=91 clock styles, coder (19 languages) / everyday profiles, girl / boy themes, 10 languages, weather, timer and more.
 
 [Variables]
-StyleCount=53
+StyleCount=91
 HourFormat=%H
 QuoteHidden=0
 QuoteMinutes=1440
@@ -846,6 +1127,18 @@ Color2Soft=255,255,255,70
 GradA=120,140,255
 GradB=255,130,200
 FontMono=Consolas
+CodeTheme=Dark
+CTbg=30,30,30,240
+CTbar=37,37,38
+CTnum=110,110,110
+CTcomment=106,153,85
+CTkeyword=86,156,214
+CTstring=206,145,120
+CTfunc=220,220,170
+CTtype=78,201,176
+CTnumber=181,206,168
+CTtext=204,204,204
+CTstatus=0,122,204
 Language=Windows
 Smooth=0
 UpdateMs=1000
@@ -966,7 +1259,6 @@ Formula=1
 ; ---------------------------------------------------------------- meters
 [Bg]
 Meter=Shape
-ToolTipText=#StyleName#  -  style #StyleNo# of #StyleCount##LockMark#  (double-click: next style)
 LeftMouseDoubleClickAction=[!CommandMeasure mMain "Next()"]
 DynamicVariables=1
 X=0

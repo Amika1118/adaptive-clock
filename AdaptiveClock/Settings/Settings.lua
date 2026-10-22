@@ -1,23 +1,43 @@
--- Settings.lua  -  highlights the active choices in the Settings window and finds the main skin
+-- Settings.lua  -  logic of the Settings window and the style gallery
 -- Author: Amika Alankara  (MIT License)
-local count, mainIni, lastKey = 0, '', nil
+--  * shows which page you are on (breadcrumb + highlighted tab)
+--  * highlights the active choice of every setting and prints its current value next to the label
+--  * shows which clock style is on screen (the clock writes ..\state.txt)
+local count, pages, paths = 0, 5, {}
+local lastKey, lastNow
 local MAP = { H24 = '%H', H12 = '%#I' }
-local ON, OFF = '77,142,255,235', '255,255,255,28'
+local ON, TAB_OFF = '77,142,255,235', '255,255,255,18'
+
+local function setv(n, v) SKIN:Bang('!SetVariable', n, tostring(v)) end
 
 function Initialize()
   local cfg = SKIN:GetVariable('CURRENTCONFIG', '')
-  SKIN:Bang('!SetVariable', 'Main', cfg:match('^(.*)\\[^\\]+$') or 'AdaptiveClock')
+  setv('Main', cfg:match('^(.*)\\[^\\]+$') or 'AdaptiveClock')
   count = tonumber(SKIN:GetVariable('BtnCount', '0')) or 0
-  mainIni = SKIN:GetVariable('CURRENTPATH', '') .. '..\\AdaptiveClock.ini'
+  pages = tonumber(SKIN:GetVariable('PageCount', '0')) or 0
+  local here = SKIN:GetVariable('CURRENTPATH', '')
+  paths = { clock = here .. '..\\AdaptiveClock.ini', state = here .. '..\\state.txt' }
+  if pages > 0 then Page(1) end
 end
 
-local function readVars()                          -- only the [Variables] block of the main skin
-  local f = io.open(mainIni, 'r')
+function Page(p)                                   -- show one page of the Settings window
+  p = tonumber(p) or 1
+  for k = 1, pages do
+    setv('Pg' .. k, k == p and 0 or 1)
+    setv('Tab' .. k, k == p and ON or TAB_OFF)
+  end
+  setv('CrumbPage', SKIN:GetVariable('PageName' .. p, ''))
+  SKIN:Bang('!UpdateMeter', '*')
+  SKIN:Bang('!Redraw')
+end
+
+local function readVars(path, onlyVariables)
+  local f = io.open(path, 'r')
   if not f then return {} end
-  local vars, inVars = {}, false
+  local vars, inVars = {}, not onlyVariables
   for line in f:lines() do
-    if line:match('^%[Variables%]') then inVars = true
-    elseif inVars and line:match('^%[') then break
+    if onlyVariables and line:match('^%[Variables%]') then inVars = true
+    elseif onlyVariables and inVars and line:match('^%[') then break
     elseif inVars then
       local k, v = line:match('^([%w_]+)=(.*)$')
       if k then vars[k] = (v:gsub('\r', '')) end
@@ -28,17 +48,34 @@ local function readVars()                          -- only the [Variables] block
 end
 
 function Update()
+  local files = { clock = readVars(paths.clock, true), state = readVars(paths.state, false) }
+  local st = files.state
+  local now = (st.StyleName and st.StyleName ~= '')
+      and ('Now showing:  ' .. st.StyleName .. '  (style ' .. (st.StyleNo or '?') .. ' of ' .. (st.StyleTotal or '?') .. ')'
+           .. ((st.Locked == '1') and '  -  locked' or ''))
+      or 'Now showing: (load the clock to see its style)'
+  if now ~= lastNow then lastNow = now; setv('NowShowing', now) end
   if count == 0 then return 0 end
-  local v, parts = readVars(), {}
+
+  local parts, values = {}, {}
   for n = 1, count do
+    local file = files[SKIN:GetVariable('B' .. n .. 'F', 'clock')] or files.clock
     local name = SKIN:GetVariable('B' .. n .. 'V', '')
     local val  = SKIN:GetVariable('B' .. n .. 'X', '')
-    parts[n] = (v[name] == (MAP[val] or val)) and '1' or '0'
+    local on = (file[name] == (MAP[val] or val))
+    parts[n] = on and '1' or '0'
+    if on then
+      local g = SKIN:GetVariable('B' .. n .. 'G', '0')
+      if g ~= '0' then values[g] = SKIN:GetVariable('B' .. n .. 'L', '') end
+    end
   end
   local key = table.concat(parts)
   if key ~= lastKey then
     lastKey = key
-    for n = 1, count do SKIN:Bang('!SetVariable', 'B' .. n .. 'C', parts[n] == '1' and ON or OFF) end
+    for n = 1, count do
+      setv('B' .. n .. 'C', parts[n] == '1' and ON or SKIN:GetVariable('B' .. n .. 'O', '255,255,255,28'))
+    end
+    for g, text in pairs(values) do setv('GV' .. g, text) end
     SKIN:Bang('!UpdateMeter', '*')
     SKIN:Bang('!Redraw')
   end
