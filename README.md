@@ -13,8 +13,7 @@ A desktop clock with **99 styles**, built for Rainmeter on Windows. By Amika Ala
   System monitor, Epoch and ISO, Git log, Dot matrix, **Matrix rain**, **CI pipeline** (stages pass one by one), Stack trace,
   Hexdump, Neofetch, htop and a Test runner. Four editor colour themes: Dark, Dracula, Monokai, Light.
 - **Everyday clocks**: greeting, month calendar, year progress, sticky note, week strip.
-- **Girl and boy themes**: pink / lilac (petals, heart, butterfly, bow, rainbow, moonlight...) or blue / cyan (radar, rocket, pitch,
-  synthwave, game HUD, race lights, shield...), each with its own accent colours and clocks.
+- **Themes**: *Classic*, *Bloom* (pink and lilac: Blossom, Heartbeat, Flutter, Ribbon, Spectrum, Lunar Glow...) and *Volt* (electric blue and cyan: Radar Sweep, Launch, Kickoff, Neon Drive, Level Up, Grid Start, Crest...). Each has its own accent colours and clocks.
 - **For everyone**: chronograph, flip clock, nixie, vinyl, compass, moon phase, skyline, aurora and many more.
 - **Languages**: Windows (follows your system for dates), English, Spanish, French, German, Portuguese, Italian, Sinhala, Tamil, Hindi, Japanese.
 - **Extras**: weather (optional), sunrise and sunset, battery, focus timer with alarm.
@@ -51,7 +50,7 @@ active choice is highlighted and its name is written next to the setting.
 | Variable | Values | Meaning |
 |---|---|---|
 | `Profile` | `All`, `Coder`, `Everyday` | Which styles and quotes are used |
-| `Theme` | `Neutral`, `Girl`, `Boy` | Accent palette; Girl / Boy also add their own styles |
+| `Theme` | `Neutral` (Classic), `Bloom`, `Volt` | Accent palette; Bloom / Volt also add their own styles. The old values `Girl` / `Boy` still work |
 | `CodeTheme` | `Dark`, `Dracula`, `Monokai`, `Light` | Colours of the editor / terminal clocks |
 | `Language` | `Windows`, `English`, `Spanish`, `French`, `German`, `Portuguese`, `Italian`, `Sinhala`, `Tamil`, `Hindi`, `Japanese` | Date names, greetings and labels. The two word-clock styles need English or Windows |
 | `ColorMode` | `Invert`, `Accent`, `White`, `Black` | Text colour |

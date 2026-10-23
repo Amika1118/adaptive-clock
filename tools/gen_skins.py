@@ -53,7 +53,7 @@ LANGS = ["Windows", "English", "Spanish", "French", "German", "Portuguese", "Ita
 PAGES = [
     ("Style", [
         ("Profile", "Profile", [("All", "All"), ("Coder", "Coder"), ("Everyday", "Everyday")]),
-        ("Theme", "Theme", [("Neutral", "Neutral"), ("Girl", "Girl"), ("Boy", "Boy")]),
+        ("Theme", "Theme", [("Classic", "Neutral"), ("Bloom", "Bloom"), ("Volt", "Volt")]),
         ("Code colours", "CodeTheme", [("Dark", "Dark"), ("Dracula", "Dracula"), ("Monokai", "Monokai"), ("Light", "Light")]),
         ("Text colour", "ColorMode", [("Invert", "Invert"), ("Accent", "Accent"), ("White", "White"), ("Black", "Black")]),
         ("Style changes", "ShuffleMinutes", [("60 min", "60"), ("30 min", "30"), ("15 min", "15"), ("5 min", "5"), ("Daily", "1440")]),
@@ -257,7 +257,7 @@ for i, name in enumerate(NAMES, start=1):
     variables += [f"B{i}V=StyleNo", f"B{i}X={i}", f"B{i}F=state", f"B{i}G=0", f"B{i}L={name}", f"B{i}O={COL[TAGS.get(i)]}", f"B{i}C={COL[TAGS.get(i)]}"]
     gm += button(i, 18 + c * (bw + 6), gy + r * (bh + 6), bw, bh, label, act(f"GoTo({i})"), color_var=f"B{i}C", fs=9)
 gy += ((len(NAMES) + cols - 1) // cols) * (bh + 6) + 8
-legend = [("Everyone", None), ("Coder", "code"), ("Everyday", "easy"), ("Girl theme", "girl"), ("Boy theme", "boy")]
+legend = [("Everyone", None), ("Coder", "code"), ("Everyday", "easy"), ("Bloom theme", "girl"), ("Volt theme", "boy")]
 for j, (text, tag) in enumerate(legend):
     gm += button(800 + j, 18 + j * (bw + 6), gy, bw, 22, text, "", fill=COL[tag], fs=9)
 gy += 34

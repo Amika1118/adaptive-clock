@@ -853,7 +853,7 @@ def ide(i, lang, fname, lines):
 for lang_name, fname, lines in CODE:
     ide(nxt(), lang_name, fname, lines)
 
-# ---- girl styles (Theme: Girl)
+# ---- Bloom styles (Theme: Bloom)
 i = nxt()   # 72 Butterfly
 sh = ["Ellipse 150,178,72,50 | Fill Color #ColorSoft# | StrokeWidth 3 | Stroke Color #Color# | Rotate -28,150,178",
       "Ellipse 290,178,72,50 | Fill Color #ColorSoft# | StrokeWidth 3 | Stroke Color #Color# | Rotate 28,290,178",
@@ -923,7 +923,7 @@ txt(i, "Time", "[mH]:[mM]", 300, 205, 56, INK, face="Segoe UI Semibold")
 txt(i, "Date", "[mDow], [mDnum]", 300, 252, 16, DIM)
 txt(i, "Mon", "[mMon]", 300, 276, 16, "#Color#")
 
-# ---- boy styles (Theme: Boy)
+# ---- Volt styles (Theme: Volt)
 i = nxt()   # 78 Rocket
 ox = -95
 shpx(i, "Rocket", [circle(60, 120, 2, "#InkMid#"), circle(150, 80, 3, "#InkMid#"), circle(40, 260, 2, "#InkMid#"),
@@ -1282,7 +1282,7 @@ ContextAction15=[!ActivateConfig "#CURRENTCONFIG#\\Gallery" "Gallery.ini"]
 [Metadata]
 Name=Adaptive Clock
 Author=Amika Alankara
-Version=4.4
+Version=4.5
 Description=91 clock styles, coder (19 languages) / everyday profiles, girl / boy themes, 10 languages, weather, timer and more.
 
 [Variables]

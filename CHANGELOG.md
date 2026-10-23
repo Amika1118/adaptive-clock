@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.5
+- Themes renamed: *Girl* is now **Bloom** and *Boy* is now **Volt** (Neutral shows as *Classic* in Settings). Existing `Theme=Girl` / `Theme=Boy`
+  settings keep working.
+- The 20 themed clocks have new names: Blossom, Heartbeat, Pastel Bars, Stardust, Flutter, Cloud Nine, Daisy Chain, Ribbon, Spectrum, Lunar Glow
+  (Bloom) and Radar Sweep, Orbit, Redline, Match Day, Launch, Kickoff, Neon Drive, Level Up, Grid Start, Crest (Volt).
+- README: the screenshots section was taken out again.
+
 ## 4.4
 - **Coding clocks rebuilt as IDE scenes** (19 languages): tabs with language badges, syntax-coloured code with the time inside it,
   a debugger line and breakpoint that step through the code every second, minimap, a console that runs the program and prints the

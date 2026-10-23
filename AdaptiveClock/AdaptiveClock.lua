@@ -1,4 +1,4 @@
--- AdaptiveClock.lua  v4.4   (Rainmeter 4.x, Lua 5.1)
+-- AdaptiveClock.lua  v4.5   (Rainmeter 4.x, Lua 5.1)
 -- Author: Amika Alankara  (MIT License)
 --
 -- One file, many small jobs. Each Script measure in the .ini picks its job with  Mode=
@@ -34,14 +34,14 @@ local NAMES = {
   'Line tracks', 'Dash ring', 'Gauges', 'Neon', '24-hour dial', 'Split', 'Analog + digital', 'Phrase', 'Pulse',
   'Terminal', 'Live preview', 'Hex clock', 'Binary dots', 'System monitor', 'Epoch and ISO', 'Git log',
   'Greeting', 'Month calendar', 'Year progress', 'Sticky note', 'Week strip',
-  'Petals', 'Heart', 'Pastel pills', 'Starlight',
-  'Radar', 'Planet orbit', 'Speedometer', 'Scoreboard',
+  'Blossom', 'Heartbeat', 'Pastel Bars', 'Stardust',
+  'Radar Sweep', 'Orbit', 'Redline', 'Match Day',
   'Flip clock', 'Minimal analog', 'Tiles', 'Aurora',
   'Weather', 'Sun times', 'Battery', 'Timer and alarm',
   'Python', 'JavaScript', 'TypeScript', 'Java', 'C', 'C++', 'C#', 'Go', 'Rust', 'PHP', 'Ruby', 'Swift', 'Kotlin',
   'SQL', 'HTML', 'Bash', 'PowerShell', 'Lua', 'Dart',
-  'Butterfly', 'Cloud', 'Daisy', 'Bow', 'Rainbow', 'Moonlight',
-  'Rocket', 'Pitch', 'Synthwave', 'Game HUD', 'Race lights', 'Shield',
+  'Flutter', 'Cloud Nine', 'Daisy Chain', 'Ribbon', 'Spectrum', 'Lunar Glow',
+  'Launch', 'Kickoff', 'Neon Drive', 'Level Up', 'Grid Start', 'Crest',
   'Nixie', 'Vinyl', 'Compass', 'Waves', 'Zen circle', 'Day bar', 'Moon phase', 'Skyline',
   'Dot matrix', 'Matrix rain', 'CI pipeline', 'Stack trace', 'Hexdump', 'Neofetch', 'htop', 'Test runner',
 }
@@ -52,9 +52,9 @@ for i = 25, 31 do TAGS[i] = 'code' end      -- Profile: All or Coder
 for i = 53, 71 do TAGS[i] = 'code' end      -- one editor window per programming language
 for i = 92, 99 do TAGS[i] = 'code' end
 for i = 32, 36 do TAGS[i] = 'easy' end      -- Profile: All or Everyday
-for i = 37, 40 do TAGS[i] = 'girl' end      -- Theme: Girl
+for i = 37, 40 do TAGS[i] = 'girl' end      -- Theme: Bloom
 for i = 72, 77 do TAGS[i] = 'girl' end
-for i = 41, 44 do TAGS[i] = 'boy' end       -- Theme: Boy
+for i = 41, 44 do TAGS[i] = 'boy' end       -- Theme: Volt
 for i = 78, 83 do TAGS[i] = 'boy' end
 TAGS[7], TAGS[23] = 'en', 'en'              -- word clocks: English only
 
@@ -164,11 +164,18 @@ local function var(name, default) return SKIN:GetVariable(name, default) end
 local function profile() return var('Profile', 'All') end
 local function is12h() return var('HourFormat', '%H') ~= '%H' end
 
+local function theme()                          -- Neutral | Bloom | Volt   (the old names Girl / Boy still work)
+  local t = var('Theme', 'Neutral')
+  if t == 'Girl' then return 'Bloom' end
+  if t == 'Boy' then return 'Volt' end
+  return t
+end
+
 -- ---------------------------------------------------------------- colours
 
 local PAL = {
-  Girl = { c = '255,105,180', c2 = '187,134,252' },
-  Boy  = { c = '56,152,255',  c2 = '0,224,208' },
+  Bloom = { c = '255,105,180', c2 = '187,134,252' },
+  Volt  = { c = '56,152,255',  c2 = '0,224,208' },
 }
 
 local CODE = {                                  -- role colours of the editor / terminal windows
@@ -199,7 +206,7 @@ local function accent()
 
   local luma   = wallpaperLuma()
   local cm     = var('ColorMode', 'Invert')            -- Invert | Accent | White | Black   (text / ink colour)
-  local th     = var('Theme', 'Neutral')               -- Neutral | Girl | Boy               (accent palette)
+  local th     = theme()                               -- Neutral | Bloom | Volt             (accent palette)
   local pal    = PAL[th]
   local bright = wasBright or false                    -- small hysteresis so a mid-grey wallpaper does not flicker
   if luma then
@@ -272,11 +279,11 @@ end
 local function allowed(i)
   local tag = TAGS[i]
   if not tag then return true end
-  local p, th = profile(), var('Theme', 'Neutral')
+  local p, th = profile(), theme()
   if tag == 'code' then return p ~= 'Everyday' end
   if tag == 'easy' then return p ~= 'Coder' end
-  if tag == 'girl' then return th == 'Girl' end
-  if tag == 'boy'  then return th == 'Boy' end
+  if tag == 'girl' then return th == 'Bloom' end
+  if tag == 'boy'  then return th == 'Volt' end
   if tag == 'en'   then local l = var('Language', 'Windows'); return l == 'English' or l == 'Windows' end
   return true
 end
@@ -372,10 +379,10 @@ function CycleQuoteRate()   cycleVar('QuoteMinutes', { 1440, 60, 30, 10 }, '1440
 function CycleColors()      cycleVar('ColorMode', { 'Invert', 'Accent', 'White', 'Black' }, 'Invert') end
 function CycleShuffle()     cycleVar('ShuffleMinutes', { 60, 30, 15, 5, 1440 }, '60') end
 function CycleProfile()     cycleVar('Profile', { 'All', 'Coder', 'Everyday' }, 'All') end
-function CycleTheme()       cycleVar('Theme', { 'Neutral', 'Girl', 'Boy' }, 'Neutral') end
+function CycleTheme()       cycleVar('Theme', { 'Neutral', 'Bloom', 'Volt' }, 'Neutral') end
 function CycleLanguage()    cycleVar('Language', { 'Windows', 'English', 'Spanish', 'French', 'German', 'Portuguese', 'Italian', 'Sinhala', 'Tamil', 'Hindi', 'Japanese' }, 'Windows') end
 
--- Used by the Settings skin:  [!CommandMeasure mMain "Set('Theme','Girl')" "AdaptiveClock"]
+-- Used by the Settings skin:  [!CommandMeasure mMain "Set('Theme','Bloom')" "AdaptiveClock"]
 local SETTABLE = { Profile = 1, Theme = 1, ColorMode = 1, ShuffleMinutes = 1, QuoteMinutes = 1, QuoteHidden = 1,
   QuoteStyle = 1, HourFormat = 1, Language = 1, WeekStart = 1, Smooth = 1, TempUnit = 1, WeatherOff = 1,
   PomoWork = 1, PomoBreak = 1, TimerBeep = 1, CodeTheme = 1 }
