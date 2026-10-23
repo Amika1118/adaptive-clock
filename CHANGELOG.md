@@ -1,5 +1,16 @@
 # Changelog
 
+## 4.4
+- **Coding clocks rebuilt as IDE scenes** (19 languages): tabs with language badges, syntax-coloured code with the time inside it,
+  a debugger line and breakpoint that step through the code every second, minimap, a console that runs the program and prints the
+  time, and a status bar with `Ln` / `Col`.
+- 8 new coder clocks: Dot matrix, Matrix rain, CI pipeline, Stack trace, Hexdump, Neofetch, htop, Test runner (99 styles in total).
+  Code editor is now Live preview (code on the left, a browser preview on the right); Terminal and Git log are larger and livelier.
+- **Layout fixes** found with the new preview tool: text that collided or ran past its card or panel in Date card, Stacked digits,
+  Digital, Epoch, Greeting, Sticky note, Split, World time, 24-hour dial, Speedometer, Scoreboard, Flip clock, Tiles, Aurora,
+  Weather, Battery, Timer, Rainbow, Synthwave (lines left the panel), Skyline (half ring leaked into the quote) and Race lights.
+- `tools/preview.py`: renders every style from the generated `.ini` and warns about overlaps; contact sheets are in `docs/`.
+
 ## 4.3
 - The Now Playing widget and its settings were removed.
 - The pop-up tooltip over the clock is gone (double-click for the next style still works).

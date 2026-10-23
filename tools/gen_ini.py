@@ -93,7 +93,7 @@ txt(i, "Date", "[mDnum]  [mMonS]", 240, 100, 44, "245,245,245", align="Left")
 i = 3
 shp(i, "Ring", [circle(220, 220, 170, sw=2, stroke="#ColorMid#"),
                 mdot(220, 220, 170, "#HourRad#", 6, "#Color#")])
-txt(i, "Title", "[mLblWorld]", 220, 140, 36, "245,245,245", face="Segoe UI Semibold")
+txt(i, "Title", "[mLblWorld]", 220, 128, 30, "245,245,245", face="Segoe UI Semibold")
 txt(i, "Names", "[mWName]", 100, 235, 13, "235,235,235", align="LeftCenter", face="Segoe UI")
 txt(i, "Days", "[mWDay]", 220, 235, 13, "#ColorDim#", align="CenterCenter", face="Segoe UI")
 txt(i, "Times", "[mWTime]", 340, 235, 13, "235,235,235", align="RightCenter", face="Segoe UI")
@@ -144,7 +144,7 @@ shp(i, "Line", [tick(0, 0, 0, 0, 0, 0, "0,0,0,0").replace("Line 0.0,0.0,0.0,0.0"
 
 # ------------------------------------------------------------------ 8  Digital
 i = 8
-txt(i, "Time", "[mH]:[mM]", 220, 190, 130, "245,245,245")
+txt(i, "Time", "[mH]:[mM]", 220, 190, 112, "245,245,245")
 txt(i, "Sec", "[mS]", 220, 285, 36, "#Color#")
 txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 345, 20, "#ColorDim#")
 
@@ -205,15 +205,15 @@ txt(i, "Time", "[mH]:[mM]", 220, 365, 60, "245,245,245")
 
 # ------------------------------------------------------------------ 14  Stack
 i = 14
-txt(i, "H", "[mH]", 220, 150, 170, "245,245,245", face="Segoe UI Semibold")
-txt(i, "M", "[mM]", 220, 320, 170, "#Color#")
+txt(i, "H", "[mH]", 220, 155, 132, "245,245,245", face="Segoe UI Semibold")
+txt(i, "M", "[mM]", 220, 325, 132, "#Color#")
 txt(i, "Date", "[mDowS] [mDnum] [mMonS]", 30, 30, 16, "#ColorDim#", align="Left", face="Segoe UI")
 
 # ------------------------------------------------------------------ 15  Date card
 i = 15
 txt(i, "Dow", "[mDow]", 220, 80, 24, "#ColorDim#", style="Bold", face="Segoe UI", StringCase="Upper")
-txt(i, "Day", "[mDnum]", 220, 195, 200, "#Color#", face="Segoe UI Semibold")
-txt(i, "Mon", "[mMon] [mYear]", 220, 315, 30, "245,245,245")
+txt(i, "Day", "[mDnum]", 220, 208, 148, "#Color#", face="Segoe UI Semibold")
+txt(i, "Mon", "[mMon] [mYear]", 220, 322, 28, "245,245,245")
 txt(i, "Time", "[mH]:[mM]", 220, 375, 40, "#ColorDim#")
 
 # ------------------------------------------------------------------ 16  Line tracks
@@ -268,17 +268,16 @@ for h in range(0, 24, 3):
     a = h / 24 * 2 * PI - PI / 2
     txt(i, f"N{h}", str(h), f"{220+140*cos(a):.1f}", f"{220+140*sin(a):.1f}", 16, "#ColorDim#", face="Segoe UI")
 hand(i, "Hand", 220, 220, 125, "mDayF", 3, "#Color#")
-txt(i, "Time", "[mH]:[mM]", 220, 290, 30, "245,245,245")
-txt(i, "Date", "[mDowS] [mDnum] [mMonS]", 220, 320, 14, "#ColorDim#")
+txt(i, "Time", "[mH]:[mM]   [mDowS] [mDnum] [mMonS]", 220, 414, 17, "245,245,245")
 
 # ------------------------------------------------------------------ 21  Split
 i = 21
 shp(i, "Line", ["Line 220,100,220,340 | StrokeWidth 2 | Stroke Color #ColorMid#"])
 txt(i, "Dow", "[mDow]", 205, 135, 26, "#ColorDim#", align="RightCenter")
-txt(i, "Day", "[mDnum]", 205, 215, 100, "245,245,245", align="RightCenter", face="Segoe UI Semibold")
+txt(i, "Day", "[mDnum]", 205, 215, 86, "245,245,245", align="RightCenter", face="Segoe UI Semibold")
 txt(i, "Mon", "[mMon]", 205, 295, 26, "#ColorDim#", align="RightCenter")
-txt(i, "H", "[mH]", 235, 175, 100, "245,245,245", align="LeftCenter")
-txt(i, "M", "[mM]", 235, 275, 100, "#Color#", align="LeftCenter")
+txt(i, "H", "[mH]", 235, 168, 84, "245,245,245", align="LeftCenter")
+txt(i, "M", "[mM]", 235, 272, 84, "#Color#", align="LeftCenter")
 
 # ------------------------------------------------------------------ 22  Analog + digital
 i = 22
@@ -365,27 +364,42 @@ def window(i, x, y, w, h, title, bg=TBG):
 
 # ---- 25 Terminal (coder)
 i = 25
-window(i, 30, 95, 380, 250, "bash - clock")
-txt(i, "L1", "user@clock:~$ date", 48, 148, 13, GREEN, align="LeftCenter", face="Consolas")
-txt(i, "L2", "[mH]:[mM]:[mS]", 220, 192, 42, "230,237,243", face="Consolas")
-txt(i, "L3", "[mDowS] [mMonS] [mDnum] [mYear]", 48, 238, 13, GREY, align="LeftCenter", face="Consolas")
-txt(i, "L4", "user@clock:~$ uptime", 48, 272, 13, GREEN, align="LeftCenter", face="Consolas")
-txt(i, "L5", "up [mUptime]", 48, 296, 13, BLUE, align="LeftCenter", face="Consolas")
-txt(i, "L6", "user@clock:~$ [mCursor]", 48, 322, 13, GREEN, align="LeftCenter", face="Consolas")
+window(i, 14, 92, 412, 322, "bash - clock")
+txt(i, "L1", "user@clock:~$ date", 34, 140, 13, GREEN, align="LeftCenter", face="Consolas")
+txt(i, "L2", "[mH]:[mM]:[mS]", 220, 192, 50, "#CTfunc#", face="Consolas", style="Bold")
+txt(i, "L3", "[mDow] [mMon] [mDnum] [mYear]", 220, 236, 13, GREY, face="Consolas")
+txt(i, "L4", "user@clock:~$ uptime", 34, 276, 13, GREEN, align="LeftCenter", face="Consolas")
+txt(i, "L5", " up [mUptime],  cpu [mCPU:0]%,  ram [mRAM:%]%", 34, 302, 12, BLUE, align="LeftCenter", face="Consolas")
+txt(i, "L6", "user@clock:~$ [mCursor]", 34, 340, 13, GREEN, align="LeftCenter", face="Consolas")
 
-# ---- 26 Code editor (coder)
+# ---- 26 Live preview (coder)
 i = 26
-shp(i, "Win", [rrect(30, 95, 380, 255, 10, "#CTbg#", 1, "#InkSoft#"), rrect(30, 95, 380, 30, 10, "#CTbar#"),
-               rrect(30, 110, 380, 15, 0, "#CTbar#"), rrect(40, 95, 92, 30, 0, "#CTbg#"),
-               "Line 40,96,132,96 | StrokeWidth 2 | Stroke Color #CTstatus#"])
-txt(i, "Tab", "clock.js", 86, 111, 11, "#CTtext#", face="Segoe UI")
-code = [("// clock.js", "#CTcomment#"), ('const time = "[mH]:[mM]";', "#CTtype#"),
-        ('const date = "[mDowS] [mDnum] [mMonS]";', "#CTstring#"), ("let focus = true;", "#CTkeyword#"),
-        ("tick(); // [mS]s", "#CTfunc#"), ("export default time;", "#CTnumber#")]
-for n, (line, col) in enumerate(code):
-    y = 150 + n * 30
-    txt(i, f"N{n}", str(n + 1), 62, y, 13, "#CTnum#", align="RightCenter", face="Consolas")
-    txt(i, f"C{n}", line, 76, y, 14, col, align="LeftCenter", face="Consolas")
+x0, y0, w = 14, 86, 412
+shp(i, "Win", [rrect(x0, y0, w, 330, 10, "#CTbg#", 1, "#InkSoft#"), rrect(x0, y0, w, 26, 10, "#CTbar#"), rrect(x0, y0 + 13, w, 13, 0, "#CTbar#"),
+               circle(x0 + 16, y0 + 13, 4.5, "255,95,86"), circle(x0 + 32, y0 + 13, 4.5, "255,189,46"), circle(x0 + 48, y0 + 13, 4.5, "39,201,63"),
+               rrect(x0, y0 + 26, 206, 26, 0, "#CTbar#,170"), rrect(x0 + 8, y0 + 27, 92, 25, 0, "#CTbg#"),
+               f"Line {x0+8},{y0+28},{x0+100},{y0+28} | StrokeWidth 2 | Stroke Color #CTstatus#",
+               rrect(x0, y0 + 304, w, 26, 10, "#CTstatus#"), rrect(x0, y0 + 304, w, 13, 0, "#CTstatus#"),
+               f"Line {x0+206},{y0+26},{x0+206},{y0+304} | StrokeWidth 1 | Stroke Color #InkSoft#",
+               rrect(x0 + 216, y0 + 62, 180, 232, 8, "250,250,252", 1, "200,200,210"),
+               rrect(x0 + 216, y0 + 62, 180, 26, 8, "232,234,240"), rrect(x0 + 216, y0 + 76, 180, 12, 0, "232,234,240"),
+               rrect(x0 + 226, y0 + 68, 160, 14, 7, "250,250,252"),
+               rrect(x0 + 236, y0 + 214, 140, 7, 3, "225,227,238"), rrect(x0 + 236, y0 + 214, "(6+134*[mSecF])", 7, 3, "79,70,229"),
+               circle(x0 + 224, y0 + 75, 3, "255,95,86"), circle(x0 + 235, y0 + 75, 3, "255,189,46")])
+txt(i, "Title", "Live Server - port 5500", x0 + w / 2, y0 + 13, 9, "#CTcomment#", face="Segoe UI")
+txt(i, "Tab", "index.html", x0 + 54, y0 + 39.5, 10, "#CTtext#", face="Segoe UI")
+txt(i, "Url", "localhost:5500", x0 + 306, y0 + 75, 8, "110,114,130", face="Segoe UI")
+lines = [("<!-- clock -->", "comment"), ("<style>", "keyword"), ("h1 { color: indigo }", "string"), ("</style>", "keyword"),
+         ("<h1>[mH]:[mM]</h1>", "func"), ("<p>[mDowS] [mDnum]</p>", "text"), ('<meter value="[mS]">', "number")]
+for n, (line, role) in enumerate(lines):
+    y = y0 + 70 + n * 30
+    txt(i, f"N{n}", str(n + 1), x0 + 28, y, 11, "#CTnum#", align="RightCenter", face="Consolas")
+    txt(i, f"C{n}", line, x0 + 38, y, 11, f"#CT{role}#", align="LeftCenter", face="Consolas")
+txt(i, "PreTime", "[mH]:[mM]", x0 + 306, y0 + 150, 44, "30,34,48", face="Segoe UI Semibold")
+txt(i, "PreDate", "[mDow], [mDnum] [mMon]", x0 + 306, y0 + 190, 11, "100,104,120", face="Segoe UI")
+txt(i, "PreSec", "[mS] s", x0 + 306, y0 + 240, 10, "79,70,229", face="Consolas", style="Bold")
+txt(i, "Status", "Go Live", x0 + 14, y0 + 317, 10, "250,250,250", align="LeftCenter", face="Segoe UI", style="Bold")
+txt(i, "Pos", "HTML    UTF-8", x0 + w - 12, y0 + 317, 10, "250,250,250", align="RightCenter", face="Segoe UI")
 
 # ---- 27 Hex clock (coder)
 i = 27
@@ -435,26 +449,28 @@ txt(i, "Date", "[mDow], [mDnum] [mMon] [mYear]", 220, 385, 14, DIM, face="Consol
 # ---- 30 Epoch and ISO (coder)
 i = 30
 txt(i, "L1", "UNIX TIME", 220, 120, 12, "#Color#", face="Segoe UI", style="Bold")
-txt(i, "Epoch", "[mEpoch]", 220, 175, 62, INK, face="Consolas")
+txt(i, "Epoch", "[mEpoch]", 220, 175, 50, INK, face="Consolas")
 txt(i, "L2", "ISO 8601", 220, 250, 12, "#Color#", face="Segoe UI", style="Bold")
 txt(i, "Iso", "[mISO]", 220, 288, 25, INK, face="Consolas")
 txt(i, "Sha", "commit [mSha]", 220, 345, 16, DIM, face="Consolas")
 
 # ---- 31 Git log (coder)
 i = 31
-window(i, 30, 95, 380, 250, "git log --oneline")
+window(i, 14, 92, 412, 322, "git log --oneline --graph")
+shp(i, "Graph", ["Line 40,138,40,318 | StrokeWidth 2 | Stroke Color #CTcomment#"] + [circle(40, 140 + k * 40, 5, "#CTkeyword#") for k in range(5)])
 for k in range(5):
-    y = 148 + k * 38
-    txt(i, f"H{k}", f"[mLogHash{k}]", 48, y, 15, AMBER, align="LeftCenter", face="Consolas")
-    txt(i, f"M{k}", f"tick: [mLogTime{k}]", 138, y, 15, TXT, align="LeftCenter", face="Consolas")
-txt(i, "Head", "HEAD", 395, 148, 12, GREEN, align="RightCenter", face="Consolas", style="Bold")
+    y = 140 + k * 40
+    txt(i, f"H{k}", f"[mLogHash{k}]", 58, y, 13, AMBER, align="LeftCenter", face="Consolas")
+    txt(i, f"M{k}", f"tick: [mLogTime{k}]", 148, y, 13, TXT, align="LeftCenter", face="Consolas")
+txt(i, "Head", "HEAD -> main", 404, 140, 10, GREEN, align="RightCenter", face="Consolas", style="Bold")
+txt(i, "Big", "[mH]:[mM]:[mS]", 220, 366, 26, "#CTfunc#", face="Consolas", style="Bold")
 
 # ---- 32 Greeting (everyday)
 i = 32
 txt(i, "Icon", "[mGreetIcon]", 220, 120, 64, "#Color#", face="Segoe UI Symbol")
-txt(i, "Greet", "[mGreet]", 220, 195, 38, INK)
-txt(i, "Time", "[mH]:[mM]", 220, 275, 84, INK, face="Segoe UI Semibold")
-txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 350, 18, DIM)
+txt(i, "Greet", "[mGreet]", 220, 188, 34, INK)
+txt(i, "Time", "[mH]:[mM]", 220, 284, 80, INK, face="Segoe UI Semibold")
+txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 364, 18, DIM)
 txt(i, "AP", "[mAmPm]", 395, 252, 16, DIM)
 
 # ---- 33 Month calendar (everyday)
@@ -480,9 +496,9 @@ txt(i, "Date", "[mDow], [mDnum] [mMon]  -  [mH]:[mM]", 220, 372, 16, DIM)
 i = 35
 shp(i, "Note", [rrect(62, 112, 330, 300, 4, "0,0,0,50"), rrect(55, 105, 330, 300, 4, "255,236,128"),
                 circle(220, 112, 9, "214,64,64", 1, "150,30,30")])
-txt(i, "Dow", "[mDow]", 220, 160, 28, "100,80,30", face="Segoe UI Semibold")
-txt(i, "Day", "[mDnum]", 220, 248, 112, "80,64,20", face="Segoe UI Semibold")
-txt(i, "Mon", "[mMon]", 220, 328, 28, "100,80,30")
+txt(i, "Dow", "[mDow]", 220, 150, 28, "100,80,30", face="Segoe UI Semibold")
+txt(i, "Day", "[mDnum]", 220, 240, 92, "80,64,20", face="Segoe UI Semibold")
+txt(i, "Mon", "[mMon]", 220, 322, 28, "100,80,30")
 txt(i, "Time", "[mH]:[mM]", 220, 372, 30, "90,72,24")
 
 # ---- 36 Week strip (everyday)
@@ -585,8 +601,8 @@ for k in range(0, 13, 2):
     txt(i, f"N{k}", str(k * 5), f"{220+114*cos(a):.1f}", f"{230+114*sin(a):.1f}", 13, DIM, face="Segoe UI")
 hand(i, "Needle", 220, 230, 128, "mMinF", 4, "#Color2#", start=g0, rot=gr)
 shp(i, "Hub", [circle(220, 230, 10, "#Color2#")])
-txt(i, "Time", "[mH]:[mM]", 220, 335, 50, INK, face="Segoe UI Semibold")
-txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 378, 15, DIM)
+txt(i, "Time", "[mH]:[mM]", 220, 372, 44, INK, face="Segoe UI Semibold")
+txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 412, 15, DIM)
 
 # ---- 44 Scoreboard (boy)
 i = 44
@@ -594,17 +610,17 @@ shp(i, "Panel", [rrect(40, 115, 360, 235, 16, "18,22,30,245", 2, "60,66,81")] +
     [circle(x, y, 4, "60,66,81") for x, y in ((58, 133), (382, 133), (58, 332), (382, 332))])
 txt(i, "Head", "MATCH CLOCK", 220, 143, 12, "150,160,176", face="Segoe UI", style="Bold")
 txt(i, "Sec", "SEC [mS]", 360, 143, 12, "255,184,0", face="Consolas")
-txt(i, "H", "[mH]", 130, 232, 104, "255,184,0", face="Consolas", style="Bold")
-txt(i, "Colon", ":", 220, 224, 80, "255,184,0", face="Consolas", style="Bold")
-txt(i, "M", "[mM]", 310, 232, 104, "255,184,0", face="Consolas", style="Bold")
+txt(i, "H", "[mH]", 130, 232, 90, "255,184,0", face="Consolas", style="Bold")
+txt(i, "Colon", ":", 220, 224, 70, "255,184,0", face="Consolas", style="Bold")
+txt(i, "M", "[mM]", 310, 232, 90, "255,184,0", face="Consolas", style="Bold")
 txt(i, "Date", "[mDow] [mDnum] [mMon]", 220, 318, 16, "150,160,176", face="Consolas")
 
 # ---- 45 Flip clock
 i = 45
 shp(i, "Cards", [rrect(55, 135, 150, 190, 18, "28,28,32"), rrect(235, 135, 150, 190, 18, "28,28,32"),
                  "Line 55,230,205,230 | StrokeWidth 3 | Stroke Color 8,8,10", "Line 235,230,385,230 | StrokeWidth 3 | Stroke Color 8,8,10"])
-txt(i, "H", "[mH]", 130, 230, 120, "250,250,250", face="Segoe UI Semibold")
-txt(i, "M", "[mM]", 310, 230, 120, "250,250,250", face="Segoe UI Semibold")
+txt(i, "H", "[mH]", 130, 230, 84, "250,250,250", face="Segoe UI Semibold")
+txt(i, "M", "[mM]", 310, 230, 84, "250,250,250", face="Segoe UI Semibold")
 txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 100, 18, DIM)
 txt(i, "Sec", "[mS]", 220, 360, 22, INK)
 txt(i, "AP", "[mAmPm]", 130, 352, 14, DIM)
@@ -625,7 +641,7 @@ i = 47
 shp(i, "Tiles", [rrect(30, 100, 260, 150, 10, "#ColorSoft#"), rrect(300, 100, 110, 150, 10, "#Color2Soft#"),
                  rrect(30, 260, 125, 120, 10, "#Color2Soft#"), rrect(165, 260, 125, 120, 10, "#ColorSoft#"),
                  rrect(300, 260, 110, 120, 10, "#ColorSoft#")])
-txt(i, "T", "[mH]:[mM]", 160, 165, 78, INK, face="Segoe UI Semibold")
+txt(i, "T", "[mH]:[mM]", 160, 165, 62, INK, face="Segoe UI Semibold")
 txt(i, "TD", "[mDow]", 160, 226, 16, DIM)
 txt(i, "D1", "[mDowS]", 355, 128, 16, DIM)
 txt(i, "D2", "[mDnum]", 355, 188, 64, INK, face="Segoe UI Semibold")
@@ -640,7 +656,7 @@ txt(i, "S2", "[mLblSecondsLow]", 355, 348, 13, DIM)
 i = 48
 shpx(i, "Card", [rrect(40, 110, 360, 270, 32, "0,0,0,0")], Shape="Rectangle 40,110,360,270,32 | Fill LinearGradient AuroraGrad | StrokeWidth 0",
      AuroraGrad="135 | #GradA# ; 0.0 | #GradB# ; 1.0")
-txt(i, "Time", "[mH]:[mM]", 220, 225, 112, "250,250,250", face="Segoe UI Semibold",
+txt(i, "Time", "[mH]:[mM]", 220, 225, 84, "250,250,250", face="Segoe UI Semibold",
     StringEffect="Shadow", FontEffectColor="0,0,0,60")
 txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 312, 20, "250,250,250")
 shp(i, "Bar", [rrect(80, 346, 280, 6, 3, "250,250,250,70"), rrect(80, 346, "(6+274*[mSecF])", 6, 3, "250,250,250,230")])
@@ -667,7 +683,7 @@ def button(i, name, cx, cy, r, text, action, fs=16):
 
 # 49 Weather
 i = 49
-txt(i, "Icon", "[mWxIcon]", 220, 125, 72, "#Color#", face="Segoe UI Symbol")
+txt(i, "Icon", "[mWxIcon]", 220, 106, 54, "#Color#", face="Segoe UI Symbol")
 txt(i, "Temp", "[mWxTempTxt]", 220, 215, 88, INK, face="Segoe UI Semibold")
 txt(i, "Text", "[mWxText]", 220, 285, 20, DIM, W=380, ClipString=2, H=48)
 txt(i, "Time", "[mH]:[mM]", 220, 342, 40, INK)
@@ -694,7 +710,7 @@ hand(i, "Prog", 220, 215, 160, "mBatPct", 1, "#Color#", lstart=145, solid=1)
 txt(i, "Pct", "[mBatPct:0]%", 220, 205, 84, INK, face="Segoe UI Semibold")
 txt(i, "State", "[mBatTxt]", 220, 270, 18, "#Color#")
 txt(i, "Time", "[mH]:[mM]", 220, 330, 44, INK)
-txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 378, 15, DIM)
+txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 406, 15, DIM)
 
 # 52 Timer and alarm (click the buttons)
 i = 52
@@ -705,11 +721,11 @@ txt(i, "Left", "#PomoText#", 220, 195, 76, INK)
 button(i, "Reset", 165, 262, 17, "R", '[!CommandMeasure mMain "PomoReset()"]', 12)
 button(i, "Go", 220, 262, 26, "#PomoBtn#", '[!CommandMeasure mMain "PomoToggle()"]', 16)
 button(i, "Skip", 275, 262, 17, ">>", '[!CommandMeasure mMain "PomoSkip()"]', 11)
-txt(i, "Alarm", "#AlarmText#", 220, 352, 17, INK, face="Segoe UI Semibold",
+txt(i, "Alarm", "#AlarmText#", 220, 374, 17, INK, face="Segoe UI Semibold",
     LeftMouseUpAction='[!CommandMeasure mMain "AlarmClick()"]')
-button(i, "Minus", 150, 392, 17, "-15", '[!CommandMeasure mMain "AlarmAdd(-15)"]', 11)
-button(i, "Plus", 290, 392, 17, "+15", '[!CommandMeasure mMain "AlarmAdd(15)"]', 11)
-txt(i, "Time", "[mH]:[mM]", 220, 392, 16, DIM)
+button(i, "Minus", 150, 414, 17, "-15", '[!CommandMeasure mMain "AlarmAdd(-15)"]', 11)
+button(i, "Plus", 290, 414, 17, "+15", '[!CommandMeasure mMain "AlarmAdd(15)"]', 11)
+txt(i, "Time", "[mH]:[mM]", 220, 414, 16, DIM)
 
 # ================================================================== v4.3: more clocks (53-91)
 for _nm, _md in [("mMoonIcon", "moonIcon"), ("mMoonName", "moonName"), ("mMoonPct", "moonPct"), ("mMoonF", "moonF")]:
@@ -720,63 +736,122 @@ def nxt():
     SEQ[0] += 1
     return SEQ[0]
 
-# ---- coder styles: one editor window per programming language (colours come from the CodeTheme setting)
+# ---- coder styles: one IDE scene per programming language (v4.4)
+for _nm, _md in [("mSecN", "secN")]:
+    lmeas(_nm, _md)
+meas("mLn8", "Calc", Formula="([mSecN]%8)+1")
+for _k in range(4):
+    lmeas(f"mCi{_k}", "ciStatus", Index=_k)
+for _k in range(3):
+    lmeas(f"mHx{_k}", "hexRow", Index=_k)
+for _k in range(10):
+    lmeas(f"mRain{_k}", "rain", Index=_k)
+for _k in range(4):
+    meas(f"mCore{_k}", "CPU", Processor=_k + 1)
+
+# name: (badge text, badge colour, badge text colour, run command)
+BADGE = {"Python": ("Py", "55,118,171", "255,222,87", "python clock.py"), "JavaScript": ("JS", "247,223,30", "30,30,30", "node clock.js"),
+         "TypeScript": ("TS", "49,120,198", "250,250,250", "ts-node clock.ts"), "Java": ("Jv", "232,111,0", "250,250,250", "java Clock"),
+         "C": ("C", "85,107,153", "250,250,250", "gcc clock.c && ./a.out"), "C++": ("C+", "0,89,156", "250,250,250", "g++ clock.cpp && ./a.out"),
+         "C#": ("C#", "104,33,122", "250,250,250", "dotnet run"), "Go": ("Go", "0,173,216", "250,250,250", "go run clock.go"),
+         "Rust": ("Rs", "183,65,14", "250,250,250", "cargo run"), "PHP": ("php", "119,123,179", "20,20,40", "php clock.php"),
+         "Ruby": ("Rb", "204,52,45", "250,250,250", "ruby clock.rb"), "Swift": ("Sw", "240,81,56", "250,250,250", "swift Clock.swift"),
+         "Kotlin": ("Kt", "127,82,255", "250,250,250", "kotlin ClockKt"), "SQL": ("SQL", "0,117,143", "250,250,250", "sqlite3 clock.db < clock.sql"),
+         "HTML": ("<>", "227,79,38", "250,250,250", "open index.html"), "Bash": ("$_", "78,170,37", "250,250,250", "bash clock.sh"),
+         "PowerShell": ("PS", "1,60,130", "250,250,250", "pwsh clock.ps1"), "Lua": ("Lu", "0,0,128", "250,250,250", "lua clock.lua"),
+         "Dart": ("Dt", "1,117,194", "250,250,250", "dart run")}
+
 CODE = [
- ("Python", "clock.py", [("# clock.py", "comment"), ("import time", "keyword"), ('now = "[mH]:[mM]:[mS]"', "string"),
-                         ('day = "[mDowS] [mDnum] [mMonS]"', "string"), ("print(now)", "func"), ("while True: tick()", "text")]),
- ("JavaScript", "clock.js", [("// clock.js", "comment"), ('const time = "[mH]:[mM]";', "string"), ("let sec = [mS];", "number"),
-                             ("console.log(time);", "func"), ("setInterval(tick, 1000);", "func"), ("export default time;", "keyword")]),
- ("TypeScript", "clock.ts", [("// clock.ts", "comment"), ("type Time = string;", "type"), ('const now: Time = "[mH]:[mM]";', "string"),
-                             ("let sec: number = [mS];", "number"), ("console.log(now);", "func"), ("export { now };", "keyword")]),
- ("Java", "Clock.java", [("// Clock.java", "comment"), ("public class Clock {", "keyword"), ('  String time = "[mH]:[mM]";', "string"),
-                         ("  int sec = [mS];", "number"), ("  void tick() { sec++; }", "func"), ("}", "keyword")]),
- ("C", "clock.c", [("/* clock.c */", "comment"), ("#include <time.h>", "keyword"), ('char *t = "[mH]:[mM]";', "string"),
-                   ("int sec = [mS];", "number"), ("puts(t);", "func"), ("return 0;", "keyword")]),
- ("C++", "clock.cpp", [("// clock.cpp", "comment"), ("#include <iostream>", "keyword"), ('auto t = "[mH]:[mM]";', "string"),
-                       ("int s = [mS];", "number"), ("std::cout << t;", "func"), ("return 0;", "keyword")]),
- ("C#", "Clock.cs", [("// Clock.cs", "comment"), ("using System;", "keyword"), ('var time = "[mH]:[mM]";', "string"),
-                     ("int sec = [mS];", "number"), ("Console.WriteLine(time);", "func"), ("// [mDowS] [mDnum] [mMonS]", "comment")]),
- ("Go", "clock.go", [("// clock.go", "comment"), ("package main", "keyword"), ('t := "[mH]:[mM]"', "string"),
-                     ("s := [mS]", "number"), ("fmt.Println(t)", "func"), ("func main() {}", "keyword")]),
- ("Rust", "clock.rs", [("// clock.rs", "comment"), ("fn main() {", "keyword"), ('    let t = "[mH]:[mM]";', "string"),
-                       ("    let s = [mS];", "number"), ("    println!(t);", "func"), ("}", "keyword")]),
- ("PHP", "clock.php", [("<?php // clock.php", "keyword"), ('$time = "[mH]:[mM]";', "string"), ("$sec = [mS];", "number"),
-                       ("echo $time;", "func"), ('echo date("D j M");', "func"), ("?>", "keyword")]),
- ("Ruby", "clock.rb", [("# clock.rb", "comment"), ('time = "[mH]:[mM]"', "string"), ("sec = [mS]", "number"),
-                       ("puts time", "func"), ("sleep 1", "func"), ("# [mDowS] [mDnum] [mMonS]", "comment")]),
- ("Swift", "Clock.swift", [("// Clock.swift", "comment"), ("import Foundation", "keyword"), ('let time = "[mH]:[mM]"', "string"),
-                           ("var sec = [mS]", "number"), ("print(time)", "func"), ("sec += 1", "text")]),
- ("Kotlin", "clock.kt", [("// clock.kt", "comment"), ("fun main() {", "keyword"), ('    val t = "[mH]:[mM]"', "string"),
-                         ("    var s = [mS]", "number"), ("    println(t)", "func"), ("}", "keyword")]),
- ("SQL", "clock.sql", [("-- clock.sql", "comment"), ("SELECT '[mH]:[mM]' AS time,", "keyword"), ("       [mS] AS seconds,", "number"),
-                       ("       '[mDowS] [mDnum]' AS day", "string"), ("FROM clock;", "keyword"), ("-- 1 row", "comment")]),
- ("HTML", "index.html", [("<!-- index.html -->", "comment"), ('<h1 class="time">', "keyword"), ("  [mH]:[mM]", "string"),
-                         ("</h1>", "keyword"), ("<p>[mDowS] [mDnum] [mMonS]</p>", "text"), ("<span>[mS]s</span>", "number")]),
- ("Bash", "clock.sh", [("#!/bin/bash", "comment"), ('time="[mH]:[mM]"', "string"), ("sec=[mS]", "number"),
-                       ("echo $time", "func"), ("sleep 1", "func"), ("# [mDowS] [mDnum]", "comment")]),
- ("PowerShell", "clock.ps1", [("# clock.ps1", "comment"), ('$time = "[mH]:[mM]"', "string"), ("$sec = [mS]", "number"),
-                              ("Write-Host $time", "func"), ("Start-Sleep 1", "func"), ("# [mDowS] [mDnum]", "comment")]),
- ("Lua", "clock.lua", [("-- clock.lua", "comment"), ('local t = "[mH]:[mM]"', "string"), ("local s = [mS]", "number"),
-                       ("print(t, s)", "func"), ("return t", "keyword"), ("-- [mDowS] [mDnum]", "comment")]),
- ("Dart", "clock.dart", [("// clock.dart", "comment"), ("void main() {", "keyword"), ('  var t = "[mH]:[mM]";', "string"),
-                         ("  var s = [mS];", "number"), ("  print(t);", "func"), ("}", "keyword")]),
+ ("Python", "clock.py", [("# clock.py", "comment"), ("import time", "keyword"), ("def now() -> str:", "keyword"),
+     ('    return "[mH]:[mM]:[mS]"', "string"), ("while True:", "keyword"), ("    print(now())", "func"), ("    time.sleep(1)", "func"),
+     ("# [mDowS] [mDnum] [mMonS]", "comment")]),
+ ("JavaScript", "clock.js", [("// clock.js", "comment"), ("const now = () =>", "keyword"), ('  "[mH]:[mM]:[mS]";', "string"),
+     ("setInterval(() => {", "func"), ("  console.log(now());", "func"), ("}, 1000);", "func"), ("export default now;", "keyword"),
+     ("// [mDowS] [mDnum] [mMonS]", "comment")]),
+ ("TypeScript", "clock.ts", [("// clock.ts", "comment"), ("type Clock = () => string;", "type"), ("const now: Clock = () =>", "keyword"),
+     ('  "[mH]:[mM]:[mS]";', "string"), ("let ticks: number = [mS];", "number"), ("setInterval(() => ticks++, 1000);", "func"),
+     ("console.log(now());", "func"), ("export type { Clock };", "keyword")]),
+ ("Java", "Clock.java", [("// Clock.java", "comment"), ("public class Clock {", "keyword"), ("  static String now() {", "keyword"),
+     ('    return "[mH]:[mM]:[mS]";', "string"), ("  }", "text"), ("  static void main() {", "keyword"),
+     ("    System.out.println(now());", "func"), ("}", "keyword")]),
+ ("C", "clock.c", [("/* clock.c */", "comment"), ("#include <stdio.h>", "keyword"), ("int main(void) {", "keyword"),
+     ('  char *t = "[mH]:[mM]:[mS]";', "string"), ("  int sec = [mS];", "number"), ("  puts(t);", "func"),
+     ("  return 0;", "keyword"), ("}", "keyword")]),
+ ("C++", "clock.cpp", [("// clock.cpp", "comment"), ("#include <iostream>", "keyword"), ("int main() {", "keyword"),
+     ('  auto t = "[mH]:[mM]:[mS]";', "string"), ("  int s = [mS];", "number"), ("  std::cout << t << std::endl;", "func"),
+     ("  return 0;", "keyword"), ("}", "keyword")]),
+ ("C#", "Clock.cs", [("// Clock.cs", "comment"), ("using System;", "keyword"), ("class Clock {", "keyword"),
+     ("  static void Main() {", "keyword"), ('    var t = "[mH]:[mM]:[mS]";', "string"), ("    Console.WriteLine(t);", "func"),
+     ("  }", "text"), ("}", "keyword")]),
+ ("Go", "clock.go", [("// clock.go", "comment"), ("package main", "keyword"), ('import "fmt"', "keyword"), ("func main() {", "keyword"),
+     ('  t := "[mH]:[mM]:[mS]"', "string"), ("  s := [mS]", "number"), ("  fmt.Println(t, s)", "func"), ("}", "keyword")]),
+ ("Rust", "clock.rs", [("// clock.rs", "comment"), ("fn main() {", "keyword"), ('    let t = "[mH]:[mM]:[mS]";', "string"),
+     ("    let s: u32 = [mS];", "number"), ('    println!("{t}");', "func"), ("    let _ = s + 1;", "text"), ("}", "keyword"),
+     ("// cargo run", "comment")]),
+ ("PHP", "clock.php", [("<?php", "keyword"), ("// clock.php", "comment"), ('$t = "[mH]:[mM]:[mS]";', "string"), ("$sec = [mS];", "number"),
+     ("echo $t . PHP_EOL;", "func"), ('echo date("D j M");', "func"), ("sleep(1);", "func"), ("?>", "keyword")]),
+ ("Ruby", "clock.rb", [("# clock.rb", "comment"), ("def now", "keyword"), ('  "[mH]:[mM]:[mS]"', "string"), ("end", "keyword"),
+     ("loop do", "keyword"), ("  puts now", "func"), ("  sleep 1", "func"), ("end", "keyword")]),
+ ("Swift", "Clock.swift", [("// Clock.swift", "comment"), ("import Foundation", "keyword"), ("func now() -> String {", "keyword"),
+     ('  return "[mH]:[mM]:[mS]"', "string"), ("}", "keyword"), ("var sec = [mS]", "number"), ("print(now())", "func"), ("sec += 1", "text")]),
+ ("Kotlin", "clock.kt", [("// clock.kt", "comment"), ('fun now() = "[mH]:[mM]:[mS]"', "string"), ("fun main() {", "keyword"),
+     ("  var sec = [mS]", "number"), ("  println(now())", "func"), ("  sec++", "text"), ("}", "keyword"), ("// ./gradlew run", "comment")]),
+ ("SQL", "clock.sql", [("-- clock.sql", "comment"), ("SELECT", "keyword"), ("  '[mH]:[mM]:[mS]' AS now,", "string"),
+     ("  [mS] AS seconds,", "number"), ("  '[mDowS] [mDnum] [mMonS]' AS day", "string"), ("FROM clock", "keyword"),
+     ("WHERE tick = 1", "keyword"), ("LIMIT 1;", "keyword")]),
+ ("HTML", "index.html", [("<!-- index.html -->", "comment"), ('<main class="clock">', "keyword"), ("  <h1>[mH]:[mM]:[mS]</h1>", "string"),
+     ("  <p>[mDowS] [mDnum] [mMonS]</p>", "text"), ('  <meter value="[mS]" max="60">', "number"), ("  </meter>", "keyword"),
+     ("</main>", "keyword"), ('<script src="tick.js"></script>', "func")]),
+ ("Bash", "clock.sh", [("#!/bin/bash", "comment"), ('now="[mH]:[mM]:[mS]"', "string"), ("sec=[mS]", "number"), ("while true; do", "keyword"),
+     ('  echo "$now"', "func"), ("  sleep 1", "func"), ("done", "keyword"), ("# [mDowS] [mDnum] [mMonS]", "comment")]),
+ ("PowerShell", "clock.ps1", [("# clock.ps1", "comment"), ('$now = "[mH]:[mM]:[mS]"', "string"), ("$sec = [mS]", "number"),
+     ("while ($true) {", "keyword"), ("  Write-Host $now", "func"), ("  Start-Sleep 1", "func"), ("}", "keyword"),
+     ("# [mDowS] [mDnum] [mMonS]", "comment")]),
+ ("Lua", "clock.lua", [("-- clock.lua", "comment"), ("local function now()", "keyword"), ('  return "[mH]:[mM]:[mS]"', "string"), ("end", "keyword"),
+     ("local sec = [mS]", "number"), ("print(now(), sec)", "func"), ('os.execute("sleep 1")', "func"), ("-- [mDowS] [mDnum] [mMonS]", "comment")]),
+ ("Dart", "clock.dart", [("// clock.dart", "comment"), ("String now() =>", "keyword"), ('    "[mH]:[mM]:[mS]";', "string"), ("void main() {", "keyword"),
+     ("  var sec = [mS];", "number"), ("  print(now());", "func"), ("}", "keyword"), ("// dart run", "comment")]),
 ]
-for lang_name, fname, lines in CODE:
-    i = nxt()
-    x0, y0, w = 30, 92, 380
-    h = 30 + len(lines) * 30 + 14 + 26
-    shp(i, "Win", [rrect(x0, y0, w, h, 10, "#CTbg#", 1, "#InkSoft#"), rrect(x0, y0, w, 30, 10, "#CTbar#"),
-                   rrect(x0, y0 + 15, w, 15, 0, "#CTbar#"), rrect(x0 + 10, y0, 36 + 9 * len(fname), 30, 0, "#CTbg#"),
-                   f"Line {x0+10},{y0+1},{x0+46+9*len(fname)},{y0+1} | StrokeWidth 2 | Stroke Color #CTstatus#",
-                   rrect(x0, y0 + h - 26, w, 26, 10, "#CTstatus#"), rrect(x0, y0 + h - 26, w, 13, 0, "#CTstatus#")])
-    txt(i, "Tab", fname, x0 + 28 + 4.5 * len(fname), y0 + 15, 11, "#CTtext#", face="Segoe UI")
+
+def ide(i, lang, fname, lines):
+    badge, bcol, btxt, run = BADGE[lang]
+    x0, y0, w = 14, 78, 412
+    rows = 22
+    first = y0 + 66
+    sh = [rrect(x0, y0, w, 336, 10, "#CTbg#", 1, "#InkSoft#"), rrect(x0, y0, w, 26, 10, "#CTbar#"), rrect(x0, y0 + 13, w, 13, 0, "#CTbar#"),
+          circle(x0 + 16, y0 + 13, 4.5, "255,95,86"), circle(x0 + 32, y0 + 13, 4.5, "255,189,46"), circle(x0 + 48, y0 + 13, 4.5, "39,201,63"),
+          rrect(x0, y0 + 26, w, 26, 0, "#CTbar#,170"), rrect(x0 + 8, y0 + 27, 112, 25, 0, "#CTbg#"),
+          f"Line {x0+8},{y0+28},{x0+120},{y0+28} | StrokeWidth 2 | Stroke Color #CTstatus#",
+          rrect(x0 + 14, y0 + 31, 17, 17, 4, bcol),
+          f"Rectangle {x0+1},({y0+55}+([mSecN]%8)*{rows}),{w-2},{rows} | Fill Color #CTtext#,24 | StrokeWidth 0",
+          f"Ellipse {x0+14},({first}+([mSecN]%8)*{rows}),4.5 | Fill Color 232,72,72 | StrokeWidth 0",
+          rrect(x0, y0 + 236, w, 78, 0, "#CTbar#"), f"Line {x0+14},{y0+256},{x0+66},{y0+256} | StrokeWidth 2 | Stroke Color #CTstatus#",
+          rrect(x0, y0 + 314, w, 22, 10, "#CTstatus#"), rrect(x0, y0 + 314, w, 11, 0, "#CTstatus#"), circle(x0 + 16, y0 + 325, 5, bcol)]
+    mx = x0 + w - 50
+    for k, (line, role) in enumerate(lines):
+        bw = min(38, 3 + len(line.strip()) * 1.15)
+        sh.append(f"Rectangle {mx + (len(line) - len(line.lstrip())) * 1.1:.1f},{y0 + 62 + k * 7},{bw:.1f},4,2 | Fill Color #CT{role}#,200 | StrokeWidth 0")
+    sh.append(f"Rectangle {mx-3},({y0+58}+([mSecN]%8)*7),46,11,2 | Fill Color 0,0,0,0 | StrokeWidth 1 | Stroke Color #CTtext#,140")
+    shp(i, "Ide", sh)
+    txt(i, "Title", f"{fname} - Adaptive IDE", x0 + w / 2, y0 + 13, 9, "#CTcomment#", face="Segoe UI")
+    txt(i, "Badge", badge, x0 + 22.5, y0 + 39.5, 7 if len(badge) > 2 else 8, btxt, face="Segoe UI", style="Bold")
+    txt(i, "Tab", fname, x0 + 37, y0 + 39.5, 10, "#CTtext#", align="LeftCenter", face="Segoe UI")
+    txt(i, "Tab2", "README.md", x0 + 134, y0 + 39.5, 10, "#CTcomment#", align="LeftCenter", face="Segoe UI")
     for n, (line, role) in enumerate(lines):
-        y = y0 + 30 + 22 + n * 30
+        y = first + n * rows
         indent = len(line) - len(line.lstrip(" "))
-        txt(i, f"N{n}", str(n + 1), x0 + 32, y, 13, "#CTnum#", align="RightCenter", face="Consolas")
-        txt(i, f"C{n}", line.strip(), x0 + 46 + indent * 8, y, 14, f"#CT{role}#", align="LeftCenter", face="Consolas")
-    txt(i, "Lang", lang_name, x0 + 14, y0 + h - 13, 11, "250,250,250", align="LeftCenter", face="Segoe UI", style="Bold")
-    txt(i, "Pos", "Ln [mS], Col [mM]   UTF-8", x0 + w - 14, y0 + h - 13, 11, "250,250,250", align="RightCenter", face="Segoe UI")
+        txt(i, f"N{n}", str(n + 1), x0 + 36, y, 11, "#CTnum#", align="RightCenter", face="Consolas")
+        txt(i, f"C{n}", line.strip(), x0 + 48 + indent * 8.2, y, 12, f"#CT{role}#", align="LeftCenter", face="Consolas")
+    txt(i, "TabOut", "OUTPUT", x0 + 14, y0 + 247, 9, "#CTtext#", align="LeftCenter", face="Segoe UI", style="Bold")
+    txt(i, "TabProb", "PROBLEMS  0", x0 + 82, y0 + 247, 9, "#CTcomment#", align="LeftCenter", face="Segoe UI")
+    txt(i, "Run", "$ " + run, x0 + 14, y0 + 268, 11, "#CTcomment#", align="LeftCenter", face="Consolas")
+    txt(i, "Exit", "exit 0", x0 + w - 14, y0 + 268, 10, "80,200,110", align="RightCenter", face="Consolas")
+    txt(i, "Out", "> [mH]:[mM]:[mS][mCursor]", x0 + 14, y0 + 295, 24, "#CTfunc#", align="LeftCenter", face="Consolas", style="Bold")
+    txt(i, "Lang", lang, x0 + 28, y0 + 325, 10, "250,250,250", align="LeftCenter", face="Segoe UI", style="Bold")
+    txt(i, "Pos", "Ln [mLn8], Col [mM]    UTF-8", x0 + w - 12, y0 + 325, 10, "250,250,250", align="RightCenter", face="Segoe UI")
+
+for lang_name, fname, lines in CODE:
+    ide(nxt(), lang_name, fname, lines)
 
 # ---- girl styles (Theme: Girl)
 i = nxt()   # 72 Butterfly
@@ -834,7 +909,7 @@ for k, (r, col) in enumerate(zip((165, 150, 135, 120, 105, 90), ("255,120,140", 
 shp(i, "Sky", [mdot(220, 290, 128, "#DayRad#", 10, "250,250,250"),
                circle(62, 300, 24, "250,250,250,210"), circle(92, 290, 28, "250,250,250,210"), circle(120, 304, 22, "250,250,250,210"),
                circle(320, 304, 22, "250,250,250,210"), circle(348, 290, 28, "250,250,250,210"), circle(378, 300, 24, "250,250,250,210")])
-txt(i, "Time", "[mH]:[mM]", 220, 215, 52, INK, face="Segoe UI Semibold")
+txt(i, "Time", "[mH]:[mM]", 220, 262, 50, INK, face="Segoe UI Semibold")
 txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 350, 16, DIM)
 
 i = nxt()   # 77 Moonlight
@@ -886,7 +961,7 @@ for k in range(1, 6):
     y = 290 + k * k * 3.4
     sh.append(f"Line 30,{y:.1f},410,{y:.1f} | StrokeWidth 2 | Stroke Color 255,60,200,{230 - k * 25}")
 for k in range(-7, 8):
-    sh.append(f"Line 220,290,{220 + k * 64},380 | StrokeWidth 1 | Stroke Color 255,60,200,200")
+    sh.append(f"Line 220,290,{220 + k * 26},380 | StrokeWidth 1 | Stroke Color 255,60,200,200")
 shpx(i, "Grid", sh, SunGrad="90 | 255,210,70 ; 0.0 | 255,60,150 ; 1.0")
 txt(i, "Date", "[mDow]  [mDnum]  [mMon]", 220, 126, 13, "100,230,255", face="Consolas", StringCase="Upper")
 txt(i, "Time", "[mH]:[mM]", 220, 190, 70, "250,250,250", face="Consolas", style="Bold",
@@ -909,7 +984,7 @@ sh = [rrect(40, 105, 360, 90, 14, "20,20,24,235", 2, "#ColorMid#")]
 for k in range(5):
     x = 90 + k * 65
     sh.append(circle(x, 150, 24, "50,10,10", 3, "90,90,96"))
-    sh.append(f"Ellipse {x},150,(([mSecF]*60)>={(k + 1) * 12 - 11} ? 20 : 0) | Fill Color 255,40,40 | StrokeWidth 0")
+    sh.append(f"Ellipse {x},150,((([mSecF]*60)>={(k + 1) * 12 - 11})*20) | Fill Color 255,40,40 | StrokeWidth 0")
 shp(i, "Lights", sh)
 txt(i, "Lap", "LAP TIME", 220, 232, 12, "#Color#", face="Consolas", style="Bold")
 txt(i, "Time", "[mH]:[mM]:[mS]", 220, 285, 64, INK, face="Consolas", style="Bold")
@@ -1003,7 +1078,8 @@ txt(i, "Time", "[mH]:[mM]", 220, 352, 44, INK)
 txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 396, 15, DIM)
 
 i = nxt()   # 91 Skyline
-sh = [f"Ellipse 220,360,150 | Fill Color 0,0,0,0 | StrokeWidth 1 | Stroke Color #InkSoft#", mdot(220, 360, 150, "#DayRad#", 20, "#ColorSoft#"),
+hand(i, "Arc", 220, 360, 152, "mOne", 1, "#InkSoft#", start=PI, rot=PI, lstart=149, solid=1)
+sh = [mdot(220, 360, 150, "#DayRad#", 20, "#ColorSoft#"),
       mdot(220, 360, 150, "#DayRad#", 11, "#Color#")]
 for x, w, hh in ((30, 40, 70), (72, 34, 105), (108, 46, 60), (156, 30, 125), (188, 50, 85), (240, 36, 140), (278, 44, 75), (324, 32, 110), (358, 52, 62)):
     sh.append(f"Rectangle {x},{360-hh},{w},{hh} | Fill Color #InkDim# | StrokeWidth 0")
@@ -1012,6 +1088,106 @@ shp(i, "Sky", sh)
 txt(i, "Time", "[mH]:[mM]", 220, 120, 74, INK, face="Segoe UI Semibold")
 txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 178, 17, DIM)
 assert SEQ[0] == 91, SEQ[0]
+# ---- 92-99: more coder clocks
+i = nxt()   # 92 Dot matrix
+sh, cell, gap = [], 14, 3.5
+for d, x in enumerate((52, 130, 238, 316)):
+    for r in range(5):
+        for c in range(4):
+            sh.append(f"Rectangle {x + c * (cell + gap):.1f},{128 + r * (cell + gap):.1f},{cell},{cell},3 | Fill Color #Color#,#PX{d * 20 + r * 4 + c + 1}# | StrokeWidth 0")
+for k, r in enumerate((1, 3)):
+    sh.append(f"Rectangle 210,{128 + r * (cell + gap):.1f},{cell},{cell},3 | Fill Color #Color#,#PX{81 + k}# | StrokeWidth 0")
+shp(i, "Matrix", sh)
+shp(i, "Secs", [circle(40 + k * 6.2, 272, 1.2, "#InkSoft#") for k in range(60)] +
+    [f"Ellipse {40 + k * 6.2:.1f},272,(([mSecN]>{k})*3.2) | Fill Color #Color# | StrokeWidth 0" for k in range(60)])
+txt(i, "Cmt", "// dot matrix display", 220, 100, 12, "#Color#", face="Consolas")
+txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 322, 16, DIM)
+
+i = nxt()   # 93 Matrix rain
+shp(i, "Panel", [rrect(14, 70, 412, 362, 12, "2,12,6,235", 1, "0,255,100,70")])
+for k in range(10):
+    txt(i, f"R{k}", f"[mRain{k}]", 38 + k * 40.5, 78, 13, "0,255,110,140", align="CenterTop", face="Consolas")
+shp(i, "Box", [rrect(66, 180, 308, 124, 14, "0,14,6,225", 2, "0,255,110,210")])
+txt(i, "Time", "[mH]:[mM]:[mS]", 220, 226, 46, "190,255,215", face="Consolas", style="Bold", StringEffect="Border", FontEffectColor="0,255,110,130")
+txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 278, 13, "0,255,110", face="Consolas")
+
+i = nxt()   # 94 CI pipeline
+shp(i, "Card", [rrect(14, 84, 412, 340, 12, "#CTbg#", 1, "#InkSoft#")])
+txt(i, "Head", "Pipeline #[mSha]", 34, 112, 15, "#CTtext#", align="LeftCenter", face="Segoe UI", style="Bold")
+txt(i, "Branch", "main  -  tick: [mH]:[mM]", 34, 136, 11, "#CTcomment#", align="LeftCenter", face="Consolas")
+for k, name in enumerate(("lint", "test", "build", "deploy")):
+    y = 188 + k * 52
+    run = f"(([mSecN]>={15 * k})*([mSecN]<{15 * (k + 1)}))"
+    done = f"([mSecN]>={15 * (k + 1)})"
+    shp(i, f"St{k}", [circle(46, y, 10, "0,0,0,0", 2, "#CTcomment#"),
+                      f"Ellipse 46,{y},({done}*10) | Fill Color 63,185,80 | StrokeWidth 0",
+                      f"Ellipse 46,{y},({run}*10) | Fill Color 56,152,255 | StrokeWidth 0",
+                      rrect(72, y + 14, 250, 5, 2, "#CTbar#"),
+                      rrect(72, y + 14, f"(0.01+{done}*250)", 5, 2, "63,185,80"),
+                      rrect(72, y + 14, f"(0.01+{run}*250*(([mSecN]%15)/15))", 5, 2, "56,152,255")])
+    txt(i, f"N{k}", name, 72, y - 4, 14, "#CTtext#", align="LeftCenter", face="Consolas", style="Bold")
+    txt(i, f"S{k}", f"[mCi{k}]", 410, y - 4, 11, "#CTcomment#", align="RightCenter", face="Consolas")
+txt(i, "Time", "[mH]:[mM]:[mS]", 220, 404, 20, "#CTfunc#", face="Consolas", style="Bold")
+
+i = nxt()   # 95 Stack trace
+window(i, 14, 92, 412, 322, "python3 clock.py")
+txt(i, "L1", "Traceback (most recent call last):", 34, 142, 12, "244,100,100", align="LeftCenter", face="Consolas")
+txt(i, "L2", '  File "clock.py", line [mS], in tick', 34, 170, 12, GREY, align="LeftCenter", face="Consolas")
+txt(i, "L3", "    now = time.now()", 34, 194, 12, TXT, align="LeftCenter", face="Consolas")
+txt(i, "L4", "AttributeError: no attribute 'now'", 34, 224, 12, "244,100,100", align="LeftCenter", face="Consolas")
+txt(i, "Err", "ClockError: it is [mH]:[mM]:[mS]", 220, 282, 16, "255,176,64", face="Consolas", style="Bold")
+txt(i, "Fix", "# fix: wait [mS] more seconds", 34, 330, 12, GREY, align="LeftCenter", face="Consolas")
+txt(i, "Prompt", ">>> [mCursor]", 34, 360, 12, GREEN, align="LeftCenter", face="Consolas")
+
+i = nxt()   # 96 Hexdump
+window(i, 14, 92, 412, 322, "xxd clock.bin")
+txt(i, "Head", "OFFS  00 01 02 03  04 05 06 07  ASCII", 34, 138, 10, GREY, align="LeftCenter", face="Consolas")
+for k in range(3):
+    txt(i, f"Row{k}", f"[mHx{k}]", 34, 174 + k * 34, 11, TXT if k else BLUE, align="LeftCenter", face="Consolas")
+txt(i, "Time", "[mH]:[mM]:[mS]", 220, 300, 34, "#CTfunc#", face="Consolas", style="Bold")
+txt(i, "Epoch", "epoch  [mEpoch]", 220, 346, 12, GREY, face="Consolas")
+
+i = nxt()   # 97 Neofetch
+window(i, 14, 92, 412, 322, "user@clock: ~")
+shp(i, "Logo", [rrect(40 + (k % 2) * 44, 150 + (k // 2) * 44, 40, 40, 4, c) for k, c in enumerate(("#Color#", "#Color2#", "#Color2#", "#Color#"))])
+txt(i, "Who", "user@clock", 150, 138, 14, "#Color#", align="LeftCenter", face="Consolas", style="Bold")
+rows = (("OS", "Windows"), ("Shell", "Rainmeter"), ("Uptime", "[mUptime]"), ("CPU", "[mCPU:0]%"), ("RAM", "[mRAM:%]%"),
+        ("Time", "[mH]:[mM]:[mS]"), ("Date", "[mDowS] [mDnum] [mMonS]"))
+for k, (lab, val) in enumerate(rows):
+    y = 168 + k * 24
+    txt(i, f"K{k}", lab + ":", 150, y, 12, "#Color#", align="LeftCenter", face="Consolas", style="Bold")
+    txt(i, f"V{k}", val, 222, y, 12, TXT, align="LeftCenter", face="Consolas")
+shp(i, "Pal", [rrect(40 + k * 22, 350, 18, 18, 3, c) for k, c in enumerate(("40,40,44", "244,71,71", "63,185,80", "255,200,60", "56,152,255", "200,100,230", "0,200,200", "230,230,235"))])
+
+i = nxt()   # 98 htop
+window(i, 14, 92, 412, 322, "htop")
+for k in range(4):
+    y = 140 + k * 24
+    txt(i, f"C{k}", str(k + 1), 34, y, 11, BLUE, align="LeftCenter", face="Consolas", style="Bold")
+    sec(i, f"B{k}", "Bar", X=62, Y=y - 5, W=240, H=10, MeasureName=f"mCore{k}", BarColor="63,185,80", SolidColor="#InkSoft#", BarOrientation="Horizontal")
+    txt(i, f"P{k}", f"[mCore{k}:0]%", 316, y, 11, TXT, align="LeftCenter", face="Consolas")
+sec(i, "BM", "Bar", X=62, Y=231, W=240, H=10, MeasureName="mRAM", BarColor="56,152,255", SolidColor="#InkSoft#", BarOrientation="Horizontal")
+txt(i, "CM", "Mem", 34, 236, 11, BLUE, align="LeftCenter", face="Consolas", style="Bold")
+txt(i, "PM", "[mRAM:%]%", 316, 236, 11, TXT, align="LeftCenter", face="Consolas")
+txt(i, "Tm", "[mH]:[mM]:[mS]   up [mUptime]", 34, 266, 11, "#CTfunc#", align="LeftCenter", face="Consolas")
+shp(i, "Hdr", [rrect(24, 282, 392, 18, 3, "63,185,80")])
+txt(i, "HT", "PID   USER   CPU%  MEM%  COMMAND", 34, 291, 10, "10,10,10", align="LeftCenter", face="Consolas", style="Bold")
+for k, row in enumerate(("4021  root   12.4   3.1  rainmeter.exe", "1337  user    8.0   4.2  code.exe", "2210  user    5.3   6.8  chrome.exe",
+                         "9001  user    1.2   0.9  clock.lua", "  88  root    0.3   0.1  system")):
+    txt(i, f"R{k}", row, 34, 314 + k * 18, 10, TXT, align="LeftCenter", face="Consolas")
+
+i = nxt()   # 99 Test runner
+window(i, 14, 92, 412, 322, "npm test")
+shp(i, "Chip", [rrect(30, 130, 44, 20, 3, "63,185,80")])
+txt(i, "Pass", "PASS", 52, 140, 10, "10,10,10", face="Consolas", style="Bold")
+txt(i, "File", "clock.test.js", 84, 140, 12, TXT, align="LeftCenter", face="Consolas")
+for k, row in enumerate(("ok  shows [mH]:[mM]:[mS]", "ok  date is [mDowS] [mDnum] [mMonS]", "ok  tick() runs every second")):
+    txt(i, f"T{k}", row, 44, 176 + k * 26, 12, GREEN if False else "#CTfunc#", align="LeftCenter", face="Consolas")
+txt(i, "Sum1", "Tests:  3 passed, 3 total", 34, 270, 12, TXT, align="LeftCenter", face="Consolas", style="Bold")
+txt(i, "Sum2", "Time:   0.[mS] s", 34, 294, 12, GREY, align="LeftCenter", face="Consolas")
+txt(i, "Big", "[mH]:[mM]:[mS]", 220, 352, 28, "#CTfunc#", face="Consolas", style="Bold")
+assert SEQ[0] == 99, SEQ[0]
+
 
 # ---- extras for older styles: AM/PM markers for the 12-hour clock
 txt(8, "AP", "[mAmPm]", 392, 130, 18, "#ColorDim#")
@@ -1061,11 +1237,11 @@ _LBL = [("mLblHour", "hour"), ("mLblMinute", "minute"), ("mLblSecond", "second")
         ("mLblSecondsLow", "secondsLow"), ("mLblSunrise", "sunrise"), ("mLblSunset", "sunset")]
 DATE_M = "\n\n".join([script("mDow", "dow"), script("mDowS", "dowS"), script("mMon", "mon"), script("mMonS", "monS")]
                       + [lbl(n, k) for n, k in _LBL])
-HV = "\n".join(f"H{n}=1" for n in range(1, 92)) + "\nQHf=1\nQHc=1\n" + "\n".join(f"CalH{n}=" for n in range(1, 8)) + "\n" + "\n".join(f"CalD{n}=" for n in range(1, 43))
+HV = "\n".join(f"H{n}=1" for n in range(1, 100)) + "\nQHf=1\nQHc=1\n" + "\n".join(f"CalH{n}=" for n in range(1, 8)) + "\n" + "\n".join(f"CalD{n}=" for n in range(1, 43)) + "\n" + "\n".join(f"PX{n}=40" for n in range(1, 83))
 def tm(name, fmt):
     return f"[{name}]\nMeasure=Time\nFormat={fmt}"
 
-head = f"""; AdaptiveClock.ini  by Amika Alankara  -  91 clock styles driven by AdaptiveClock.lua (same folder)
+head = f"""; AdaptiveClock.ini  by Amika Alankara  -  99 clock styles driven by AdaptiveClock.lua (same folder)
 ; Right-click the skin: Next / Random style, resume hourly shuffle, 12/24h, quote options.
 
 [Rainmeter]
@@ -1106,11 +1282,11 @@ ContextAction15=[!ActivateConfig "#CURRENTCONFIG#\\Gallery" "Gallery.ini"]
 [Metadata]
 Name=Adaptive Clock
 Author=Amika Alankara
-Version=4.3
+Version=4.4
 Description=91 clock styles, coder (19 languages) / everyday profiles, girl / boy themes, 10 languages, weather, timer and more.
 
 [Variables]
-StyleCount=91
+StyleCount=99
 HourFormat=%H
 QuoteHidden=0
 QuoteMinutes=1440

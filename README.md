@@ -1,10 +1,17 @@
 # Adaptive Clock for Rainmeter
 
-A desktop clock with **91 styles**, built for Rainmeter on Windows. By Amika Alankara.
+A desktop clock with **99 styles**, built for Rainmeter on Windows. By Amika Alankara.
 
-- **Coder clocks**: a terminal, a git log, system monitor, hex / binary / epoch clocks and **19 code-editor clocks, one per language**
-  (Python, JavaScript, TypeScript, Java, C, C++, C#, Go, Rust, PHP, Ruby, Swift, Kotlin, SQL, HTML, Bash, PowerShell, Lua, Dart),
-  with four editor colour themes (Dark, Dracula, Monokai, Light).
+![Coder clocks](docs/contact-sheet-5.png)
+
+*(Previews are approximate renders made by `tools/preview.py`; fonts and spacing differ slightly in Rainmeter.)*
+
+- **Coder clocks**: 19 **IDE scenes, one per programming language** (Python, JavaScript, TypeScript, Java, C, C++, C#, Go, Rust, PHP,
+  Ruby, Swift, Kotlin, SQL, HTML, Bash, PowerShell, Lua, Dart). Each has editor tabs, a language badge, syntax-coloured code with
+  the time written into it, a **debugger line that steps through the code every second** (breakpoint, `Ln` / `Col` in the status bar,
+  minimap), and a console that "runs" the program and prints the time. Plus Terminal, Live preview, Hex clock, Binary dots,
+  System monitor, Epoch and ISO, Git log, Dot matrix, **Matrix rain**, **CI pipeline** (stages pass one by one), Stack trace,
+  Hexdump, Neofetch, htop and a Test runner. Four editor colour themes: Dark, Dracula, Monokai, Light.
 - **Everyday clocks**: greeting, month calendar, year progress, sticky note, week strip.
 - **Girl and boy themes**: pink / lilac (petals, heart, butterfly, bow, rainbow, moonlight...) or blue / cyan (radar, rocket, pitch,
   synthwave, game HUD, race lights, shield...), each with its own accent colours and clocks.
@@ -73,7 +80,7 @@ Quotes stay in English. Weather descriptions are English.
 
 ## Developing
 `AdaptiveClock.ini`, `Settings.ini` and `Gallery.ini` are generated: edit `tools/gen_ini.py` / `tools/gen_skins.py`, then run
-`python gen_ini.py && python gen_skins.py && python check_ini.py` from the `tools` folder. `python build_rmskin.py` builds
+`python gen_ini.py && python gen_skins.py && python check_ini.py` from the `tools` folder. `python preview.py` (needs matplotlib and pillow) renders every style to `docs/` and warns about text that overlaps or leaves the clock area. `python build_rmskin.py` builds
 `dist/AdaptiveClock-<version>.rmskin`. To add a language, copy a block in `Languages.lua`, translate it, and add its name to
 `CycleLanguage` in `AdaptiveClock.lua` and to the language list in `tools/gen_skins.py`.
 GitHub Actions checks the generated files on every push and attaches the `.rmskin` to a release when you push a tag like `v4.1`.

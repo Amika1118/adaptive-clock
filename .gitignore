@@ -5,3 +5,6 @@ Thumbs.db
 
 # written by the clock while it runs
 AdaptiveClock/state.txt
+
+# single-style preview images (the contact sheets in docs/ are kept)
+docs/previews/

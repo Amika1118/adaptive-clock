@@ -1,4 +1,4 @@
--- AdaptiveClock.lua  v4.3   (Rainmeter 4.x, Lua 5.1)
+-- AdaptiveClock.lua  v4.4   (Rainmeter 4.x, Lua 5.1)
 -- Author: Amika Alankara  (MIT License)
 --
 -- One file, many small jobs. Each Script measure in the .ini picks its job with  Mode=
@@ -6,6 +6,7 @@
 --   secF minF hrF dayF yearF          numbers 0..1 that drive rings, arcs, bars and hands
 --   dHT dHU dMT dMU dST dSU           single digits (binary clock)
 --   hexH hexM hexS binH binM binS     hex / binary text
+--   secN ciStatus hexRow rain         integer second, CI stage text, hexdump row, matrix-rain column
 --   epoch sha logHash logTime         unix time, short commit-like hashes
 --   greet greetIcon yearPct daysLeft  friendly text
 --   ampm cursor qmark                 small helpers
@@ -18,7 +19,7 @@
 --   wxIcon wxTemp wxText batText     weather and battery text
 
 local mode = 'main'
-local N = 91                       -- number of styles (the .ini sets StyleCount)
+local N = 99                       -- number of styles (the .ini sets StyleCount)
 local current, lastSlot, lastYday, lastKey, lastLuma, wasBright, lastCalDay, lastQKey
 local pool = {}                    -- style numbers that take part in the shuffle
 local interval = 60               -- minutes per style (ShuffleMinutes)
@@ -31,7 +32,7 @@ local NAMES = {
   'Chronograph', 'Grey bubbles', 'World time', 'Halo', 'Roman dial', 'Bubble rings', 'Words', 'Digital',
   'Concentric rings', 'Orbit dots', 'Classic analog', 'Progress bars', 'Sun path', 'Stacked digits', 'Date card',
   'Line tracks', 'Dash ring', 'Gauges', 'Neon', '24-hour dial', 'Split', 'Analog + digital', 'Phrase', 'Pulse',
-  'Terminal', 'Code editor', 'Hex clock', 'Binary dots', 'System monitor', 'Epoch and ISO', 'Git log',
+  'Terminal', 'Live preview', 'Hex clock', 'Binary dots', 'System monitor', 'Epoch and ISO', 'Git log',
   'Greeting', 'Month calendar', 'Year progress', 'Sticky note', 'Week strip',
   'Petals', 'Heart', 'Pastel pills', 'Starlight',
   'Radar', 'Planet orbit', 'Speedometer', 'Scoreboard',
@@ -42,12 +43,14 @@ local NAMES = {
   'Butterfly', 'Cloud', 'Daisy', 'Bow', 'Rainbow', 'Moonlight',
   'Rocket', 'Pitch', 'Synthwave', 'Game HUD', 'Race lights', 'Shield',
   'Nixie', 'Vinyl', 'Compass', 'Waves', 'Zen circle', 'Day bar', 'Moon phase', 'Skyline',
+  'Dot matrix', 'Matrix rain', 'CI pipeline', 'Stack trace', 'Hexdump', 'Neofetch', 'htop', 'Test runner',
 }
 
 -- Styles that only appear for a profile / theme (all others always appear)
 local TAGS = {}
 for i = 25, 31 do TAGS[i] = 'code' end      -- Profile: All or Coder
 for i = 53, 71 do TAGS[i] = 'code' end      -- one editor window per programming language
+for i = 92, 99 do TAGS[i] = 'code' end
 for i = 32, 36 do TAGS[i] = 'easy' end      -- Profile: All or Everyday
 for i = 37, 40 do TAGS[i] = 'girl' end      -- Theme: Girl
 for i = 72, 77 do TAGS[i] = 'girl' end
@@ -920,6 +923,57 @@ local SYNODIC = 29.530588853
 local function moonAge() return ((os.time() - 947182440) / 86400) % SYNODIC end   -- new moon: 2000-01-06 18:14 UTC
 local function moonIndex() return math.floor(moonAge() / SYNODIC * 8 + 0.5) % 8 + 1 end
 
+-- ---------------------------------------------------------------- helpers for the coder clocks
+
+local GLYPH = {
+  ['0'] = { '1111', '1001', '1001', '1001', '1111' }, ['1'] = { '0110', '0010', '0010', '0010', '0111' },
+  ['2'] = { '1111', '0001', '1111', '1000', '1111' }, ['3'] = { '1111', '0001', '0111', '0001', '1111' },
+  ['4'] = { '1001', '1001', '1111', '0001', '0001' }, ['5'] = { '1111', '1000', '1111', '0001', '1111' },
+  ['6'] = { '1111', '1000', '1111', '1001', '1111' }, ['7'] = { '1111', '0001', '0010', '0100', '0100' },
+  ['8'] = { '1111', '1001', '1111', '1001', '1111' }, ['9'] = { '1111', '1001', '1111', '0001', '1111' },
+}
+local lastPix
+
+local function setPixels(t)                       -- dot-matrix clock: PXn = 255 (lit) or 40 (off)
+  local key = t.hour * 100 + t.min
+  if key == lastPix then return end
+  lastPix = key
+  local digits = string.format('%02d%02d', t.hour, t.min)
+  for d = 1, 4 do
+    local g = GLYPH[digits:sub(d, d)]
+    for r = 1, 5 do
+      for c = 1, 4 do
+        setv('PX' .. ((d - 1) * 20 + (r - 1) * 4 + c), g[r]:sub(c, c) == '1' and 255 or 40)
+      end
+    end
+  end
+  setv('PX81', 255); setv('PX82', 255)
+end
+
+local RAIN = 'ABCDEF0123456789<>/{}=;'
+local function rainColumn(col)                    -- 15 characters that "fall" one row per second
+  local t, out = os.time(), {}
+  for r = 0, 14 do
+    local h = ((t - r) * 7919 + col * 104729 + 13) % 65521
+    h = (h * h + 12345) % 65521
+    local k = h % #RAIN + 1
+    out[#out + 1] = RAIN:sub(k, k)
+  end
+  return table.concat(out, '\n')
+end
+
+local function hexRow(k)                          -- row k of a hexdump of "HH:MM:SS Day DD Mon YYYY"
+  local s = os.date('%H:%M:%S %a %d %b %Y')
+  local chunk = (s:sub(k * 8 + 1, k * 8 + 8) .. '        '):sub(1, 8)
+  local hex, asc = {}, {}
+  for i = 1, 8 do
+    local b = chunk:byte(i)
+    hex[i] = string.format('%02x', b)
+    asc[i] = (b >= 32 and b < 127) and string.char(b) or '.'
+  end
+  return string.format('%04x  %s  %s  |%s|', k * 8, table.concat(hex, ' ', 1, 4), table.concat(hex, ' ', 5, 8), table.concat(asc))
+end
+
 -- ---------------------------------------------------------------- measure entry points
 
 local function now() return os.date('*t') end
@@ -955,6 +1009,15 @@ local MODES = {
   qmark  = function() return LQ end,
   quoteBody = quoteBody,
   quoteWho  = quoteWho,
+  secN = function() return now().sec end,
+  ciStatus = function()
+    local st = math.floor(now().sec / 15)
+    if st > logIndex then return 'passed' end
+    if st == logIndex then return 'running' end
+    return 'queued'
+  end,
+  hexRow = function() return hexRow(logIndex) end,
+  rain   = function() return rainColumn(logIndex) end,
   moonIcon = function() return MOON_ICONS[moonIndex()] end,
   moonName = function() return MOON_NAMES[moonIndex()] end,
   moonPct  = function() return string.format('%d%%', math.floor((1 - math.cos(2 * math.pi * moonAge() / SYNODIC)) / 2 * 100 + 0.5)) end,
@@ -982,7 +1045,7 @@ local MODES = {
 
 function Initialize()
   mode = SELF:GetOption('Mode', 'main')
-  N = tonumber(var('StyleCount', '91')) or 91
+  N = tonumber(var('StyleCount', '99')) or 99
   lblKey = SELF:GetOption('Key', '')
   logIndex = tonumber(SELF:GetOption('Index', '0')) or 0
 
@@ -1016,6 +1079,7 @@ function Update()
   accent()
   angles(t)
   quoteFlags()
+  setPixels(t)
   tickTimers(t)
   do
     local f = sunFraction(t)
