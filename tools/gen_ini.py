@@ -312,8 +312,18 @@ def meas(name, kind, **o):
     L = [f"[{name}]", f"Measure={kind}"] + [f"{k}={v}" for k, v in o.items()]
     EXTRA.append("\n".join(L))
 
+UNI_ALWAYS = {"quoteBody", "quoteWho", "quotePlain", "quoteAuthor", "qmark", "greetIcon", "moonIcon", "wxIcon", "wxTemp"}
+LANG_MODES = {"dow", "dowS", "mon", "monS", "lbl", "greet", "worldDay", "batText", "calH", "wkH", "pomoLabel", "alarmText"}
+
+def script_file(mode):
+    """Plain AdaptiveClock.lua (no BOM) unless the measure returns symbols (AdaptiveClockU.lua, which has a BOM)
+    or text in the chosen language (#LangFile# = plain for Windows / English, the BOM loader for other languages)."""
+    if mode in UNI_ALWAYS: return "#CURRENTPATH#AdaptiveClockU.lua"
+    if mode in LANG_MODES: return "#CURRENTPATH##LangFile#"
+    return "#CURRENTPATH#AdaptiveClock.lua"
+
 def lmeas(name, mode, **o):
-    meas(name, "Script", ScriptFile="#CURRENTPATH#AdaptiveClock.lua", Mode=mode, **o)
+    meas(name, "Script", ScriptFile=script_file(mode), Mode=mode, **o)
 
 for _nm, _md in [("mDHT", "dHT"), ("mDHU", "dHU"), ("mDMT", "dMT"), ("mDMU", "dMU"), ("mDST", "dST"), ("mDSU", "dSU"),
                  ("mHexH", "hexH"), ("mHexM", "hexM"), ("mHexS", "hexS"), ("mBinH", "binH"), ("mBinM", "binM"),
@@ -477,7 +487,7 @@ txt(i, "AP", "[mAmPm]", 395, 252, 16, DIM)
 i = 33
 txt(i, "Title", "[mMon] [mYear]", 220, 95, 26, INK, face="Segoe UI Semibold")
 for c in range(7):
-    txt(i, f"H{c}", f"#CalH{c+1}#", 60 + c * 53, 140, 12, DIM, face="Segoe UI")
+    txt(i, f"H{c}", f"[mCalH{c+1}]", 60 + c * 53, 140, 12, DIM, face="Segoe UI")
 shp(i, "Today", [f"Ellipse (60+((#CalToday#-1)%7)*53),(180+Trunc((#CalToday#-1)/7)*37),17 | Fill Color #ColorSoft# | StrokeWidth 2 | Stroke Color #Color#"])
 for n in range(42):
     txt(i, f"D{n}", f"#CalD{n+1}#", 60 + (n % 7) * 53, 180 + (n // 7) * 37, 17, INK)
@@ -507,7 +517,7 @@ txt(i, "Time", "[mH]:[mM]", 220, 140, 104, INK, face="Segoe UI Semibold")
 shp(i, "Today", [f"Ellipse (60+(#WeekIdx#-1)*53),262,25 | Fill Color #ColorSoft# | StrokeWidth 3 | Stroke Color #Color#"])
 for c in range(7):
     shp(i, f"Ring{c}", [circle(60 + c * 53, 262, 22, sw=1, stroke="#InkSoft#")])
-    txt(i, f"D{c}", f"#CalH{c+1}#", 60 + c * 53, 262, 15, INK)
+    txt(i, f"D{c}", f"[mCalH{c+1}]", 60 + c * 53, 262, 15, INK)
 txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 328, 20, DIM)
 txt(i, "Left", "[mLblDaysLeftYear]", 220, 366, 15, "#Color#")
 
@@ -577,7 +587,7 @@ txt(i, "Date", "[mDow] [mDnum] [mMon]", 220, 412, 14, DIM, face="Consolas")
 
 # ---- 42 Planet orbit (boy)
 i = 42
-sh = ["Ellipse 220,200,128,30 | Fill Color 0,0,0,0 | StrokeWidth 5 | Stroke Color #Color2# | Rotate -18,220,200",
+sh = ["Ellipse 220,200,128,30 | Fill Color 0,0,0,0 | StrokeWidth 5 | Stroke Color #Color2# | Rotate -18",
       "Ellipse 220,200,70 | Fill LinearGradient PlanetGrad | StrokeWidth 0",
       f"Ellipse (220+165*Cos(#SecRad#)),(200+60*Sin(#SecRad#)),9 | Fill Color #Color2# | StrokeWidth 0"]
 for x, y, r in ((60, 110, 2), (110, 70, 3), (350, 90, 2), (390, 160, 3), (70, 260, 2), (380, 300, 2), (140, 320, 3)):
@@ -663,8 +673,8 @@ shp(i, "Bar", [rrect(80, 346, 280, 6, 3, "250,250,250,70"), rrect(80, 346, "(6+2
 
 # ---- 49-53: weather, sun times, now playing, battery, timer and alarm
 meas("mWxRaw", "WebParser",
-     URL="https://api.open-meteo.com/v1/forecast?latitude=#Latitude#&longitude=#Longitude#&current=temperature_2m,weather_code&temperature_unit=#TempUnit#",
-     UpdateRate="(900*#Div#)", Disabled="#WeatherOff#",
+     URL="https://api.open-meteo.com/v1/forecast?latitude=#WxLat#&longitude=#WxLon#&current=temperature_2m,weather_code&temperature_unit=#TempUnit#",
+     UpdateRate="(900*#Div#)", Disabled="#WeatherOff#", DynamicVariables=1,
      RegExp='(?siU)"current":\\{.*"temperature_2m":(.*),"weather_code":(.*)\\}')
 meas("mWxT", "WebParser", URL="[mWxRaw]", StringIndex=1)
 meas("mWxC", "WebParser", URL="[mWxRaw]", StringIndex=2)
@@ -685,7 +695,7 @@ def button(i, name, cx, cy, r, text, action, fs=16):
 i = 49
 txt(i, "Icon", "[mWxIcon]", 220, 106, 54, "#Color#", face="Segoe UI Symbol")
 txt(i, "Temp", "[mWxTempTxt]", 220, 215, 88, INK, face="Segoe UI Semibold")
-txt(i, "Text", "[mWxText]", 220, 285, 20, DIM, W=380, ClipString=2, H=48)
+txt(i, "Text", "[mWxText]", 220, 285, 16, DIM, W=400, ClipString=2, H=60)
 txt(i, "Time", "[mH]:[mM]", 220, 342, 40, INK)
 txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 385, 16, DIM)
 
@@ -716,12 +726,12 @@ txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 406, 15, DIM)
 i = 52
 hand(i, "Track", 220, 195, 152, "mOne", 1, "#InkSoft#", lstart=138, solid=1)
 hand(i, "Prog", 220, 195, 152, "mPomoF", 1, "#Color#", lstart=138, solid=1)
-txt(i, "Label", "#PomoLabel#", 220, 118, 16, "#Color#", face="Segoe UI Semibold")
+txt(i, "Label", "[mPomoLabel]", 220, 118, 16, "#Color#", face="Segoe UI Semibold")
 txt(i, "Left", "#PomoText#", 220, 195, 76, INK)
 button(i, "Reset", 165, 262, 17, "R", '[!CommandMeasure mMain "PomoReset()"]', 12)
 button(i, "Go", 220, 262, 26, "#PomoBtn#", '[!CommandMeasure mMain "PomoToggle()"]', 16)
 button(i, "Skip", 275, 262, 17, ">>", '[!CommandMeasure mMain "PomoSkip()"]', 11)
-txt(i, "Alarm", "#AlarmText#", 220, 374, 17, INK, face="Segoe UI Semibold",
+txt(i, "Alarm", "[mAlarmText]", 220, 374, 17, INK, face="Segoe UI Semibold",
     LeftMouseUpAction='[!CommandMeasure mMain "AlarmClick()"]')
 button(i, "Minus", 150, 414, 17, "-15", '[!CommandMeasure mMain "AlarmAdd(-15)"]', 11)
 button(i, "Plus", 290, 414, 17, "+15", '[!CommandMeasure mMain "AlarmAdd(15)"]', 11)
@@ -855,10 +865,10 @@ for lang_name, fname, lines in CODE:
 
 # ---- Bloom styles (Theme: Bloom)
 i = nxt()   # 72 Butterfly
-sh = ["Ellipse 150,178,72,50 | Fill Color #ColorSoft# | StrokeWidth 3 | Stroke Color #Color# | Rotate -28,150,178",
-      "Ellipse 290,178,72,50 | Fill Color #ColorSoft# | StrokeWidth 3 | Stroke Color #Color# | Rotate 28,290,178",
-      "Ellipse 166,258,50,38 | Fill Color #Color2Soft# | StrokeWidth 3 | Stroke Color #Color2# | Rotate 25,166,258",
-      "Ellipse 274,258,50,38 | Fill Color #Color2Soft# | StrokeWidth 3 | Stroke Color #Color2# | Rotate -25,274,258",
+sh = ["Ellipse 150,178,72,50 | Fill Color #ColorSoft# | StrokeWidth 3 | Stroke Color #Color# | Rotate -28",
+      "Ellipse 290,178,72,50 | Fill Color #ColorSoft# | StrokeWidth 3 | Stroke Color #Color# | Rotate 28",
+      "Ellipse 166,258,50,38 | Fill Color #Color2Soft# | StrokeWidth 3 | Stroke Color #Color2# | Rotate 25",
+      "Ellipse 274,258,50,38 | Fill Color #Color2Soft# | StrokeWidth 3 | Stroke Color #Color2# | Rotate -25",
       circle(142, 172, 10, "#Color2Soft#"), circle(298, 172, 10, "#Color2Soft#"),
       circle(168, 262, 7, "#ColorSoft#"), circle(272, 262, 7, "#ColorSoft#"),
       "Rectangle 213,150,14,130,7 | Fill Color #Color2# | StrokeWidth 0", circle(220, 144, 11, "#Color2#"),
@@ -884,17 +894,17 @@ sh = [circle(220, 215, 150, sw=1, stroke="#ColorSoft#")]
 for k in range(12):
     a = k * PI / 6
     px, py = 220 + 82 * cos(a), 215 + 82 * sin(a)
-    sh.append(f"Ellipse {px:.1f},{py:.1f},44,15 | Fill Color #ColorSoft# | StrokeWidth 2 | Stroke Color #Color# | Rotate {k*30},{px:.1f},{py:.1f}")
+    sh.append(f"Ellipse {px:.1f},{py:.1f},44,15 | Fill Color #ColorSoft# | StrokeWidth 2 | Stroke Color #Color# | Rotate {k*30}")
 sh += [circle(220, 215, 50, "#Color2Soft#", 3, "#Color2#"), mdot(220, 215, 150, "#SecRad#", 7, "#Color2#")]
 shp(i, "Daisy", sh)
 txt(i, "Time", "[mH]:[mM]", 220, 208, 30, INK, face="Segoe UI Semibold")
 txt(i, "Date", "[mDowS] [mDnum]", 220, 236, 12, DIM)
 
 i = nxt()   # 75 Bow
-shpx(i, "Bow", ["Ellipse 158,190,66,46 | Fill Color #ColorSoft# | StrokeWidth 4 | Stroke Color #Color# | Rotate -16,158,190",
-                "Ellipse 282,190,66,46 | Fill Color #ColorSoft# | StrokeWidth 4 | Stroke Color #Color# | Rotate 16,282,190",
-                "Ellipse 158,190,36,20 | Fill Color 0,0,0,0 | StrokeWidth 2 | Stroke Color #Color2# | Rotate -16,158,190",
-                "Ellipse 282,190,36,20 | Fill Color 0,0,0,0 | StrokeWidth 2 | Stroke Color #Color2# | Rotate 16,282,190",
+shpx(i, "Bow", ["Ellipse 158,190,66,46 | Fill Color #ColorSoft# | StrokeWidth 4 | Stroke Color #Color# | Rotate -16",
+                "Ellipse 282,190,66,46 | Fill Color #ColorSoft# | StrokeWidth 4 | Stroke Color #Color# | Rotate 16",
+                "Ellipse 158,190,36,20 | Fill Color 0,0,0,0 | StrokeWidth 2 | Stroke Color #Color2# | Rotate -16",
+                "Ellipse 282,190,36,20 | Fill Color 0,0,0,0 | StrokeWidth 2 | Stroke Color #Color2# | Rotate 16",
                 "Path Tail1 | Fill Color #Color2Soft# | StrokeWidth 3 | Stroke Color #Color2#",
                 "Path Tail2 | Fill Color #Color2Soft# | StrokeWidth 3 | Stroke Color #Color2#",
                 circle(220, 198, 25, "#Color#", 3, "#Color2#")],
@@ -1187,6 +1197,102 @@ txt(i, "Sum1", "Tests:  3 passed, 3 total", 34, 270, 12, TXT, align="LeftCenter"
 txt(i, "Sum2", "Time:   0.[mS] s", 34, 294, 12, GREY, align="LeftCenter", face="Consolas")
 txt(i, "Big", "[mH]:[mM]:[mS]", 220, 352, 28, "#CTfunc#", face="Consolas", style="Bold")
 assert SEQ[0] == 99, SEQ[0]
+# ---- 100-106: friendlier, more interesting clocks (v4.6)
+for _k in range(1, 8):
+    lmeas(f"mCalH{_k}", "calH", Index=_k)
+    lmeas(f"mWkH{_k}", "wkH", Index=_k)
+lmeas("mPomoLabel", "pomoLabel")
+lmeas("mAlarmText", "alarmText")
+for _nm, _md in [("mQPlain", "quotePlain"), ("mQAuthor", "quoteAuthor"), ("mWkText", "wkText"), ("mWkF", "wkF"), ("mWkDay", "wkDay"),
+                 ("mWeekNo", "weekNo"), ("mBdayDays", "bdayDays"), ("mBdayText", "bdayText"), ("mDayLen", "dayLen")]:
+    lmeas(_nm, _md)
+
+i = nxt()   # 100 Big quote
+txt(i, "Time", "[mH]:[mM]", 220, 100, 30, DIM)
+txt(i, "Mark", "[mQMark]", 44, 118, 64, "#ColorMid#", face="Georgia")
+txt(i, "Body", "[mQPlain]", 220, 150, 22, INK, face="Georgia", style="Italic", W=350, H=190, ClipString=2, align="CenterTop")
+txt(i, "Who", "[mQAuthor]", 220, 372, 16, "#Color#", face="Segoe UI", style="Bold")
+txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 408, 13, DIM)
+
+i = nxt()   # 101 Weekend countdown
+txt(i, "Big", "[mWkText]", 220, 150, 66, INK, face="Segoe UI Semibold")
+txt(i, "Lbl", "[mLblWeekendLeft]", 220, 214, 18, DIM)
+for k in range(5):
+    x = 80 + k * 70
+    shp(i, f"Day{k}", [circle(x, 290, 24, "0,0,0,0", 2, "#InkSoft#"),
+                       f"Ellipse {x},290,(([mWkDay]>={k + 1})*22) | Fill Color #ColorSoft# | StrokeWidth 0",
+                       f"Ellipse {x},290,(([mWkDay]>={k + 1})*([mWkDay]<{k + 2})*24) | Fill Color 0,0,0,0 | StrokeWidth 3 | Stroke Color #Color#"])
+    txt(i, f"D{k}", f"[mWkH{k + 1}]", x, 290, 14, INK, face="Segoe UI Semibold")
+sec(i, "Bar", "Bar", X=60, Y=340, W=320, H=10, MeasureName="mWkF", BarColor="#Color#", SolidColor="#InkSoft#", BarOrientation="Horizontal")
+txt(i, "Pct", "[mWkF:%]% of the work week", 220, 372, 14, DIM)
+txt(i, "Time", "[mH]:[mM]", 220, 408, 16, DIM)
+
+i = nxt()   # 102 Year grid
+sh = []
+for k in range(1, 53):
+    c, r = (k - 1) % 13, (k - 1) // 13
+    x, y = 60 + c * 26.5, 150 + r * 30
+    sh.append(f"Ellipse {x:.1f},{y},4 | Fill Color #InkSoft# | StrokeWidth 0")
+    sh.append(f"Ellipse {x:.1f},{y},(([mWeekNo]>={k})*5.5) | Fill Color #Color# | StrokeWidth 0")
+    sh.append(f"Ellipse {x:.1f},{y},(([mWeekNo]>={k})*([mWeekNo]<{k + 1})*9) | Fill Color 0,0,0,0 | StrokeWidth 2 | Stroke Color #Color2#")
+shp(i, "Grid", sh)
+txt(i, "Week", "Week [mWeekNo]", 220, 96, 34, INK, face="Segoe UI Semibold")
+txt(i, "Of", "of 52  -  [mYearPct] of [mYear] done", 220, 124, 13, DIM)
+txt(i, "Left", "[mLblDaysLeft]", 220, 282, 20, "#Color#")
+txt(i, "Time", "[mH]:[mM]", 220, 346, 54, INK)
+txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 396, 15, DIM)
+
+i = nxt()   # 103 Sun and moon
+txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 96, 16, DIM)
+hand(i, "Track", 220, 250, 118, "mOne", 1, "#InkSoft#", start=PI, rot=PI, lstart=112, solid=1)
+hand(i, "Prog", 220, 250, 118, "mSunF", 1, "#Color#", start=PI, rot=PI, lstart=108, solid=1)
+shp(i, "Sun", ["Line 90,250,350,250 | StrokeWidth 1 | Stroke Color #ColorMid#", mdot(220, 250, 115, "#SunRad#", 9, "#Color#")])
+txt(i, "Len", "[mDayLen]", 220, 212, 28, INK, face="Segoe UI Semibold")
+txt(i, "Len2", "[mLblDaylight]", 220, 238, 12, DIM)
+txt(i, "L1", "[mLblSunrise]", 95, 280, 12, DIM)
+txt(i, "T1", "[mSunRise]", 95, 304, 22, INK, face="Segoe UI Semibold")
+txt(i, "L2", "[mLblSunset]", 345, 280, 12, DIM)
+txt(i, "T2", "[mSunSet]", 345, 304, 22, INK, face="Segoe UI Semibold")
+txt(i, "Moon", "[mMoonIcon]", 110, 372, 40, INK, face="Segoe UI Emoji")
+txt(i, "MoonN", "[mMoonName]", 150, 362, 16, INK, align="LeftCenter", face="Segoe UI Semibold")
+txt(i, "MoonP", "[mMoonPct] lit", 150, 384, 12, DIM, align="LeftCenter")
+txt(i, "Note", "[mSunNote]", 220, 420, 11, "#Color#")
+
+i = nxt()   # 104 Sparkle Pop (Bloom)
+sh = [circle(220, 205, 96, "#Color2Soft#", 3, "#Color#"), circle(220, 205, 84, sw=1, stroke="#ColorSoft#"),
+      circle(98, 120, 36, "#ColorSoft#", 2, "#Color#"), circle(342, 108, 30, "#Color2Soft#", 2, "#Color2#"),
+      circle(352, 305, 44, "#ColorSoft#", 2, "#Color#"), circle(92, 300, 30, "#Color2Soft#", 2, "#Color2#"),
+      circle(300, 372, 20, "#ColorSoft#"), circle(150, 372, 24, "#Color2Soft#"), mdot(220, 205, 118, "#SecRad#", 8, "#Color2#")]
+stars = {}
+for k, (x, y, r) in enumerate(((60, 210, 10), (170, 90, 8), (395, 200, 9), (255, 330, 8), (45, 380, 7), (400, 380, 8))):
+    sh.append(f"Path Sp{k} | Fill Color #Color# | StrokeWidth 0")
+    stars[f"Sp{k}"] = star_path(x, y, r, r * 0.42)
+shpx(i, "Pop", sh, **stars)
+txt(i, "Time", "[mH]:[mM]", 220, 198, 40, INK, face="Segoe UI Semibold")
+txt(i, "Date", "[mDow]", 220, 232, 14, DIM)
+txt(i, "Day", "[mDnum]", 352, 305, 28, INK, face="Segoe UI Semibold")
+txt(i, "Mon", "[mMonS]", 92, 300, 15, INK)
+txt(i, "Dow", "[mDowS]", 98, 120, 15, INK)
+txt(i, "Sec", "[mS]", 342, 108, 18, INK)
+
+i = nxt()   # 105 Pulse Line (Volt)
+shpx(i, "Ecg", ["Path Beat | Fill Color 0,0,0,0 | StrokeWidth 3 | Stroke Color #Color#",
+                "Path Beat | Fill Color 0,0,0,0 | StrokeWidth 8 | Stroke Color #ColorSoft#",
+                "Ellipse (20+400*[mSecF]),300,7 | Fill Color #Color2# | StrokeWidth 0"],
+     Beat="20,300 | LineTo 120,300 | LineTo 140,300 | LineTo 156,268 | LineTo 174,338 | LineTo 192,246 | LineTo 210,300 | LineTo 420,300")
+txt(i, "Time", "[mH]:[mM]", 220, 130, 84, INK, face="Segoe UI Semibold")
+txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 196, 17, DIM)
+txt(i, "Sec", "[mS] s", 220, 372, 22, "#Color#", face="Consolas")
+
+i = nxt()   # 106 Birthday countdown
+sh = [circle(x, y, r, c) for x, y, r, c in ((60, 110, 7, "#Color#"), (380, 130, 9, "#Color2#"), (90, 330, 8, "#Color2#"),
+                                           (350, 340, 7, "#Color#"), (200, 90, 5, "#Color2#"), (310, 80, 6, "#Color#"))]
+shp(i, "Confetti", sh)
+txt(i, "Days", "[mBdayDays]", 220, 190, 120, INK, face="Segoe UI Semibold")
+txt(i, "Text", "[mBdayText]", 220, 285, 18, DIM, W=380, H=60, ClipString=2, align="CenterTop")
+txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 380, 15, DIM)
+assert SEQ[0] == 106, SEQ[0]
+
 
 
 # ---- extras for older styles: AM/PM markers for the 12-hour clock
@@ -1223,25 +1329,28 @@ qsec("QC_Who", "String", "QHc", X=36, Y=504, Text="[mQWho]", FontFace="Consolas"
 EXTRA_M = "\n\n".join(EXTRA)
 
 # ------------------------------------------------------------------ header
-SCRIPT = "ScriptFile=#CURRENTPATH#AdaptiveClock.lua"
+SCRIPT = "ScriptFile=#CURRENTPATH#AdaptiveClock.lua"   # default; script() and lbl() pick per mode
 
 def script(name, mode):
-    return f"[{name}]\nMeasure=Script\n{SCRIPT}\nMode={mode}"
+    return f"[{name}]\nMeasure=Script\nScriptFile={script_file(mode)}\nMode={mode}"
 
 def lbl(name, key):
-    return f"[{name}]\nMeasure=Script\n{SCRIPT}\nMode=lbl\nKey={key}"
+    return f"[{name}]\nMeasure=Script\nScriptFile={script_file('lbl')}\nMode=lbl\nKey={key}"
 
 _LBL = [("mLblHour", "hour"), ("mLblMinute", "minute"), ("mLblSecond", "second"), ("mLblHours", "hours"),
         ("mLblMinutes", "minutes"), ("mLblSeconds", "seconds"), ("mLblWorld", "world"), ("mLblDaysLeft", "daysLeft"),
         ("mLblDaysLeftYear", "daysLeftYear"), ("mLblYearDone", "yearDone"), ("mLblOfYear", "ofYear"),
-        ("mLblSecondsLow", "secondsLow"), ("mLblSunrise", "sunrise"), ("mLblSunset", "sunset")]
+        ("mLblSecondsLow", "secondsLow"), ("mLblSunrise", "sunrise"), ("mLblSunset", "sunset"),
+        ("mLblWeekendLeft", "weekendLeft"), ("mLblDaylight", "daylight")]
 DATE_M = "\n\n".join([script("mDow", "dow"), script("mDowS", "dowS"), script("mMon", "mon"), script("mMonS", "monS")]
                       + [lbl(n, k) for n, k in _LBL])
-HV = "\n".join(f"H{n}=1" for n in range(1, 100)) + "\nQHf=1\nQHc=1\n" + "\n".join(f"CalH{n}=" for n in range(1, 8)) + "\n" + "\n".join(f"CalD{n}=" for n in range(1, 43)) + "\n" + "\n".join(f"PX{n}=40" for n in range(1, 83))
+HV = ("\n".join(f"H{n}=1" for n in range(1, 107)) + "\nQHf=1\nQHc=1\n" + "\n".join(f"CalD{n}=" for n in range(1, 43)) + "\n"
+      + "\n".join(f"PX{n}=40" for n in range(1, 83)))
+
 def tm(name, fmt):
     return f"[{name}]\nMeasure=Time\nFormat={fmt}"
 
-head = f"""; AdaptiveClock.ini  by Amika Alankara  -  99 clock styles driven by AdaptiveClock.lua (same folder)
+head = f"""; AdaptiveClock.ini  by Amika Alankara  -  106 clock styles driven by AdaptiveClock.lua (same folder)
 ; Right-click the skin: Next / Random style, resume hourly shuffle, 12/24h, quote options.
 
 [Rainmeter]
@@ -1282,11 +1391,11 @@ ContextAction15=[!ActivateConfig "#CURRENTCONFIG#\\Gallery" "Gallery.ini"]
 [Metadata]
 Name=Adaptive Clock
 Author=Amika Alankara
-Version=4.5
+Version=4.7
 Description=91 clock styles, coder (19 languages) / everyday profiles, girl / boy themes, 10 languages, weather, timer and more.
 
 [Variables]
-StyleCount=99
+StyleCount=106
 HourFormat=%H
 QuoteHidden=0
 QuoteMinutes=1440
@@ -1319,8 +1428,16 @@ Language=Windows
 Smooth=0
 UpdateMs=1000
 Div=1
+LangFile=AdaptiveClock.lua
+PomoMode=focus
+AlarmRing=0
 Latitude=
 Longitude=
+WeatherLatitude=
+WeatherLongitude=
+WxLat=
+WxLon=
+Birthday=
 TempUnit=celsius
 WeatherOff=1
 PomoWork=25
@@ -1385,6 +1502,16 @@ RegSubKey=Control Panel\\Desktop
 RegValue=WallPaper
 UpdateDivider=(2*#Div#)
 OnChangeAction=[!CommandMeasure mLum "Run"]
+
+[mLoc]
+Measure=Plugin
+Plugin=RunCommand
+Program=PowerShell
+Parameter=-NoProfile -ExecutionPolicy Bypass -File "#CURRENTPATH#LocationFinder.ps1" -Out "#CURRENTPATH#State\\location.txt"
+OutputType=ANSI
+State=Hide
+Timeout=30000
+UpdateDivider=-1
 
 {script('mMain', 'main')}
 

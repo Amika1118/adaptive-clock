@@ -1,5 +1,8 @@
--- AdaptiveClock.lua  v4.5   (Rainmeter 4.x, Lua 5.1)
+-- AdaptiveClock.lua  v4.7   (Rainmeter 4.x, Lua 5.1)
 -- Author: Amika Alankara  (MIT License)
+-- This file is plain ASCII and has NO byte-order mark, so it loads everywhere.
+-- Measures that return symbols or non-English text use AdaptiveClockU.lua instead (a tiny loader saved WITH a BOM; it runs this file),
+-- because Rainmeter only treats Lua strings as Unicode when the script file it loads starts with a BOM.
 --
 -- One file, many small jobs. Each Script measure in the .ini picks its job with  Mode=
 --   main            colours (ink / theme palette), style shuffle, calendar variables, quote flags (value = full quote)
@@ -19,11 +22,12 @@
 --   wxIcon wxTemp wxText batText     weather and battery text
 
 local mode = 'main'
-local N = 99                       -- number of styles (the .ini sets StyleCount)
+local N = 106                       -- number of styles (the .ini sets StyleCount)
 local current, lastSlot, lastYday, lastKey, lastLuma, wasBright, lastCalDay, lastQKey
 local pool = {}                    -- style numbers that take part in the shuffle
 local interval = 60               -- minutes per style (ShuffleMinutes)
 local locked, lockedStyle = false, 0
+local wxLat, lastLocSrc
 local lblKey = ''
 local logIndex = 0
 local qpool
@@ -44,6 +48,7 @@ local NAMES = {
   'Launch', 'Kickoff', 'Neon Drive', 'Level Up', 'Grid Start', 'Crest',
   'Nixie', 'Vinyl', 'Compass', 'Waves', 'Zen circle', 'Day bar', 'Moon phase', 'Skyline',
   'Dot matrix', 'Matrix rain', 'CI pipeline', 'Stack trace', 'Hexdump', 'Neofetch', 'htop', 'Test runner',
+  'Big quote', 'Weekend', 'Year grid', 'Sun and moon', 'Sparkle Pop', 'Pulse Line', 'Birthday',
 }
 
 -- Styles that only appear for a profile / theme (all others always appear)
@@ -56,6 +61,10 @@ for i = 37, 40 do TAGS[i] = 'girl' end      -- Theme: Bloom
 for i = 72, 77 do TAGS[i] = 'girl' end
 for i = 41, 44 do TAGS[i] = 'boy' end       -- Theme: Volt
 for i = 78, 83 do TAGS[i] = 'boy' end
+for i = 100, 102 do TAGS[i] = 'easy' end
+for i = 106, 106 do TAGS[i] = 'easy' end
+for i = 104, 104 do TAGS[i] = 'girl' end
+for i = 105, 105 do TAGS[i] = 'boy' end
 TAGS[7], TAGS[23] = 'en', 'en'              -- word clocks: English only
 
 local D  = '\226\128\148'          -- em dash   (UTF-8 written as escapes so the file encoding never matters)
@@ -161,6 +170,11 @@ local function refresh()
 end
 
 local function var(name, default) return SKIN:GetVariable(name, default) end
+
+local function safe(f, ...)                         -- an error in an optional part must not stop the clock
+  local ok, err = pcall(f, ...)
+  if not ok then SKIN:Bang('!Log', 'AdaptiveClock: ' .. tostring(err), 'Error') end
+end
 local function profile() return var('Profile', 'All') end
 local function is12h() return var('HourFormat', '%H') ~= '%H' end
 
@@ -321,11 +335,13 @@ local function styleFor(t)
   return p[(slot(t) % M) + 1]
 end
 
+local coords                                      -- defined below (location helpers)
+
 local function writeState()                       -- read by the Settings window and the gallery
   local f = io.open(var('CURRENTPATH', '') .. 'state.txt', 'w')
   if not f then return end
   f:write('StyleNo=', tostring(current or 0), '\nStyleName=', NAMES[current or 0] or '', '\nStyleTotal=', tostring(N),
-          '\nLocked=', locked and '1' or '0', '\n')
+          '\nLocked=', locked and '1' or '0', '\nLocation=', select(3, coords()) or 'none', '\n')
   f:close()
 end
 
@@ -380,7 +396,16 @@ function CycleColors()      cycleVar('ColorMode', { 'Invert', 'Accent', 'White',
 function CycleShuffle()     cycleVar('ShuffleMinutes', { 60, 30, 15, 5, 1440 }, '60') end
 function CycleProfile()     cycleVar('Profile', { 'All', 'Coder', 'Everyday' }, 'All') end
 function CycleTheme()       cycleVar('Theme', { 'Neutral', 'Bloom', 'Volt' }, 'Neutral') end
-function CycleLanguage()    cycleVar('Language', { 'Windows', 'English', 'Spanish', 'French', 'German', 'Portuguese', 'Italian', 'Sinhala', 'Tamil', 'Hindi', 'Japanese' }, 'Windows') end
+local LANGUAGES = { 'Windows', 'English', 'Spanish', 'French', 'German', 'Portuguese', 'Italian', 'Sinhala', 'Tamil', 'Hindi', 'Japanese' }
+local function langFile(name) return (name == 'Windows' or name == 'English') and 'AdaptiveClock.lua' or 'AdaptiveClockU.lua' end
+function CycleLanguage()
+  local cur, idx = var('Language', 'Windows'), 0
+  for i, v in ipairs(LANGUAGES) do if v == cur then idx = i end end
+  local nxtLang = LANGUAGES[(idx % #LANGUAGES) + 1]
+  saveVar('Language', nxtLang)
+  saveVar('LangFile', langFile(nxtLang))
+  SKIN:Bang('!Refresh')
+end
 
 -- Used by the Settings skin:  [!CommandMeasure mMain "Set('Theme','Bloom')" "AdaptiveClock"]
 local SETTABLE = { Profile = 1, Theme = 1, ColorMode = 1, ShuffleMinutes = 1, QuoteMinutes = 1, QuoteHidden = 1,
@@ -392,6 +417,7 @@ function Set(name, value)
   value = tostring(value)
   if name == 'HourFormat' then value = (value == 'H12') and '%#I' or '%H' end
   saveVar(name, value)
+  if name == 'Language' then saveVar('LangFile', langFile(value)) end
   if name == 'Smooth' then
     saveVar('UpdateMs', value == '1' and 100 or 1000)
     saveVar('Div', value == '1' and 10 or 1)
@@ -497,6 +523,7 @@ end
 local function quoteFlags()                       -- which of the two quote designs is visible
   local hidden = (var('QuoteHidden', '0') == '1')
   local m = quoteMode()
+  if current == 100 then hidden = true end       -- the Big quote clock shows the quote itself
   local key = tostring(hidden) .. m
   if key == lastQKey then return end
   lastQKey = key
@@ -543,8 +570,9 @@ local EN = {
         yearDone = 'of {year} is done', ofYear = 'of {year}', secondsLow = 'seconds', focus = 'FOCUS', rest = 'BREAK',
         alarm = 'Alarm', ringing = 'ALARM!', sunrise = 'Sunrise', sunset = 'Sunset',
         nothing = 'Nothing playing', battery = 'Battery', charging = 'Charging',
-        setLocation = 'Set Latitude and Longitude in the .ini', weatherOff = 'Weather is off (turn it on in Settings)',
-        loading = 'Loading...' },
+        setLocation = 'Location not found - see Settings > Extras', weatherOff = 'Weather is off - enable it in Settings',
+        loading = 'Loading...', itsWeekend = "It's the weekend!", weekendLeft = 'until the weekend',
+        daylight = 'of daylight', bdayUnset = 'Set Birthday=MM-DD in AdaptiveClock.ini', bdayToday = 'Happy birthday!', bdayLeft = 'days until your birthday' },
 }
 local LANGS
 
@@ -684,7 +712,6 @@ end
 local function calendar(t)
   local ws = tonumber(var('WeekStart', '1')) or 1             -- 0 = Sunday first, 1 = Monday first
   local names = lang().dowH or EN.dowH
-  for c = 1, 7 do setv('CalH' .. c, names[((c - 1 + ws) % 7) + 1]) end
   local first = os.date('*t', os.time({ year = t.year, month = t.month, day = 1, hour = 12 }))
   local off = (first.wday - 1 - ws) % 7
   local dim = daysInMonth(t.year, t.month)
@@ -739,11 +766,39 @@ end
 
 -- ---------------------------------------------------------------- sunrise / sunset (needs Latitude and Longitude)
 
+local locCache, locRead = nil, 0
+
+local function readLocation()                      -- State\location.txt is written by LocationFinder.ps1 (no internet involved)
+  local t = os.time()
+  if locCache ~= nil and t - locRead < 30 then return locCache end
+  locRead, locCache = t, false
+  local f = io.open(var('CURRENTPATH', '') .. 'State\\location.txt', 'r')
+  if f then
+    local d = {}
+    for raw in f:lines() do
+      local k, v = raw:gsub('\r', ''):match('^(%w+)=(.*)$')
+      if k then d[k] = v end
+    end
+    f:close()
+    local la, lo = tonumber(d.lat), tonumber(d.lon)
+    if la and lo and (d.source == 'windows' or d.source == 'timezone') then locCache = { lat = la, lon = lo, source = d.source } end
+  end
+  return locCache
+end
+
+coords = function()                            -- typed in the .ini, or found on this PC. Never looked up online.
+  local la, lo = tonumber(var('Latitude', '')), tonumber(var('Longitude', ''))
+  if la and lo then return la, lo, 'manual' end
+  local c = readLocation()
+  if c then return c.lat, c.lon, c.source end
+  return nil
+end
+
 local sunCache = {}
 
 local function sunTimes(t)                        -- unix times of sunrise and sunset, or nil without coordinates
-  local lat, lon = tonumber(var('Latitude', '')), tonumber(var('Longitude', ''))
-  if not lat or not lon then return nil end
+  local lat, lon = coords()
+  if not lat then return nil end
   local c = sunCache
   if c.yday == t.yday and c.year == t.year and c.lat == lat and c.lon == lon then return c.rise, c.set end
   local rad = math.pi / 180
@@ -822,7 +877,7 @@ end
 
 local function wxText()
   if var('WeatherOff', '1') == '1' then return tr('weatherOff') end
-  if not (tonumber(var('Latitude', '')) and tonumber(var('Longitude', ''))) then return tr('setLocation') end
+  if not coords() then return tr('setLocation') end
   local c = wxCode()
   if c == nil then return tr('loading') end
   return WX[c] or ''
@@ -907,16 +962,16 @@ local function tickTimers(t)
 
   local rem = math.max(0, pomo.remaining)
   local text = string.format('%02d:%02d', math.floor(rem / 60), rem % 60)
-  local label2 = (pomo.mode == 'focus') and tr('focus') or tr('rest')
-  local alarmText = ringing and tr('ringing') or (tr('alarm') .. ' ' .. var('AlarmTime', '07:00') .. ((var('AlarmOn', '0') == '1') and '  ON' or '  OFF'))
-  local key = text .. label2 .. alarmText .. tostring(pomo.running)
+  local label2 = pomo.mode
+  local alarmText = ringing and 'R' or 'N'
+  local key = text .. label2 .. alarmText .. tostring(pomo.running) .. var('AlarmTime', '07:00') .. var('AlarmOn', '0')
   if key == pubKey then return end
   pubKey = key
   setv('PomoText', text)
   setnum('PomoFrac', rem / math.max(1, pomoLen(pomo.mode)))
-  setv('PomoLabel', label2)
+  setv('PomoMode', label2)
   setv('PomoBtn', pomo.running and '||' or '>')
-  setv('AlarmText', alarmText)
+  setv('AlarmRing', ringing and 1 or 0)
 end
 
 -- ---------------------------------------------------------------- moon phase
@@ -981,6 +1036,63 @@ local function hexRow(k)                          -- row k of a hexdump of "HH:M
   return string.format('%04x  %s  %s  |%s|', k * 8, table.concat(hex, ' ', 1, 4), table.concat(hex, ' ', 5, 8), table.concat(asc))
 end
 
+-- ---------------------------------------------------------------- friendly helpers (weekend, birthday, week of the year)
+
+local function weekdayMon()                         -- Monday = 1 ... Sunday = 7
+  return (os.date('*t').wday + 5) % 7 + 1
+end
+
+local function untilWeekend()                       -- seconds until Saturday 00:00, or nil during the weekend
+  local t, wd = os.date('*t'), weekdayMon()
+  if wd >= 6 then return nil end
+  return (5 - wd) * 86400 + (86400 - (t.hour * 3600 + t.min * 60 + t.sec))
+end
+
+local function birthdayDays()
+  local m, d = (var('Birthday', '')):match('^(%d+)%-(%d+)$')
+  if not m then return nil end
+  local t = os.date('*t')
+  local today = os.time({ year = t.year, month = t.month, day = t.day, hour = 12 })
+  local target = os.time({ year = t.year, month = tonumber(m), day = tonumber(d), hour = 12 })
+  if target < today then target = os.time({ year = t.year + 1, month = tonumber(m), day = tonumber(d), hour = 12 }) end
+  return math.floor((target - today) / 86400 + 0.5)
+end
+
+local function weatherCoords()                      -- the ONLY place coordinates are prepared for the internet, and only if Weather is on
+  if var('WeatherOff', '1') == '1' then
+    setv('WxLat', ''); setv('WxLon', '')
+    return
+  end
+  local la, lo = tonumber(var('WeatherLatitude', '')), tonumber(var('WeatherLongitude', ''))
+  if not (la and lo) then la, lo = coords() end
+  if not la then return end
+  local a, b = string.format('%.1f', la), string.format('%.1f', lo)   -- rounded to about 11 km before it can leave the PC
+  if a ~= wxLat then
+    local first = (wxLat == nil)
+    wxLat = a
+    setv('WxLat', a); setv('WxLon', b)
+    if first then SKIN:Bang('!CommandMeasure', 'mWxRaw', 'Update') end
+  end
+end
+
+function RefreshLocation()                          -- Settings > Extras > Find my location again
+  local here = var('CURRENTPATH', '')
+  SKIN:Bang('!SetOption', 'mLoc', 'Parameter', '-NoProfile -ExecutionPolicy Bypass -File "' .. here ..
+            'LocationFinder.ps1" -Out "' .. here .. 'State\\location.txt" -Force')
+  SKIN:Bang('!CommandMeasure', 'mLoc', 'Run')
+  locRead, locCache = 0, nil
+end
+
+local DEFAULTS = { Profile = 'All', Theme = 'Neutral', CodeTheme = 'Dark', ColorMode = 'Invert', ShuffleMinutes = '60',
+  QuoteMinutes = '1440', QuoteHidden = '0', QuoteStyle = 'Auto', HourFormat = '%H', Language = 'Windows', WeekStart = '1',
+  Smooth = '0', UpdateMs = '1000', Div = '1', TempUnit = 'celsius', WeatherOff = '1', PomoWork = '25', PomoBreak = '5',
+  TimerBeep = '1', SkipStyles = '', LockedStyle = '0', LangFile = 'AdaptiveClock.lua' }
+
+function ResetSettings()                            -- Settings > Actions > Reset all settings
+  for k, v in pairs(DEFAULTS) do saveVar(k, v) end
+  SKIN:Bang('!Refresh')
+end
+
 -- ---------------------------------------------------------------- measure entry points
 
 local function now() return os.date('*t') end
@@ -1017,6 +1129,42 @@ local MODES = {
   quoteBody = quoteBody,
   quoteWho  = quoteWho,
   secN = function() return now().sec end,
+  calH = function()                                -- calendar header: Index 1..7 (week starts on WeekStart)
+    local ws = tonumber(var('WeekStart', '1')) or 1
+    return (lang().dowH or EN.dowH)[((logIndex - 1 + ws) % 7) + 1]
+  end,
+  wkH = function() return (lang().dowH or EN.dowH)[(logIndex % 7) + 1] end,   -- Monday-first weekday name: Index 1..7
+  pomoLabel = function() return (var('PomoMode', 'focus') == 'focus') and tr('focus') or tr('rest') end,
+  alarmText = function()
+    if var('AlarmRing', '0') == '1' then return tr('ringing') end
+    return tr('alarm') .. ' ' .. var('AlarmTime', '07:00') .. ((var('AlarmOn', '0') == '1') and '  ON' or '  OFF')
+  end,
+  quotePlain  = function() return quoteEntry(os.date('*t'))[1] end,
+  quoteAuthor = function() local a = quoteEntry(os.date('*t'))[2]; return (a ~= '') and (D .. ' ' .. a) or '' end,
+  wkText = function()
+    local s = untilWeekend()
+    if not s then return tr('itsWeekend') end
+    return string.format('%dd %02dh', math.floor(s / 86400), math.floor((s % 86400) / 3600))
+  end,
+  wkF = function()
+    local t, wd = os.date('*t'), weekdayMon()
+    if wd >= 6 then return 1 end
+    return math.min(1, ((wd - 1) * 86400 + t.hour * 3600 + t.min * 60 + t.sec) / (5 * 86400))
+  end,
+  wkDay = function() return weekdayMon() end,
+  weekNo = function() return math.floor((os.date('*t').yday - 1) / 7) + 1 end,
+  bdayDays = function() return birthdayDays() or 0 end,
+  bdayText = function()
+    local d = birthdayDays()
+    if not d then return tr('bdayUnset') end
+    if d == 0 then return tr('bdayToday') end
+    return d .. ' ' .. tr('bdayLeft')
+  end,
+  dayLen = function()
+    local r, s = sunPair(now())
+    local m = math.floor((s - r) / 60 + 0.5)
+    return string.format('%dh %02dm', math.floor(m / 60), m % 60)
+  end,
   ciStatus = function()
     local st = math.floor(now().sec / 15)
     if st > logIndex then return 'passed' end
@@ -1052,11 +1200,11 @@ local MODES = {
 
 function Initialize()
   mode = SELF:GetOption('Mode', 'main')
-  N = tonumber(var('StyleCount', '99')) or 99
+  N = tonumber(var('StyleCount', '106')) or 106
   lblKey = SELF:GetOption('Key', '')
   logIndex = tonumber(SELF:GetOption('Index', '0')) or 0
 
-  if mode == 'main' or mode == 'quoteBody' or mode == 'quoteWho' then
+  if mode == 'main' or mode == 'quoteBody' or mode == 'quoteWho' or mode == 'quotePlain' or mode == 'quoteAuthor' then
     loadQuotes()
     buildQuotePool()
   end
@@ -1083,15 +1231,20 @@ function Update()
   end
 
   local t = os.date('*t')
-  accent()
-  angles(t)
-  quoteFlags()
-  setPixels(t)
-  tickTimers(t)
-  do
+  safe(accent)
+  safe(angles, t)
+  safe(quoteFlags)
+  safe(setPixels, t)
+  safe(weatherCoords)
+  safe(function()
+    local _, _, src = coords()
+    if src ~= lastLocSrc then lastLocSrc = src; writeState() end
+  end)
+  safe(tickTimers, t)
+  safe(function()
     local f = sunFraction(t)
     setnum('SunRad', math.pi + f * math.pi)
-  end
+  end)
   if t.yday ~= lastCalDay then
     lastCalDay = t.yday
     calendar(t)
@@ -1104,6 +1257,5 @@ function Update()
     showStyle(styleFor(t))
   end
 
-  local q = quoteEntry(t)
-  return LQ .. q[1] .. RQ .. ((q[2] ~= '') and (' ' .. D .. ' ' .. q[2]) or '')
+  return 0
 end

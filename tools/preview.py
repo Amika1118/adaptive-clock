@@ -46,7 +46,7 @@ def set_palette(ink="255,255,255", color=None, color2=None):
                 MinRad=f"{min_f*2*math.pi-math.pi/2:.5f}", HourRad=f"{hr_f*2*math.pi-math.pi/2:.5f}",
                 DayRad=f"{math.pi+day_f*math.pi:.5f}", DayF=f"{day_f:.5f}", SunRad=f"{math.pi+0.55*math.pi:.5f}",
                 PomoFrac="0.62", PomoText="14:20", PomoLabel="FOCUS", PomoBtn=">", AlarmText="Alarm 07:00  ON",
-                CalToday="25", WeekIdx="4", QHf="0", QHc="1")
+                CalToday="25", WeekIdx="4", WkH1="Mo", WkH2="Tu", WkH3="We", WkH4="Th", WkH5="Fr", WkH6="Sa", WkH7="Su", QHf="0", QHc="1")
     for i, d in enumerate("MoTuWeThFrSaSu", 0):
         pass
     G = {"0": ["1111","1001","1001","1001","1111"], "1": ["0110","0010","0010","0010","0111"], "8": ["1111","1001","1111","1001","1111"]}
@@ -62,7 +62,8 @@ def set_palette(ink="255,255,255", color=None, color2=None):
         d = i - off
         VARS[f"CalD{i}"] = str(d) if 1 <= d <= 31 else ""
 
-MEAS = dict(mSecN=37, mLn8=6, mCi0="passed", mCi1="passed", mCi2="running", mCi3="queued", mCore0=23, mCore1=41, mCore2=12, mCore3=68,
+MEAS = dict(mPomoLabel="FOCUS", mAlarmText="Alarm 07:00  ON", mQPlain="The best time to plant a tree was twenty years ago. The second best time is now.", mQAuthor="\u2014 Proverb", mWkText="2d 05h", mWkF=0.42, mWkDay=4, mWeekNo=43,
+            mBdayDays=62, mBdayText="62 days until your birthday", mDayLen="11h 55m", mLblWeekendLeft="until the weekend", mLblDaylight="of daylight", mSecN=37, mLn8=6, mCi0="passed", mCi1="passed", mCi2="running", mCi3="queued", mCore0=23, mCore1=41, mCore2=12, mCore3=68,
             mHx0="0000  31 30 3a 30  38 3a 33 37  |10:08:37|", mHx1="0008  20 54 68 75  20 32 32 20  | Thu 22 |",
             mHx2="0010  4f 63 74 20  32 30 32 36  |Oct 2026|", mH="10", mM="08", mS="37", mDow="Thursday", mDowS="Thu", mDnum="22", mMon="October", mMonS="Oct", mYear="2026",
             mSecF=sec_f, mMinF=min_f, mHrF=hr_f, mDayF=day_f, mOne=1, mDHT=1, mDHU=0, mDMT=0, mDMU=8, mDST=3, mDSU=7,
@@ -77,6 +78,9 @@ MEAS = dict(mSecN=37, mLn8=6, mCi0="passed", mCi1="passed", mCi2="running", mCi3
             mWTime="01:08\n06:08\n10:08\n15:08\n21:08", mWordA="TEN PAST", mWordB="TEN", mWxIcon="\u2601", mWxTempTxt="23\u00b0C",
             mWxText="Overcast", mSunRise="06:12", mSunSet="18:20", mSunF=0.55, mSunNote="", mBatTxt="Charging", mBatPct=86,
             mPomoF=0.62, mMoonIcon="\u25d1", mMoonName="Waxing gibbous", mMoonPct="73%", mMoonF=0.39)
+for k, nm in enumerate(("Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"), 1):
+    MEAS[f"mCalH{k}"] = nm
+    MEAS[f"mWkH{k}"] = nm
 for k in range(5):
     MEAS[f"mLogHash{k}"] = ["a3f9c21", "7be41d0", "19c8e5a", "e02b7f3", "5d6a912"][k]
     MEAS[f"mLogTime{k}"] = f"10:{8 - k:02d}"
@@ -357,7 +361,7 @@ def render(n, name, out_path, light=False, theme="Neutral"):
     return warns
 
 def names():
-    lua = open(LUA, encoding="utf-8").read()
+    lua = open(LUA, encoding="utf-8-sig").read()
     block = lua[lua.index("local NAMES = {"):lua.index("-- Styles that only appear")]
     return re.findall(r"'([^']+)'", block)
 

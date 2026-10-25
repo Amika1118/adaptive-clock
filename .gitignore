@@ -8,3 +8,7 @@ AdaptiveClock/state.txt
 
 # single-style preview images (the contact sheets in docs/ are kept)
 docs/previews/
+
+# location and other runtime files written next to the skin
+AdaptiveClock/State/*
+!AdaptiveClock/State/.gitkeep

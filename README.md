@@ -1,6 +1,6 @@
 # Adaptive Clock for Rainmeter
 
-A desktop clock with **99 styles**, built for Rainmeter on Windows. By Amika Alankara.
+A desktop clock with **106 styles**, built for Rainmeter on Windows. By Amika Alankara.
 
 ![Coder clocks](docs/contact-sheet-5.png)
 
@@ -16,7 +16,9 @@ A desktop clock with **99 styles**, built for Rainmeter on Windows. By Amika Ala
 - **Themes**: *Classic*, *Bloom* (pink and lilac: Blossom, Heartbeat, Flutter, Ribbon, Spectrum, Lunar Glow...) and *Volt* (electric blue and cyan: Radar Sweep, Launch, Kickoff, Neon Drive, Level Up, Grid Start, Crest...). Each has its own accent colours and clocks.
 - **For everyone**: chronograph, flip clock, nixie, vinyl, compass, moon phase, skyline, aurora and many more.
 - **Languages**: Windows (follows your system for dates), English, Spanish, French, German, Portuguese, Italian, Sinhala, Tamil, Hindi, Japanese.
+- **Friendly clocks**: Big quote, Weekend countdown, Year grid, Sun and moon, Birthday countdown, Sparkle Pop, Pulse Line.
 - **Extras**: weather (optional), sunrise and sunset, battery, focus timer with alarm.
+- **Your location stays on your PC**: sunrise and sunset use the location Windows gives the clock (or your time zone as a fallback) and nothing is sent anywhere. See [Privacy and location](#privacy-and-location).
 - **Adaptive colours**: black or white text chosen from the wallpaper behind the skin, or your Windows accent colour.
 - **Quotes**: a friendly card, or a code-comment style for the Coder profile.
 - **Settings window** (5 pages, always shows where you are) and a **style gallery** that highlights the style on screen.
@@ -31,7 +33,7 @@ Windows 10/11, [Rainmeter 4.x](https://www.rainmeter.net/), PowerShell (built in
 in Rainmeter, then load `AdaptiveClock\AdaptiveClock.ini`. Also available: `AdaptiveClock\Settings\Settings.ini` and
 `AdaptiveClock\Gallery\Gallery.ini` (or use the last two items of the right-click menu).
 
-Keep the `.ini`, `.lua`, `Languages.lua` and `WallpaperLuma.ps1` files together. Save `.lua` files as UTF-8.
+Keep all the files of the `AdaptiveClock` folder together (`.ini`, `AdaptiveClock.lua`, `AdaptiveClockU.lua`, `Languages.lua`, `LocationFinder.ps1`, `WallpaperLuma.ps1`). **Do not change the BOM of the Lua files:** `AdaptiveClock.lua` and `Languages.lua` must have *no* BOM, `AdaptiveClockU.lua` must be *UTF-8 with BOM* (see below). `python tools/check_ini.py` verifies this.
 
 ## Mouse
 Double-click for the next style. Hover to see the style name and number (and whether it is locked).
@@ -59,8 +61,10 @@ active choice is highlighted and its name is written next to the setting.
 | `HourFormat` | `%H` or `%#I` | 24 h or 12 h |
 | `QuoteHidden`, `QuoteMinutes`, `QuoteStyle`, `QuoteSize` | see settings | Quote behaviour |
 | `Smooth` | `0` / `1` | Smooth seconds hand (updates 10x per second, uses more CPU) |
-| `Latitude`, `Longitude` | e.g. `51.5`, `-0.12` | Needed for sunrise / sunset and weather. You type them in; nothing is detected |
-| `WeatherOff` | `1` / `0` | Weather is off by default (no network use). On = asks open-meteo.com every 15 min |
+| `Latitude`, `Longitude` | e.g. `51.5`, `-0.12` | Optional. Overrides the location found on your PC for sunrise and sunset |
+| `WeatherLatitude`, `WeatherLongitude` | e.g. `48.9`, `2.3` | Optional. Weather uses this place instead of your real location |
+| `Birthday` | `MM-DD`, e.g. `12-25` | Used by the Birthday clock |
+| `WeatherOff` | `1` / `0` | Weather is off by default (no internet use). On = asks open-meteo.com every 15 min (see Privacy) |
 | `TempUnit` | `celsius`, `fahrenheit` | Weather units |
 | `PomoWork`, `PomoBreak`, `TimerBeep` | minutes / minutes / `1`,`0` | Timer style |
 | `AlarmTime`, `AlarmOn` | `07:00`, `0` / `1` | Alarm (use the timer style buttons) |
@@ -93,3 +97,24 @@ verify before redistributing commercially.
 
 ## License
 MIT. See `LICENSE`.
+
+## Privacy and location
+- **Finding your location happens on your PC.** `LocationFinder.ps1` asks Windows for the position (Settings > Privacy & security > Location,
+  including *Let desktop apps access your location*). If Windows does not answer, it estimates from your time zone using a table inside the
+  script. The answer is rounded to about 1 km and saved in `AdaptiveClock\State\location.txt`, which is listed in `.gitignore` so it is never
+  committed. You can see the source in *Settings > Extras*.
+- **Sunrise, sunset, daylight length and the sun position are calculated locally.** No network is used.
+- **Weather is the only feature that uses the internet, and it is off by default.** When you switch it on, the clock sends your position
+  rounded to one decimal (about 11 km) to `api.open-meteo.com` every 15 minutes. If you would rather not share even that, set
+  `WeatherLatitude` / `WeatherLongitude` to a nearby big city, or leave weather off.
+- The wallpaper-brightness check reads your wallpaper file locally and sends nothing.
+
+## Troubleshooting
+- **The clock does not appear.** Delete the old `Documents\Rainmeter\Skins\AdaptiveClock` folder, install again, choose *Refresh all*, then load
+  `AdaptiveClock\AdaptiveClock.ini`. If it is still blank, open Rainmeter's tray menu > *About* > *Log* and look at the red `ERR` lines; they name the file
+  and the line.
+- **Symbols or other languages look like `Ã°Å¸...`.** Rainmeter only reads Lua text as Unicode when the script file starts with a UTF-8 BOM. For that reason
+  the measures that return symbols (moon, weather icon, curly quotes) or non-English text run through `AdaptiveClockU.lua`, a tiny loader saved *with* a BOM that
+  then runs `AdaptiveClock.lua` (which has no BOM). The core of the clock never depends on the BOM file, so if a PC cannot load it, only those symbols are missing.
+- **Sunrise or the location says "not found".** Turn on Windows location (Settings > Privacy & security > Location, including *Let desktop apps access your
+  location*) and press *Find my location again* in Settings > Extras, or type `Latitude` / `Longitude` in `AdaptiveClock.ini`.

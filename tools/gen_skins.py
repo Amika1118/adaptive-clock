@@ -4,7 +4,7 @@ import re, os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SKIN = os.path.join(HERE, "..", "AdaptiveClock")
-lua = open(os.path.join(SKIN, "AdaptiveClock.lua"), encoding="utf-8").read()
+lua = open(os.path.join(SKIN, "AdaptiveClock.lua"), encoding="utf-8-sig").read()
 
 # style names and tags come straight from AdaptiveClock.lua (single source of truth)
 names_block = lua[lua.index("local NAMES = {"):lua.index("-- Styles that only appear")]
@@ -48,27 +48,28 @@ def button(n, x, y, w, h, text, action, color_var=None, fill=None, fs=10, hide=N
 def act(call):                                    # call a function in the clock skin
     return f'[!CommandMeasure mMain "{call}" "#Main#"]'
 
-# ======================================================================== Settings (5 pages)
+# ======================================================================== Settings (6 pages)
 LANGS = ["Windows", "English", "Spanish", "French", "German", "Portuguese", "Italian", "Sinhala", "Tamil", "Hindi", "Japanese"]
+PROFILE = ("Profile", "Profile", [("All", "All"), ("Coder", "Coder"), ("Everyday", "Everyday")])
+THEME = ("Theme", "Theme", [("Classic", "Neutral"), ("Bloom", "Bloom"), ("Volt", "Volt")])
 PAGES = [
-    ("Style", [
-        ("Profile", "Profile", [("All", "All"), ("Coder", "Coder"), ("Everyday", "Everyday")]),
-        ("Theme", "Theme", [("Classic", "Neutral"), ("Bloom", "Bloom"), ("Volt", "Volt")]),
+    ("Start", "start", [PROFILE, THEME]),
+    ("Style", "plain", [
         ("Code colours", "CodeTheme", [("Dark", "Dark"), ("Dracula", "Dracula"), ("Monokai", "Monokai"), ("Light", "Light")]),
         ("Text colour", "ColorMode", [("Invert", "Invert"), ("Accent", "Accent"), ("White", "White"), ("Black", "Black")]),
         ("Style changes", "ShuffleMinutes", [("60 min", "60"), ("30 min", "30"), ("15 min", "15"), ("5 min", "5"), ("Daily", "1440")]),
     ]),
-    ("Language", [
+    ("Language", "plain", [
         ("Language", "Language", [(l, l) for l in LANGS]),
         ("Clock", "HourFormat", [("24 hour", "H24"), ("12 hour", "H12")]),
         ("Week starts", "WeekStart", [("Monday", "1"), ("Sunday", "0")]),
     ]),
-    ("Quote", [
+    ("Quote", "plain", [
         ("Quote", "QuoteHidden", [("Show", "0"), ("Hide", "1")]),
         ("Changes", "QuoteMinutes", [("Daily", "1440"), ("Hourly", "60"), ("30 min", "30"), ("10 min", "10")]),
         ("Design", "QuoteStyle", [("Auto", "Auto"), ("Friendly", "Friendly"), ("Terminal", "Terminal")]),
     ]),
-    ("Extras", [
+    ("Extras", "extras", [
         ("Smooth seconds", "Smooth", [("Off", "0"), ("On", "1")]),
         ("Weather", "WeatherOff", [("Off", "1"), ("On", "0")]),
         ("Temperature", "TempUnit", [("Celsius", "celsius"), ("Fahrenheit", "fahrenheit")]),
@@ -76,30 +77,30 @@ PAGES = [
         ("Break", "PomoBreak", [("5 min", "5"), ("10 min", "10"), ("15 min", "15")]),
         ("Timer beep", "TimerBeep", [("On", "1"), ("Off", "0")]),
     ]),
-    ("Actions", []),
+    ("Actions", "actions", []),
 ]
 ACTIONS = [("Next style", "Next()"), ("Random style", "RandomStyle()"), ("Lock / unlock this style", "ToggleLock()"),
            ("Resume shuffle + re-check wallpaper", "Resume()"), ("Next quote", "NextQuote()"),
-           ("Skip this style in future", "SkipThisStyle()"), ("Show all styles again", "ShowAllStyles()")]
+           ("Skip this style in future", "SkipThisStyle()"), ("Show all styles again", "ShowAllStyles()"),
+           ("Reset all settings", "ResetSettings()")]
+GALLERY = '[!ActivateConfig "#Main#\\\\Gallery" "Gallery.ini"]'
 
 SW, ROW, TOP = 500, 42, 138
 meters, variables, n, group_id = [], [], 0, 0
 page_h = []
-for p, (pname, groups) in enumerate(PAGES, start=1):
+
+def note(name, text, x, y, w, h, size=9, color="140,146,165", hide=None, bold=False):
+    o = dict(Meter="String", X=x, Y=y, W=w, H=h, Text=text, ClipString=2, FontFace=FONT, FontSize=size, FontColor=color, AntiAlias=1)
+    if bold: o["StringStyle"] = "Bold"
+    if hide: o.update(Hidden=f"#{hide}#", DynamicVariables=1)
+    return sec(name, **o)
+
+for p, (pname, kind, groups) in enumerate(PAGES, start=1):
     y = TOP
     hide = f"Pg{p}"
-    if pname == "Actions":
-        aw = (SW - 36 - 8) / 2
-        for j, (text, call) in enumerate(ACTIONS):
-            meters += button(900 + j, 18 + (j % 2) * (aw + 8), y + (j // 2) * 38, aw, 30, text, act(call), fill="255,255,255,36", hide=hide)
-        y += ((len(ACTIONS) + 1) // 2) * 38 + 4
-        meters += button(990, 18, y, aw, 30, "Open style gallery", '[!ActivateConfig "#Main#\\\\Gallery" "Gallery.ini"]', fill="77,142,255,160", hide=hide)
-        y += 44
-        meters.append(sec("ActHint", Meter="String", X=18, Y=y, W=SW - 36, H=70, ClipString=2, FontFace=FONT, FontSize=9,
-                          FontColor="140,146,165", AntiAlias=1, Hidden=f"#{hide}#", DynamicVariables=1,
-                          Text="Weather and sunrise need Latitude and Longitude in AdaptiveClock.ini ([Variables]). "
-                               "Changing a setting refreshes the clock."))
-        y += 60
+    if kind == "start":
+        meters.append(note("Welcome", "Welcome! Pick a look below, then press Surprise me. Everything stays on this PC.", 18, y - 8, SW - 36, 34, 11, "200,205,220", hide))
+        y += 34
     for label, var, opts in groups:
         group_id += 1
         chunks = [opts[i:i + 6] for i in range(0, len(opts), 6)]
@@ -116,9 +117,38 @@ for p, (pname, groups) in enumerate(PAGES, start=1):
                 n += 1
                 variables += [f"B{n}V={var}", f"B{n}X={val}", f"B{n}F=clock", f"B{n}G={group_id}", f"B{n}L={text}",
                               f"B{n}O={OFF}", f"B{n}C={OFF}"]
-                meters += button(n, 130 + j * (bw + 4), y + 4, bw, 26, text, act(f"Set('{var}','{val}')"), color_var=f"B{n}C",
-                                 hide=hide)
+                meters += button(n, 130 + j * (bw + 4), y + 4, bw, 26, text, act(f"Set('{var}','{val}')"), color_var=f"B{n}C", hide=hide)
             y += ROW
+    if kind == "start":
+        y += 6
+        bw3 = (SW - 36 - 8) / 3
+        for j, (text, action, fill) in enumerate((("Surprise me", act("RandomStyle()"), "77,142,255,200"), ("Next style", act("Next()"), "255,255,255,36"),
+                                                  ("Open style gallery", GALLERY, "255,255,255,36"))):
+            meters += button(950 + j, 18 + j * (bw3 + 4), y, bw3, 34, text, action, fill=fill, hide=hide, fs=11)
+        y += 50
+        meters.append(note("Tips", "Tips:  double-click the clock for the next style  -  right-click it for the menu  -  "
+                                   "Settings > Extras shows where your location comes from (it never leaves this PC).", 18, y, SW - 36, 44, 9, hide=hide))
+        y += 44
+    if kind == "extras":
+        y += 4
+        meters.append(note("LocStatus", "#LocStatus#", 18, y, SW - 36, 18, 10, "110,170,255", hide, True))
+        meters += button(970, 18, y + 22, 200, 28, "Find my location again", act("RefreshLocation()"), fill="255,255,255,36", hide=hide)
+        y += 60
+        meters.append(note("Privacy", "Privacy: your location is found on this PC (Windows location, or your time zone) and used only for sunrise and sunset. "
+                                      "Weather is the one feature that uses the internet: when you turn it on, it sends your position rounded to about 11 km "
+                                      "to open-meteo.com. Weather is off by default; you can type a different place in AdaptiveClock.ini "
+                                      "(WeatherLatitude / WeatherLongitude) if you prefer.", 18, y, SW - 36, 84, 9, hide=hide))
+        y += 84
+    if kind == "actions":
+        aw = (SW - 36 - 8) / 2
+        for j, (text, call) in enumerate(ACTIONS):
+            meters += button(900 + j, 18 + (j % 2) * (aw + 8), y + (j // 2) * 38, aw, 30, text, act(call), fill="255,255,255,36", hide=hide)
+        y += ((len(ACTIONS) + 1) // 2) * 38 + 4
+        meters += button(990, 18, y, aw, 30, "Open style gallery", GALLERY, fill="77,142,255,160", hide=hide)
+        y += 44
+        meters.append(note("ActHint", "Weather and sunrise find your location automatically. You can also type Latitude and Longitude in AdaptiveClock.ini "
+                                      "([Variables]). Changing a setting refreshes the clock.", 18, y, SW - 36, 60, 9, hide=hide))
+        y += 60
     page_h.append(y)
 
 H = max(page_h) + 24
@@ -130,14 +160,15 @@ header = [
     sec("Now", Meter="String", X=18, Y=60, W=SW - 36, H=16, Text="#NowShowing#", FontFace=FONT, FontSize=9,
         FontColor="170,175,190", ClipString=1, AntiAlias=1, DynamicVariables=1),
 ]
-for p, (pname, _) in enumerate(PAGES, start=1):
+for p, (pname, _, _) in enumerate(PAGES, start=1):
     header += button(800 + p, 18 + (p - 1) * (tw + 4), TAB_Y, tw, TAB_H, pname, f'[!CommandMeasure mSettings "Page({p})"]',
                      color_var=f"Tab{p}", fs=11)
     variables.append(f"Tab{p}={TAB_OFF}")
     variables.append(f"Pg{p}={0 if p == 1 else 1}")
     variables.append(f"PageName{p}={pname}")
-variables.append("CrumbPage=Style")
+variables.append("CrumbPage=Start")
 variables.append("NowShowing=")
+variables.append("LocStatus=")
 shead = f"""; Settings.ini  -  settings window for Adaptive Clock   (generated by tools/gen_skins.py)
 ; Author: Amika Alankara  (MIT License)
 
@@ -161,15 +192,21 @@ UpdateDivider=2
 open(os.path.join(SKIN, "Settings", "Settings.ini"), "w", encoding="utf-8").write(
     shead + "\n\n".join(panel(SW, H, "Adaptive Clock settings") + header + meters) + "\n")
 
-open(os.path.join(SKIN, "Settings", "Settings.lua"), "w", encoding="utf-8").write(r'''-- Settings.lua  -  logic of the Settings window and the style gallery
+open(os.path.join(SKIN, "Settings", "Settings.lua"), "w", encoding="utf-8").write(r"""-- Settings.lua  -  logic of the Settings window and the style gallery
 -- Author: Amika Alankara  (MIT License)
 --  * shows which page you are on (breadcrumb + highlighted tab)
 --  * highlights the active choice of every setting and prints its current value next to the label
---  * shows which clock style is on screen (the clock writes ..\state.txt)
+--  * shows which clock style is on screen and where the location comes from (the clock writes ..\state.txt)
 local count, pages, paths = 0, 5, {}
-local lastKey, lastNow
+local lastKey, lastNow, lastLoc
 local MAP = { H24 = '%H', H12 = '%#I' }
 local ON, TAB_OFF = '77,142,255,235', '255,255,255,18'
+local LOC = {
+  windows  = 'Location: from Windows - kept on this PC',
+  timezone = 'Location: estimated from your time zone - kept on this PC',
+  manual   = 'Location: typed in AdaptiveClock.ini - kept on this PC',
+  none     = 'Location: not found - turn on Windows location or type it in AdaptiveClock.ini',
+}
 
 local function setv(n, v) SKIN:Bang('!SetVariable', n, tostring(v)) end
 
@@ -218,6 +255,8 @@ function Update()
            .. ((st.Locked == '1') and '  -  locked' or ''))
       or 'Now showing: (load the clock to see its style)'
   if now ~= lastNow then lastNow = now; setv('NowShowing', now) end
+  local loc = LOC[st.Location or 'none'] or LOC.none
+  if loc ~= lastLoc then lastLoc = loc; setv('LocStatus', loc) end
   if count == 0 then return 0 end
 
   local parts, values = {}, {}
@@ -225,14 +264,16 @@ function Update()
     local file = files[SKIN:GetVariable('B' .. n .. 'F', 'clock')] or files.clock
     local name = SKIN:GetVariable('B' .. n .. 'V', '')
     local val  = SKIN:GetVariable('B' .. n .. 'X', '')
-    local on = (file[name] == (MAP[val] or val))
+    local cur = file[name]
+    if name == 'Theme' and cur == 'Girl' then cur = 'Bloom' elseif name == 'Theme' and cur == 'Boy' then cur = 'Volt' end
+    local on = (cur == (MAP[val] or val))
     parts[n] = on and '1' or '0'
     if on then
       local g = SKIN:GetVariable('B' .. n .. 'G', '0')
       if g ~= '0' then values[g] = SKIN:GetVariable('B' .. n .. 'L', '') end
     end
   end
-  local key = table.concat(parts)
+  local key = table.concat(parts) .. '|' .. loc
   if key ~= lastKey then
     lastKey = key
     for n = 1, count do
@@ -244,7 +285,7 @@ function Update()
   end
   return 0
 end
-''')
+""")
 
 # ======================================================================== Gallery
 COL = {None: "255,255,255,34", "en": "255,255,255,34", "code": "88,166,255,80", "easy": "63,185,80,80",

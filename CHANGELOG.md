@@ -1,5 +1,27 @@
 # Changelog
 
+## 4.7
+- **Reliability fix for 4.6.** The whole clock depended on a Lua file saved with a UTF-8 BOM, which not every Lua 5.1 loader accepts. Now `AdaptiveClock.lua` is
+  plain ASCII with no BOM again (as in 4.5), and only the measures that return symbols or translated text use the new `AdaptiveClockU.lua` loader (with BOM).
+  If that loader cannot run, the clock itself still loads.
+- Optional parts (colours, quote flags, timers, location, weather, pixels) are wrapped so an error in one of them is logged and cannot stop the clock.
+- 4.6 shipped an **empty `Languages.lua`** by mistake, so non-English languages did not work. Restored; `tools/check_ini.py` now flags empty or truncated files,
+  wrong BOM use, non-ASCII bytes in the core script, and compiles every Lua file with Lua 5.1.
+- The calendar headers, week-day letters, timer label and alarm text are now measures (they can contain translated text).
+
+## 4.6
+- **Fixed garbled symbols** (moon icon, weather cloud, quote marks, other languages): `AdaptiveClock.lua` and `Languages.lua` are now saved
+  as UTF-8 with BOM, which is what Rainmeter needs to read Lua text as Unicode. `tools/check_ini.py` checks this.
+- **Fixed scattered shapes** in Daisy Chain, Flutter, Ribbon and Orbit: Rainmeter measures a shape's `Rotate` origin from the shape itself, so the
+  clocks now rotate around the shape's centre.
+- **Location from Windows, kept on the PC**: sunrise, sunset and the sun position use the Windows location (time-zone estimate as a fallback) read by
+  `LocationFinder.ps1`; manual `Latitude` / `Longitude` still override. Weather stays off by default; when on, only a position rounded to 0.1 degree
+  is sent to open-meteo.com, and `WeatherLatitude` / `WeatherLongitude` can point it somewhere else.
+- 7 new clocks (106 in total): Big quote, Weekend, Year grid, Sun and moon, Birthday, Sparkle Pop (Bloom), Pulse Line (Volt).
+- Settings has a **Start** page (profile, theme, Surprise me, gallery, tips), a location status line and *Find my location again* under Extras,
+  a privacy note, and *Reset all settings* under Actions.
+- Weather message no longer gets cut off.
+
 ## 4.5
 - Themes renamed: *Girl* is now **Bloom** and *Boy* is now **Volt** (Neutral shows as *Classic* in Settings). Existing `Theme=Girl` / `Theme=Boy`
   settings keep working.

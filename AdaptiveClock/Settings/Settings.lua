@@ -2,11 +2,17 @@
 -- Author: Amika Alankara  (MIT License)
 --  * shows which page you are on (breadcrumb + highlighted tab)
 --  * highlights the active choice of every setting and prints its current value next to the label
---  * shows which clock style is on screen (the clock writes ..\state.txt)
+--  * shows which clock style is on screen and where the location comes from (the clock writes ..\state.txt)
 local count, pages, paths = 0, 5, {}
-local lastKey, lastNow
+local lastKey, lastNow, lastLoc
 local MAP = { H24 = '%H', H12 = '%#I' }
 local ON, TAB_OFF = '77,142,255,235', '255,255,255,18'
+local LOC = {
+  windows  = 'Location: from Windows - kept on this PC',
+  timezone = 'Location: estimated from your time zone - kept on this PC',
+  manual   = 'Location: typed in AdaptiveClock.ini - kept on this PC',
+  none     = 'Location: not found - turn on Windows location or type it in AdaptiveClock.ini',
+}
 
 local function setv(n, v) SKIN:Bang('!SetVariable', n, tostring(v)) end
 
@@ -55,6 +61,8 @@ function Update()
            .. ((st.Locked == '1') and '  -  locked' or ''))
       or 'Now showing: (load the clock to see its style)'
   if now ~= lastNow then lastNow = now; setv('NowShowing', now) end
+  local loc = LOC[st.Location or 'none'] or LOC.none
+  if loc ~= lastLoc then lastLoc = loc; setv('LocStatus', loc) end
   if count == 0 then return 0 end
 
   local parts, values = {}, {}
@@ -62,14 +70,16 @@ function Update()
     local file = files[SKIN:GetVariable('B' .. n .. 'F', 'clock')] or files.clock
     local name = SKIN:GetVariable('B' .. n .. 'V', '')
     local val  = SKIN:GetVariable('B' .. n .. 'X', '')
-    local on = (file[name] == (MAP[val] or val))
+    local cur = file[name]
+    if name == 'Theme' and cur == 'Girl' then cur = 'Bloom' elseif name == 'Theme' and cur == 'Boy' then cur = 'Volt' end
+    local on = (cur == (MAP[val] or val))
     parts[n] = on and '1' or '0'
     if on then
       local g = SKIN:GetVariable('B' .. n .. 'G', '0')
       if g ~= '0' then values[g] = SKIN:GetVariable('B' .. n .. 'L', '') end
     end
   end
-  local key = table.concat(parts)
+  local key = table.concat(parts) .. '|' .. loc
   if key ~= lastKey then
     lastKey = key
     for n = 1, count do
