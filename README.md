@@ -33,7 +33,7 @@ Windows 10/11, [Rainmeter 4.x](https://www.rainmeter.net/), PowerShell (built in
 in Rainmeter, then load `AdaptiveClock\AdaptiveClock.ini`. Also available: `AdaptiveClock\Settings\Settings.ini` and
 `AdaptiveClock\Gallery\Gallery.ini` (or use the last two items of the right-click menu).
 
-Keep all the files of the `AdaptiveClock` folder together (`.ini`, `AdaptiveClock.lua`, `AdaptiveClockU.lua`, `Languages.lua`, `LocationFinder.ps1`, `WallpaperLuma.ps1`). **Do not change the BOM of the Lua files:** `AdaptiveClock.lua` and `Languages.lua` must have *no* BOM, `AdaptiveClockU.lua` must be *UTF-8 with BOM* (see below). `python tools/check_ini.py` verifies this.
+Keep the whole `AdaptiveClock` folder together (`.ini`, `AdaptiveClock.lua`, the `Languages` folder with the `.inc` files, `LocationFinder.ps1`, `WallpaperLuma.ps1`). If you edit `AdaptiveClock.lua`, save it as plain ASCII **without** a BOM.
 
 ## Mouse
 Double-click for the next style. Hover to see the style name and number (and whether it is locked).
@@ -113,8 +113,13 @@ MIT. See `LICENSE`.
 - **The clock does not appear.** Delete the old `Documents\Rainmeter\Skins\AdaptiveClock` folder, install again, choose *Refresh all*, then load
   `AdaptiveClock\AdaptiveClock.ini`. If it is still blank, open Rainmeter's tray menu > *About* > *Log* and look at the red `ERR` lines; they name the file
   and the line.
-- **Symbols or other languages look like `Ã°Å¸...`.** Rainmeter only reads Lua text as Unicode when the script file starts with a UTF-8 BOM. For that reason
-  the measures that return symbols (moon, weather icon, curly quotes) or non-English text run through `AdaptiveClockU.lua`, a tiny loader saved *with* a BOM that
-  then runs `AdaptiveClock.lua` (which has no BOM). The core of the clock never depends on the BOM file, so if a PC cannot load it, only those symbols are missing.
+- **Other languages.** The Lua script never produces non-English text. Translations are variables in `Languages\<Name>.inc` (UTF-16 files, which Rainmeter
+  reads natively), and the script only picks which variable to show. Choose the language in *Settings > Language*. If a language does not apply,
+  check that `Languages\<Name>.inc` exists next to the skin.
+- **Quotes** use plain ASCII punctuation on purpose, so they are always readable. If you add your own `quotes.txt`, use plain ASCII text.
 - **Sunrise or the location says "not found".** Turn on Windows location (Settings > Privacy & security > Location, including *Let desktop apps access your
   location*) and press *Find my location again* in Settings > Extras, or type `Latitude` / `Longitude` in `AdaptiveClock.ini`.
+
+## Developing the languages
+`tools/languages.lua` holds the translations (UTF-8). `python gen_ini.py` writes `AdaptiveClock/Languages/<Name>.inc` from it. To add a language, copy a
+block, translate it, add its name to `LANGUAGES` in `AdaptiveClock.lua` and to `LANGS` in `tools/gen_skins.py`, and run the generators.

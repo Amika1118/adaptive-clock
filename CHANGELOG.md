@@ -1,13 +1,14 @@
 # Changelog
 
-## 4.7
-- **Reliability fix for 4.6.** The whole clock depended on a Lua file saved with a UTF-8 BOM, which not every Lua 5.1 loader accepts. Now `AdaptiveClock.lua` is
-  plain ASCII with no BOM again (as in 4.5), and only the measures that return symbols or translated text use the new `AdaptiveClockU.lua` loader (with BOM).
-  If that loader cannot run, the clock itself still loads.
-- Optional parts (colours, quote flags, timers, location, weather, pixels) are wrapped so an error in one of them is logged and cannot stop the clock.
-- 4.6 shipped an **empty `Languages.lua`** by mistake, so non-English languages did not work. Restored; `tools/check_ini.py` now flags empty or truncated files,
-  wrong BOM use, non-ASCII bytes in the core script, and compiles every Lua file with Lua 5.1.
-- The calendar headers, week-day letters, timer label and alarm text are now measures (they can contain translated text).
+## 4.8
+- **Quotes are visible again, in every language.** In 4.6 / 4.7 the quote text depended on a Lua file saved with a BOM, which Rainmeter did not run on
+  every PC, so the quote card stayed empty. Nothing in the clock needs a BOM any more: `AdaptiveClock.lua` is plain ASCII, quotes use plain punctuation,
+  and `AdaptiveClockU.lua` is gone.
+- **Languages work without Unicode in Lua.** The translations are variables in `Languages\<Name>.inc` (UTF-16 files, read natively by Rainmeter); the script
+  only picks which variable to show. Day and month names, greetings, labels, calendar headers, timer, alarm and battery text all follow the language.
+- **Symbols are drawn as shapes**, so no font or encoding can break them: the sun / moon in Greeting and Tiles, the weather icon, and the eight moon phases
+  in Moon phase and Sun and moon. The temperature is shown as `23 C`.
+- `tools/check_ini.py` now also checks that every language file is UTF-16, defines every variable the skin uses, and that no Lua file has a BOM.
 
 ## 4.6
 - **Fixed garbled symbols** (moon icon, weather cloud, quote marks, other languages): `AdaptiveClock.lua` and `Languages.lua` are now saved

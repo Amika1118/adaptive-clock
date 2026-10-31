@@ -1,8 +1,8 @@
--- AdaptiveClock.lua  v4.7   (Rainmeter 4.x, Lua 5.1)
+-- AdaptiveClock.lua  v4.8   (Rainmeter 4.x, Lua 5.1)
 -- Author: Amika Alankara  (MIT License)
 -- This file is plain ASCII and has NO byte-order mark, so it loads everywhere.
--- Measures that return symbols or non-English text use AdaptiveClockU.lua instead (a tiny loader saved WITH a BOM; it runs this file),
--- because Rainmeter only treats Lua strings as Unicode when the script file it loads starts with a BOM.
+-- Other languages are NOT produced here: the translations are variables in Languages\*.inc (UTF-16 files, which Rainmeter reads natively).
+-- This script only chooses WHICH variable to show (for example #Dow3#), so no Unicode ever has to pass through Lua.
 --
 -- One file, many small jobs. Each Script measure in the .ini picks its job with  Mode=
 --   main            colours (ink / theme palette), style shuffle, calendar variables, quote flags (value = full quote)
@@ -19,7 +19,7 @@
 --   moonIcon moonName moonPct moonF   moon phase
 --   dow dowS mon monS lbl             date names and labels in the chosen Language
 --   sunRise sunSet sunF sunNote       sunrise / sunset (needs Latitude + Longitude)
---   wxIcon wxTemp wxText batText     weather and battery text
+--   wxTemp wxText                     weather text
 
 local mode = 'main'
 local N = 106                       -- number of styles (the .ini sets StyleCount)
@@ -27,6 +27,7 @@ local current, lastSlot, lastYday, lastKey, lastLuma, wasBright, lastCalDay, las
 local pool = {}                    -- style numbers that take part in the shuffle
 local interval = 60               -- minutes per style (ShuffleMinutes)
 local locked, lockedStyle = false, 0
+local publishIcons                                -- defined below; showStyle calls it
 local wxLat, lastLocSrc
 local lblKey = ''
 local logIndex = 0
@@ -67,10 +68,9 @@ for i = 104, 104 do TAGS[i] = 'girl' end
 for i = 105, 105 do TAGS[i] = 'boy' end
 TAGS[7], TAGS[23] = 'en', 'en'              -- word clocks: English only
 
-local D  = '\226\128\148'          -- em dash   (UTF-8 written as escapes so the file encoding never matters)
-local LQ = '\226\128\156'          -- left curly quote
-local RQ = '\226\128\157'          -- right curly quote
-local SUN, MOON = '\226\152\128', '\226\152\190'
+local D  = '-'                      -- plain ASCII punctuation: always readable
+local LQ = '"'
+local RQ = '"'
 
 -- kind: 'b' = both profiles, 'c' = coder, 'e' = everyday
 local function Q(kind, text, who) return { text, who, kind } end
@@ -353,6 +353,7 @@ local function showStyle(n)
   setv('StyleName', NAMES[n] or ('Style ' .. n))
   current = n
   writeState()
+  if publishIcons then publishIcons() end
 end
 
 -- ---------------------------------------------------------------- menu actions
@@ -397,13 +398,13 @@ function CycleShuffle()     cycleVar('ShuffleMinutes', { 60, 30, 15, 5, 1440 }, 
 function CycleProfile()     cycleVar('Profile', { 'All', 'Coder', 'Everyday' }, 'All') end
 function CycleTheme()       cycleVar('Theme', { 'Neutral', 'Bloom', 'Volt' }, 'Neutral') end
 local LANGUAGES = { 'Windows', 'English', 'Spanish', 'French', 'German', 'Portuguese', 'Italian', 'Sinhala', 'Tamil', 'Hindi', 'Japanese' }
-local function langFile(name) return (name == 'Windows' or name == 'English') and 'AdaptiveClock.lua' or 'AdaptiveClockU.lua' end
+local function langInc(name) return (name == 'Windows') and 'English' or name end
 function CycleLanguage()
   local cur, idx = var('Language', 'Windows'), 0
   for i, v in ipairs(LANGUAGES) do if v == cur then idx = i end end
   local nxtLang = LANGUAGES[(idx % #LANGUAGES) + 1]
   saveVar('Language', nxtLang)
-  saveVar('LangFile', langFile(nxtLang))
+  saveVar('LangInc', langInc(nxtLang))
   SKIN:Bang('!Refresh')
 end
 
@@ -417,7 +418,7 @@ function Set(name, value)
   value = tostring(value)
   if name == 'HourFormat' then value = (value == 'H12') and '%#I' or '%H' end
   saveVar(name, value)
-  if name == 'Language' then saveVar('LangFile', langFile(value)) end
+  if name == 'Language' then saveVar('LangInc', langInc(value)) end
   if name == 'Smooth' then
     saveVar('UpdateMs', value == '1' and 100 or 1000)
     saveVar('Div', value == '1' and 10 or 1)
@@ -574,43 +575,9 @@ local EN = {
         loading = 'Loading...', itsWeekend = "It's the weekend!", weekendLeft = 'until the weekend',
         daylight = 'of daylight', bdayUnset = 'Set Birthday=MM-DD in AdaptiveClock.ini', bdayToday = 'Happy birthday!', bdayLeft = 'days until your birthday' },
 }
-local LANGS
+local function lang() return EN, 'English' end    -- translations come from Languages\*.inc variables, not from Lua
 
-local function lang()                           -- returns the active language table and its name
-  local name = var('Language', 'Windows')
-  if name == 'English' or name == 'Windows' then return EN, name end
-  if not LANGS then
-    local ok, t = pcall(dofile, var('CURRENTPATH', '') .. 'Languages.lua')
-    LANGS = (ok and type(t) == 'table') and t or {}
-  end
-  return LANGS[name] or EN, name
-end
-
-local function tr(key)
-  local l = lang()
-  return (l.t and l.t[key]) or EN.t[key] or key
-end
-
-local function label(key)                         -- translated label with {n} and {year} filled in
-  local t = os.date('*t')
-  local s = tr(key)
-  s = s:gsub('{n}', function() return tostring((((t.year % 4 == 0 and t.year % 100 ~= 0) or t.year % 400 == 0) and 366 or 365) - t.yday) end)
-  s = s:gsub('{year}', tostring(t.year))
-  return s
-end
-
-local function windowsText(measure)               -- text of a Windows-language Time measure in the .ini
-  local m = SKIN:GetMeasure(measure)
-  return m and (m:GetStringValue() or '') or ''
-end
-
-local function dateName(kind, windowsMeasure)     -- kind = dow | dowS | mon | monS
-  local l, name = lang()
-  if name == 'Windows' then return windowsText(windowsMeasure) end
-  local t = os.date('*t')
-  local idx = (kind == 'dow' or kind == 'dowS') and t.wday or t.month
-  return (l[kind] and l[kind][idx]) or EN[kind][idx]
-end
+local function tr(key) return EN.t[key] or key end
 
 local function daysFromCivil(y, m, d)           -- days since 1970-01-01 (proleptic Gregorian)
   if m <= 2 then y = y - 1 end
@@ -749,13 +716,12 @@ local function bits(n, w)
   return s
 end
 
-local function greeting(h)
-  local g = lang().greet or EN.greet
-  if h < 5 then return g.night end
-  if h < 12 then return g.morning end
-  if h < 17 then return g.afternoon end
-  if h < 21 then return g.evening end
-  return g.night
+local function greetKey(h)
+  if h < 5 then return 'Night' end
+  if h < 12 then return 'Morning' end
+  if h < 17 then return 'Afternoon' end
+  if h < 21 then return 'Evening' end
+  return 'Night'
 end
 
 local function yearFraction(t)
@@ -856,23 +822,22 @@ local function wxCode()
   return m and tonumber((m:GetStringValue() or ''):match('%d+')) or nil
 end
 
-local function wxIcon()
+local function wxKind()                            -- 1 sun, 2 partly cloudy, 3 cloud, 4 rain, 5 snow, 6 storm
   local c = wxCode()
-  if c == nil then return '\226\152\129' end
-  if c <= 1 then return SUN end
-  if c == 2 then return '\226\155\133' end
-  if c == 3 or c == 45 or c == 48 then return '\226\152\129' end
-  if (c >= 51 and c <= 67) or (c >= 80 and c <= 82) then return '\226\152\130' end
-  if (c >= 71 and c <= 77) or c == 85 or c == 86 then return '\226\157\132' end
-  if c >= 95 then return '\226\154\161' end
-  return '\226\152\129'
+  if c == nil then return 3 end
+  if c <= 1 then return 1 end
+  if c == 2 then return 2 end
+  if (c >= 51 and c <= 67) or (c >= 80 and c <= 82) then return 4 end
+  if (c >= 71 and c <= 77) or c == 85 or c == 86 then return 5 end
+  if c >= 95 then return 6 end
+  return 3
 end
 
 local function wxTemp()
   local m = SKIN:GetMeasure('mWxT')
   local n = m and tonumber((m:GetStringValue() or ''):match('%-?%d+%.?%d*')) or nil
   if not n then return '--' end
-  return string.format('%d', math.floor(n + 0.5)) .. '\194\176' .. (var('TempUnit', 'celsius') == 'fahrenheit' and 'F' or 'C')
+  return string.format('%d', math.floor(n + 0.5)) .. ' ' .. (var('TempUnit', 'celsius') == 'fahrenheit' and 'F' or 'C')
 end
 
 local function wxText()
@@ -969,17 +934,15 @@ local function tickTimers(t)
   pubKey = key
   setv('PomoText', text)
   setnum('PomoFrac', rem / math.max(1, pomoLen(pomo.mode)))
-  setv('PomoMode', label2)
+  setv('PomoLabel', (label2 == 'focus') and '#T_focus#' or '#T_rest#')
   setv('PomoBtn', pomo.running and '||' or '>')
-  setv('AlarmRing', ringing and 1 or 0)
+  setv('AlarmText', ringing and '#T_ringing#' or ('#T_alarm# ' .. var('AlarmTime', '07:00') .. ((var('AlarmOn', '0') == '1') and '  ON' or '  OFF')))
 end
 
 -- ---------------------------------------------------------------- moon phase
 
 local MOON_NAMES = { 'New moon', 'Waxing crescent', 'First quarter', 'Waxing gibbous', 'Full moon', 'Waning gibbous',
                      'Last quarter', 'Waning crescent' }
-local MOON_ICONS = { '\240\159\140\145', '\240\159\140\146', '\240\159\140\147', '\240\159\140\148',
-                     '\240\159\140\149', '\240\159\140\150', '\240\159\140\151', '\240\159\140\152' }
 local SYNODIC = 29.530588853
 
 local function moonAge() return ((os.time() - 947182440) / 86400) % SYNODIC end   -- new moon: 2000-01-06 18:14 UTC
@@ -1086,11 +1049,52 @@ end
 local DEFAULTS = { Profile = 'All', Theme = 'Neutral', CodeTheme = 'Dark', ColorMode = 'Invert', ShuffleMinutes = '60',
   QuoteMinutes = '1440', QuoteHidden = '0', QuoteStyle = 'Auto', HourFormat = '%H', Language = 'Windows', WeekStart = '1',
   Smooth = '0', UpdateMs = '1000', Div = '1', TempUnit = 'celsius', WeatherOff = '1', PomoWork = '25', PomoBreak = '5',
-  TimerBeep = '1', SkipStyles = '', LockedStyle = '0', LangFile = 'AdaptiveClock.lua' }
+  TimerBeep = '1', SkipStyles = '', LockedStyle = '0', LangInc = 'English' }
 
 function ResetSettings()                            -- Settings > Actions > Reset all settings
   for k, v in pairs(DEFAULTS) do saveVar(k, v) end
   SKIN:Bang('!Refresh')
+end
+
+-- ---------------------------------------------------------------- texts and icons are chosen here, shown by the .ini
+
+local lastTextKey, lastIconKey, lastBat
+
+local function publishTexts(t)                       -- #DowText# and friends point at variables of the selected language
+  local lg = var('Language', 'Windows')
+  local ws = tonumber(var('WeekStart', '1')) or 1
+  local g = greetKey(t.hour)
+  local key = lg .. '|' .. t.wday .. '|' .. t.month .. '|' .. g .. '|' .. ws
+  if key == lastTextKey then return end
+  lastTextKey = key
+  local win = (lg == 'Windows')                      -- Windows: the .ini asks Windows itself for the names
+  setv('DowText',  win and '[mDowW]'  or ('#Dow'  .. t.wday  .. '#'))
+  setv('DowSText', win and '[mDowSW]' or ('#DowS' .. t.wday  .. '#'))
+  setv('MonText',  win and '[mMonW]'  or ('#Mon'  .. t.month .. '#'))
+  setv('MonSText', win and '[mMonSW]' or ('#MonS' .. t.month .. '#'))
+  setv('GreetText', '#Greet' .. g .. '#')
+  for c = 1, 7 do setv('CalH' .. c, '#DowH' .. (((c - 1 + ws) % 7) + 1) .. '#') end
+  for i = 1, 7 do setv('WkH' .. i, '#DowH' .. ((i % 7) + 1) .. '#') end
+end
+
+local function publishBattery()
+  local m = SKIN:GetMeasure('mBatAC')
+  local v = (m and m:GetValue() == 1) and '#T_charging#' or '#T_battery#'
+  if v ~= lastBat then lastBat = v; setv('BatText', v) end
+end
+
+local ICON_STYLES = { greet = { 32, 47 }, wx = { 49 }, moon = { 90, 103 } }
+
+publishIcons = function()                           -- flags Fstyle_kind: 0 = visible. Icons are drawn with shapes, not symbols.
+  local t = os.date('*t')
+  local day = (t.hour >= 6 and t.hour < 18) and 1 or 2
+  local wk, mp = wxKind(), moonIndex()
+  local key = tostring(current) .. '|' .. day .. '|' .. wk .. '|' .. mp
+  if key == lastIconKey then return end
+  lastIconKey = key
+  for _, s in ipairs(ICON_STYLES.greet) do for k = 1, 2 do setv('F' .. s .. '_g' .. k, (current == s and day == k) and 0 or 1) end end
+  for _, s in ipairs(ICON_STYLES.wx) do for k = 1, 6 do setv('F' .. s .. '_w' .. k, (current == s and wk == k) and 0 or 1) end end
+  for _, s in ipairs(ICON_STYLES.moon) do for k = 1, 8 do setv('F' .. s .. '_m' .. k, (current == s and mp == k) and 0 or 1) end end
 end
 
 -- ---------------------------------------------------------------- measure entry points
@@ -1119,8 +1123,6 @@ local MODES = {
   sha   = function() return string.format('%07x', (math.floor(os.time() / 60) * 40503 + 2654435) % 268435456) end,
   logHash = function() return string.format('%07x', ((math.floor(os.time() / 60) - logIndex) * 40503 + 2654435) % 268435456) end,
   logTime = function() local u = os.date('*t', os.time() - logIndex * 60); return string.format('%02d:%02d', u.hour, u.min) end,
-  greet     = function() return greeting(now().hour) end,
-  greetIcon = function() local h = now().hour; return (h >= 6 and h < 18) and SUN or MOON end,
   yearPct   = function() return string.format('%d%%', math.floor(yearFraction(now()) * 100)) end,
   daysLeft  = function() local t = now(); return (isLeap(t.year) and 366 or 365) - t.yday end,
   ampm   = function() if not is12h() then return '' end; return now().hour < 12 and 'AM' or 'PM' end,
@@ -1129,16 +1131,6 @@ local MODES = {
   quoteBody = quoteBody,
   quoteWho  = quoteWho,
   secN = function() return now().sec end,
-  calH = function()                                -- calendar header: Index 1..7 (week starts on WeekStart)
-    local ws = tonumber(var('WeekStart', '1')) or 1
-    return (lang().dowH or EN.dowH)[((logIndex - 1 + ws) % 7) + 1]
-  end,
-  wkH = function() return (lang().dowH or EN.dowH)[(logIndex % 7) + 1] end,   -- Monday-first weekday name: Index 1..7
-  pomoLabel = function() return (var('PomoMode', 'focus') == 'focus') and tr('focus') or tr('rest') end,
-  alarmText = function()
-    if var('AlarmRing', '0') == '1' then return tr('ringing') end
-    return tr('alarm') .. ' ' .. var('AlarmTime', '07:00') .. ((var('AlarmOn', '0') == '1') and '  ON' or '  OFF')
-  end,
   quotePlain  = function() return quoteEntry(os.date('*t'))[1] end,
   quoteAuthor = function() local a = quoteEntry(os.date('*t'))[2]; return (a ~= '') and (D .. ' ' .. a) or '' end,
   wkText = function()
@@ -1173,24 +1165,14 @@ local MODES = {
   end,
   hexRow = function() return hexRow(logIndex) end,
   rain   = function() return rainColumn(logIndex) end,
-  moonIcon = function() return MOON_ICONS[moonIndex()] end,
   moonName = function() return MOON_NAMES[moonIndex()] end,
   moonPct  = function() return string.format('%d%%', math.floor((1 - math.cos(2 * math.pi * moonAge() / SYNODIC)) / 2 * 100 + 0.5)) end,
   moonF    = function() return moonAge() / SYNODIC end,
-  dow  = function() return dateName('dow',  'mDowW') end,
-  dowS = function() return dateName('dowS', 'mDowSW') end,
-  mon  = function() return dateName('mon',  'mMonW') end,
-  monS = function() return dateName('monS', 'mMonSW') end,
-  lbl  = function() return label(lblKey) end,
   sunRise = function() local r = sunPair(now()); return fmtClock(r) end,
   sunSet  = function() local _, s = sunPair(now()); return fmtClock(s) end,
   sunF    = function() return sunFraction(now()) end,
   sunNote = function() local _, _, real = sunPair(now()); return real and '' or tr('setLocation') end,
-  wxIcon = wxIcon, wxTemp = wxTemp, wxText = wxText,
-  batText = function()
-    local m = SKIN:GetMeasure('mBatAC')
-    return (m and m:GetValue() == 1) and tr('charging') or tr('battery')
-  end,
+  wxTemp = wxTemp, wxText = wxText,
   worldName = function() return world('name') end,
   worldDay  = function() return world('day') end,
   worldTime = function() return world('time') end,
@@ -1235,6 +1217,9 @@ function Update()
   safe(angles, t)
   safe(quoteFlags)
   safe(setPixels, t)
+  safe(publishTexts, t)
+  safe(publishBattery)
+  safe(publishIcons)
   safe(weatherCoords)
   safe(function()
     local _, _, src = coords()

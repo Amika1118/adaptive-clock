@@ -14,6 +14,7 @@ from matplotlib.transforms import Affine2D
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 INI = os.path.join(HERE, "..", "AdaptiveClock", "AdaptiveClock.ini")
+sys.path.insert(0, HERE)
 LUA = os.path.join(HERE, "..", "AdaptiveClock", "AdaptiveClock.lua")
 OUT = os.path.join(HERE, "..", "docs")
 W, H, CLOCK_BOTTOM = 440, 520, 440
@@ -33,6 +34,14 @@ def parse(path):
 
 SECS = parse(INI)
 VARS = dict(SECS["Variables"])
+import gen_lang
+for _k, _v in gen_lang.variables(gen_lang.load()["English"]):
+    VARS[_k] = _v
+VARS.update(DowText="#Dow5#", DowSText="#DowS5#", MonText="#Mon10#", MonSText="#MonS10#", GreetText="#GreetMorning#",
+            PomoLabel="#T_focus#", AlarmText="#T_alarm# 07:00  ON", BatText="#T_charging#")
+for _c in range(1, 8):
+    VARS[f"CalH{_c}"] = f"#DowH{(_c % 7) + 1}#"
+    VARS[f"WkH{_c}"] = f"#DowH{(_c % 7) + 1}#"
 T = dict(h=10, m=8, s=37)
 sec_f, min_f, hr_f = T["s"] / 60, (T["m"] * 60 + T["s"]) / 3600, ((T["h"] % 12) * 3600 + T["m"] * 60 + T["s"]) / 43200
 day_f = (T["h"] * 3600 + T["m"] * 60 + T["s"]) / 86400
@@ -46,7 +55,7 @@ def set_palette(ink="255,255,255", color=None, color2=None):
                 MinRad=f"{min_f*2*math.pi-math.pi/2:.5f}", HourRad=f"{hr_f*2*math.pi-math.pi/2:.5f}",
                 DayRad=f"{math.pi+day_f*math.pi:.5f}", DayF=f"{day_f:.5f}", SunRad=f"{math.pi+0.55*math.pi:.5f}",
                 PomoFrac="0.62", PomoText="14:20", PomoLabel="FOCUS", PomoBtn=">", AlarmText="Alarm 07:00  ON",
-                CalToday="25", WeekIdx="4", WkH1="Mo", WkH2="Tu", WkH3="We", WkH4="Th", WkH5="Fr", WkH6="Sa", WkH7="Su", QHf="0", QHc="1")
+                CalToday="25", WeekIdx="4", QHf="0", QHc="1")
     for i, d in enumerate("MoTuWeThFrSaSu", 0):
         pass
     G = {"0": ["1111","1001","1001","1001","1111"], "1": ["0110","0010","0010","0010","0111"], "8": ["1111","1001","1111","1001","1111"]}
@@ -283,6 +292,8 @@ def draw_bar(ax, o):
 TEXTS = []
 def draw_string(ax, name, o):
     text = fill_measures(subst(o.get("Text", "")))
+    for _m in re.finditer(r'"([^"]*)":"([^"]*)"', o.get("Substitute", "")):
+        text = text.replace(_m.group(1), _m.group(2))
     if text.strip() == "":
         return
     size = num(o.get("FontSize", 10))
@@ -321,9 +332,16 @@ def render(n, name, out_path, light=False, theme="Neutral"):
     ax.add_patch(Rectangle((0, 0), W, H, facecolor=bg, edgecolor="none"))
     ax.plot([0, W], [CLOCK_BOTTOM, CLOCK_BOTTOM], color=(1, 0, 0, 0.18), linewidth=0.6)
     prefix = f"S{n}_"
+    VARS[f"H{n}"] = "0"
+    for _k in list(VARS):
+        if _k.startswith(f"F{n}_"): VARS[_k] = "1"
+    for _k in (f"F{n}_g1", f"F{n}_w3", f"F{n}_m4"):
+        if _k in VARS: VARS[_k] = "0"
     for sec_name, o in SECS.items():
         if not (sec_name.startswith(prefix) or sec_name.startswith("QF_")): continue
         kind = o.get("Meter")
+        if subst(o.get("Hidden", "0")).strip() == "1":
+            continue
         try:
             if kind == "Shape": draw_shape_meter(ax, o, None)
             elif kind == "Roundline": draw_roundline(ax, o)

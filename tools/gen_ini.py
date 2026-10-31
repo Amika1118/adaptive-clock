@@ -6,14 +6,15 @@ S = []          # style sections
 CX = CY = 220
 W, H = 440, 520
 
-def sec(i, name, kind, var="H", **o):
+def sec(i, name, kind, var="H", hid=None, **o):
     L = [f"[S{i}_{name}]", f"Meter={kind}"]
     L += [f"{k}={v}" for k, v in o.items()]
-    L += [f"Hidden=#{var}{i}#", "DynamicVariables=1"]
+    L += [f"Hidden=#{hid}#" if hid else f"Hidden=#{var}{i}#", "DynamicVariables=1"]
     S.append("\n".join(L))
 
-def shp(i, name, shapes):
+def shp(i, name, shapes, hid=None):
     o = {"X": 0, "Y": 0, "W": W, "H": H}
+    if hid: o["hid"] = hid
     for n, s in enumerate(shapes):
         o["Shape" if n == 0 else f"Shape{n+1}"] = s
     sec(i, name, "Shape", **o)
@@ -26,11 +27,12 @@ def txt(i, name, text, x, y, size, color="#Color#", align="CenterCenter",
     o.update(extra)
     sec(i, name, "String", **o)
 
-def hand(i, name, x, y, L, meas, width, color, start=-PI/2, rot=2*PI, lstart=0, solid=0):
+def hand(i, name, x, y, L, meas, width, color, start=-PI/2, rot=2*PI, lstart=0, solid=0, hid=None):
     o = dict(X=x-L, Y=y-L, W=2*L, H=2*L, MeasureName=meas,
              StartAngle=f"{start:.4f}", RotationAngle=f"{rot:.4f}",
              LineStart=lstart, LineLength=L, LineWidth=width, LineColor=color, AntiAlias=1)
     if solid: o["Solid"] = 1
+    if hid: o["hid"] = hid
     sec(i, name, "Roundline", **o)
 
 def ring(i, name, x, y, ro, ri, meas, color, start=-PI/2, rot=2*PI):
@@ -312,14 +314,7 @@ def meas(name, kind, **o):
     L = [f"[{name}]", f"Measure={kind}"] + [f"{k}={v}" for k, v in o.items()]
     EXTRA.append("\n".join(L))
 
-UNI_ALWAYS = {"quoteBody", "quoteWho", "quotePlain", "quoteAuthor", "qmark", "greetIcon", "moonIcon", "wxIcon", "wxTemp"}
-LANG_MODES = {"dow", "dowS", "mon", "monS", "lbl", "greet", "worldDay", "batText", "calH", "wkH", "pomoLabel", "alarmText"}
-
 def script_file(mode):
-    """Plain AdaptiveClock.lua (no BOM) unless the measure returns symbols (AdaptiveClockU.lua, which has a BOM)
-    or text in the chosen language (#LangFile# = plain for Windows / English, the BOM loader for other languages)."""
-    if mode in UNI_ALWAYS: return "#CURRENTPATH#AdaptiveClockU.lua"
-    if mode in LANG_MODES: return "#CURRENTPATH##LangFile#"
     return "#CURRENTPATH#AdaptiveClock.lua"
 
 def lmeas(name, mode, **o):
@@ -327,8 +322,8 @@ def lmeas(name, mode, **o):
 
 for _nm, _md in [("mDHT", "dHT"), ("mDHU", "dHU"), ("mDMT", "dMT"), ("mDMU", "dMU"), ("mDST", "dST"), ("mDSU", "dSU"),
                  ("mHexH", "hexH"), ("mHexM", "hexM"), ("mHexS", "hexS"), ("mBinH", "binH"), ("mBinM", "binM"),
-                 ("mBinS", "binS"), ("mEpoch", "epoch"), ("mSha", "sha"), ("mGreet", "greet"),
-                 ("mGreetIcon", "greetIcon"), ("mYearPct", "yearPct"), ("mYearF", "yearF"), ("mDaysLeft", "daysLeft"),
+                 ("mBinS", "binS"), ("mEpoch", "epoch"), ("mSha", "sha"), 
+                  ("mYearPct", "yearPct"), ("mYearF", "yearF"), ("mDaysLeft", "daysLeft"),
                  ("mAmPm", "ampm"), ("mCursor", "cursor"), ("mQBody", "quoteBody"), ("mQWho", "quoteWho"),
                  ("mQMark", "qmark")]:
     lmeas(_nm, _md)
@@ -371,6 +366,46 @@ def window(i, x, y, w, h, title, bg=TBG):
                    circle(x + 22, y + 15, 5, "255,95,86"), circle(x + 40, y + 15, 5, "255,189,46"),
                    circle(x + 58, y + 15, 5, "39,201,63")])
     txt(i, "Title", title, x + w / 2, y + 15, 11, GREY, face="Consolas")
+
+
+# ---- icons drawn with shapes (a symbol or emoji would depend on fonts and on the Lua file encoding)
+def sun_shapes(cx, cy, r):
+    return [circle(cx, cy, r * 0.5, "#Color#")] + [tick(cx, cy, r * 0.72, r * 1.0, k * PI / 4, 3, "#Color#") for k in range(8)]
+
+def cloud_shapes(cx, cy, s, fill="#Color#"):
+    return [circle(cx - 0.55 * s, cy + 0.12 * s, 0.38 * s, fill), circle(cx - 0.05 * s, cy - 0.1 * s, 0.52 * s, fill),
+            circle(cx + 0.55 * s, cy + 0.12 * s, 0.4 * s, fill), rrect(cx - 0.93 * s, cy + 0.12 * s, 1.88 * s, 0.4 * s, 0.2 * s, fill)]
+
+def greet_icon(i, cx, cy, r):                         # sun by day, moon and stars by night (flags set by the Lua script)
+    shp(i, "GiDay", sun_shapes(cx, cy, r), hid=f"F{i}_g1")
+    shp(i, "GiNight", [circle(cx, cy, r * 0.62, "#Color#"), circle(cx + r * 0.3, cy - r * 0.16, r * 0.52, "28,32,44"),
+                       circle(cx + r * 0.85, cy - r * 0.55, r * 0.07, "#Color#"), circle(cx + r * 0.6, cy + r * 0.62, r * 0.05, "#Color#"),
+                       circle(cx - r * 0.7, cy - r * 0.7, r * 0.05, "#Color#")], hid=f"F{i}_g2")
+
+def wx_icon(i, cx, cy, s):                            # 1 sun, 2 partly cloudy, 3 cloud, 4 rain, 5 snow, 6 storm
+    rain = [f"Line {cx + d * s:.1f},{cy + s * 0.55:.1f},{cx + d * s - 0.16 * s:.1f},{cy + s * 0.95:.1f} | StrokeWidth 3 | Stroke Color #Color2#" for d in (-0.5, 0, 0.5)]
+    snow = [circle(cx + d * s, cy + s * 0.75, s * 0.08, "#Color2#") for d in (-0.5, 0, 0.5)] + [circle(cx + d * s, cy + s * 1.0, s * 0.06, "#Color2#") for d in (-0.25, 0.25)]
+    kinds = {1: sun_shapes(cx, cy, s * 1.1),
+             2: sun_shapes(cx - s * 0.45, cy - s * 0.35, s * 0.8) + cloud_shapes(cx + s * 0.15, cy + s * 0.25, s * 0.75, "#Color2#"),
+             3: cloud_shapes(cx, cy, s),
+             4: cloud_shapes(cx, cy - s * 0.25, s * 0.9) + rain,
+             5: cloud_shapes(cx, cy - s * 0.25, s * 0.9) + snow,
+             6: cloud_shapes(cx, cy - s * 0.25, s * 0.9) + ["Path Bolt | Fill Color 255,196,40 | StrokeWidth 0"]}
+    bolt = [(0.15, 0.25), (-0.2, 0.75), (0.0, 0.75), (-0.1, 1.15), (0.3, 0.6), (0.1, 0.6), (0.25, 0.25)]
+    path = f"{cx + bolt[0][0] * s:.1f},{cy + bolt[0][1] * s:.1f}" + "".join(f" | LineTo {cx + x * s:.1f},{cy + y * s:.1f}" for x, y in bolt[1:]) + " | ClosePath 1"
+    for k, sh in kinds.items():
+        if k == 6: shpx(i, f"Wx{k}", sh, hid=f"F{i}_w{k}", Bolt=path)
+        else: shp(i, f"Wx{k}", sh, hid=f"F{i}_w{k}")
+
+def moon_icon(i, cx, cy, r):                          # the 8 phases, only the current one is visible (flags set by the Lua script)
+    BASE, LIT = "28,32,44", "236,236,226"
+    for k in range(1, 9):
+        hid = f"F{i}_m{k}"
+        shp(i, f"M{k}a", [circle(cx, cy, r, BASE, 1, "#InkMid#")] + ([circle(cx, cy, r, LIT)] if k == 5 else []), hid=hid)
+        if k in (2, 3, 4): hand(i, f"M{k}b", cx, cy, r, "mOne", 1, LIT, start=-PI / 2, rot=PI, lstart=0, solid=1, hid=hid)
+        if k in (6, 7, 8): hand(i, f"M{k}b", cx, cy, r, "mOne", 1, LIT, start=PI / 2, rot=PI, lstart=0, solid=1, hid=hid)
+        if k in (2, 8): shp(i, f"M{k}c", [f"Ellipse {cx},{cy},{r * 0.55:.1f},{r} | Fill Color {BASE} | StrokeWidth 0"], hid=hid)
+        if k in (4, 6): shp(i, f"M{k}c", [f"Ellipse {cx},{cy},{r * 0.55:.1f},{r} | Fill Color {LIT} | StrokeWidth 0"], hid=hid)
 
 # ---- 25 Terminal (coder)
 i = 25
@@ -477,7 +512,7 @@ txt(i, "Big", "[mH]:[mM]:[mS]", 220, 366, 26, "#CTfunc#", face="Consolas", style
 
 # ---- 32 Greeting (everyday)
 i = 32
-txt(i, "Icon", "[mGreetIcon]", 220, 120, 64, "#Color#", face="Segoe UI Symbol")
+greet_icon(i, 220, 118, 52)
 txt(i, "Greet", "[mGreet]", 220, 188, 34, INK)
 txt(i, "Time", "[mH]:[mM]", 220, 284, 80, INK, face="Segoe UI Semibold")
 txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 364, 18, DIM)
@@ -655,7 +690,7 @@ txt(i, "T", "[mH]:[mM]", 160, 165, 62, INK, face="Segoe UI Semibold")
 txt(i, "TD", "[mDow]", 160, 226, 16, DIM)
 txt(i, "D1", "[mDowS]", 355, 128, 16, DIM)
 txt(i, "D2", "[mDnum]", 355, 188, 64, INK, face="Segoe UI Semibold")
-txt(i, "G1", "[mGreetIcon]", 92, 300, 36, "#Color#", face="Segoe UI Symbol")
+greet_icon(i, 92, 298, 26)
 txt(i, "G2", "[mGreet]", 92, 352, 13, INK)
 txt(i, "Y1", "[mYearPct]", 227, 305, 34, INK, face="Segoe UI Semibold")
 txt(i, "Y2", "[mLblOfYear]", 227, 348, 13, DIM)
@@ -678,8 +713,8 @@ meas("mWxRaw", "WebParser",
      RegExp='(?siU)"current":\\{.*"temperature_2m":(.*),"weather_code":(.*)\\}')
 meas("mWxT", "WebParser", URL="[mWxRaw]", StringIndex=1)
 meas("mWxC", "WebParser", URL="[mWxRaw]", StringIndex=2)
-for _nm, _md in [("mWxIcon", "wxIcon"), ("mWxTempTxt", "wxTemp"), ("mWxText", "wxText"), ("mSunRise", "sunRise"),
-                 ("mSunSet", "sunSet"), ("mSunF", "sunF"), ("mSunNote", "sunNote"), ("mBatTxt", "batText")]:
+for _nm, _md in [("mWxTempTxt", "wxTemp"), ("mWxText", "wxText"), ("mSunRise", "sunRise"),
+                 ("mSunSet", "sunSet"), ("mSunF", "sunF"), ("mSunNote", "sunNote")]:
     lmeas(_nm, _md)
 meas("mBatPct", "Plugin", Plugin="PowerPlugin", PowerState="Percent", MinValue=0, MaxValue=100)
 meas("mBatAC", "Plugin", Plugin="PowerPlugin", PowerState="ACLine")
@@ -693,7 +728,7 @@ def button(i, name, cx, cy, r, text, action, fs=16):
 
 # 49 Weather
 i = 49
-txt(i, "Icon", "[mWxIcon]", 220, 106, 54, "#Color#", face="Segoe UI Symbol")
+wx_icon(i, 220, 100, 48)
 txt(i, "Temp", "[mWxTempTxt]", 220, 215, 88, INK, face="Segoe UI Semibold")
 txt(i, "Text", "[mWxText]", 220, 285, 16, DIM, W=400, ClipString=2, H=60)
 txt(i, "Time", "[mH]:[mM]", 220, 342, 40, INK)
@@ -738,7 +773,7 @@ button(i, "Plus", 290, 414, 17, "+15", '[!CommandMeasure mMain "AlarmAdd(15)"]',
 txt(i, "Time", "[mH]:[mM]", 220, 414, 16, DIM)
 
 # ================================================================== v4.3: more clocks (53-91)
-for _nm, _md in [("mMoonIcon", "moonIcon"), ("mMoonName", "moonName"), ("mMoonPct", "moonPct"), ("mMoonF", "moonF")]:
+for _nm, _md in [("mMoonName", "moonName"), ("mMoonPct", "moonPct"), ("mMoonF", "moonF")]:
     lmeas(_nm, _md)
 
 SEQ = [52]
@@ -1081,7 +1116,7 @@ txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 352, 16, DIM)
 i = nxt()   # 90 Moon phase
 hand(i, "Track", 220, 175, 112, "mOne", 1, "#InkSoft#", lstart=106, solid=1)
 hand(i, "Prog", 220, 175, 112, "mMoonF", 1, "#Color#", lstart=106, solid=1)
-txt(i, "Icon", "[mMoonIcon]", 220, 175, 110, INK, face="Segoe UI Emoji")
+moon_icon(i, 220, 175, 70)
 txt(i, "Name", "[mMoonName]", 220, 270, 22, INK, face="Segoe UI Semibold")
 txt(i, "Pct", "[mMoonPct] lit", 220, 300, 15, "#Color#")
 txt(i, "Time", "[mH]:[mM]", 220, 352, 44, INK)
@@ -1198,11 +1233,6 @@ txt(i, "Sum2", "Time:   0.[mS] s", 34, 294, 12, GREY, align="LeftCenter", face="
 txt(i, "Big", "[mH]:[mM]:[mS]", 220, 352, 28, "#CTfunc#", face="Consolas", style="Bold")
 assert SEQ[0] == 99, SEQ[0]
 # ---- 100-106: friendlier, more interesting clocks (v4.6)
-for _k in range(1, 8):
-    lmeas(f"mCalH{_k}", "calH", Index=_k)
-    lmeas(f"mWkH{_k}", "wkH", Index=_k)
-lmeas("mPomoLabel", "pomoLabel")
-lmeas("mAlarmText", "alarmText")
 for _nm, _md in [("mQPlain", "quotePlain"), ("mQAuthor", "quoteAuthor"), ("mWkText", "wkText"), ("mWkF", "wkF"), ("mWkDay", "wkDay"),
                  ("mWeekNo", "weekNo"), ("mBdayDays", "bdayDays"), ("mBdayText", "bdayText"), ("mDayLen", "dayLen")]:
     lmeas(_nm, _md)
@@ -1253,7 +1283,7 @@ txt(i, "L1", "[mLblSunrise]", 95, 280, 12, DIM)
 txt(i, "T1", "[mSunRise]", 95, 304, 22, INK, face="Segoe UI Semibold")
 txt(i, "L2", "[mLblSunset]", 345, 280, 12, DIM)
 txt(i, "T2", "[mSunSet]", 345, 304, 22, INK, face="Segoe UI Semibold")
-txt(i, "Moon", "[mMoonIcon]", 110, 372, 40, INK, face="Segoe UI Emoji")
+moon_icon(i, 108, 372, 22)
 txt(i, "MoonN", "[mMoonName]", 150, 362, 16, INK, align="LeftCenter", face="Segoe UI Semibold")
 txt(i, "MoonP", "[mMoonPct] lit", 150, 384, 12, DIM, align="LeftCenter")
 txt(i, "Note", "[mSunNote]", 220, 420, 11, "#Color#")
@@ -1337,13 +1367,12 @@ def script(name, mode):
 def lbl(name, key):
     return f"[{name}]\nMeasure=Script\nScriptFile={script_file('lbl')}\nMode=lbl\nKey={key}"
 
-_LBL = [("mLblHour", "hour"), ("mLblMinute", "minute"), ("mLblSecond", "second"), ("mLblHours", "hours"),
-        ("mLblMinutes", "minutes"), ("mLblSeconds", "seconds"), ("mLblWorld", "world"), ("mLblDaysLeft", "daysLeft"),
-        ("mLblDaysLeftYear", "daysLeftYear"), ("mLblYearDone", "yearDone"), ("mLblOfYear", "ofYear"),
-        ("mLblSecondsLow", "secondsLow"), ("mLblSunrise", "sunrise"), ("mLblSunset", "sunset"),
-        ("mLblWeekendLeft", "weekendLeft"), ("mLblDaylight", "daylight")]
-DATE_M = "\n\n".join([script("mDow", "dow"), script("mDowS", "dowS"), script("mMon", "mon"), script("mMonS", "monS")]
-                      + [lbl(n, k) for n, k in _LBL])
+DATE_M = ""
+_flags = ([f"F{s}_g{k}=1" for s in (32, 47) for k in (1, 2)] + [f"F49_w{k}=1" for k in range(1, 7)] +
+          [f"F{s}_m{k}=1" for s in (90, 103) for k in range(1, 9)])
+TXTV = "\n".join(["DowText=#Dow1#", "DowSText=#DowS1#", "MonText=#Mon1#", "MonSText=#MonS1#", "GreetText=#GreetMorning#"]
+                 + [f"CalH{c}=#DowH{c}#" for c in range(1, 8)] + [f"WkH{c}=#DowH{c}#" for c in range(1, 8)]
+                 + ["PomoLabel=#T_focus#", "AlarmText=#T_alarm# 07:00  OFF", "BatText=#T_battery#"] + _flags)
 HV = ("\n".join(f"H{n}=1" for n in range(1, 107)) + "\nQHf=1\nQHc=1\n" + "\n".join(f"CalD{n}=" for n in range(1, 43)) + "\n"
       + "\n".join(f"PX{n}=40" for n in range(1, 83)))
 
@@ -1391,7 +1420,7 @@ ContextAction15=[!ActivateConfig "#CURRENTCONFIG#\\Gallery" "Gallery.ini"]
 [Metadata]
 Name=Adaptive Clock
 Author=Amika Alankara
-Version=4.7
+Version=4.8
 Description=91 clock styles, coder (19 languages) / everyday profiles, girl / boy themes, 10 languages, weather, timer and more.
 
 [Variables]
@@ -1428,9 +1457,7 @@ Language=Windows
 Smooth=0
 UpdateMs=1000
 Div=1
-LangFile=AdaptiveClock.lua
-PomoMode=focus
-AlarmRing=0
+LangInc=English
 Latitude=
 Longitude=
 WeatherLatitude=
@@ -1476,6 +1503,9 @@ HourRad=0
 DayRad=3.14159
 DayF=0
 {HV}
+{TXTV}
+@Include=#CURRENTPATH#Languages\\English.inc
+@Include2=#CURRENTPATH#Languages\\#LangInc#.inc
 
 ; ---------------------------------------------------------------- measures
 [mAccent]
@@ -1602,5 +1632,26 @@ def with_dividers(text):
             block = block.rstrip("\n") + f"\nUpdateDivider={div}"
         out.append(block)
     return "\n\n".join(out)
-open("../AdaptiveClock/AdaptiveClock.ini", "w", encoding="utf-8").write(with_dividers(head + "\n\n".join(S) + "\n"))
+TEXT_MAP = {"[mDow]": "#DowText#", "[mDowS]": "#DowSText#", "[mMon]": "#MonText#", "[mMonS]": "#MonSText#", "[mGreet]": "#GreetText#",
+            "[mPomoLabel]": "#PomoLabel#", "[mAlarmText]": "#AlarmText#", "[mBatTxt]": "#BatText#",
+            "[mLblHour]": "#T_hour#", "[mLblMinute]": "#T_minute#", "[mLblSecond]": "#T_second#", "[mLblHours]": "#T_hours#",
+            "[mLblMinutes]": "#T_minutes#", "[mLblSeconds]": "#T_seconds#", "[mLblWorld]": "#T_world#", "[mLblSecondsLow]": "#T_secondsLow#",
+            "[mLblSunrise]": "#T_sunrise#", "[mLblSunset]": "#T_sunset#", "[mLblWeekendLeft]": "#T_weekendLeft#", "[mLblDaylight]": "#T_daylight#",
+            "[mLblDaysLeft]": "#T_dl0##T_dlS1##T_dl1#", "[mLblDaysLeftYear]": "#T_dly0##T_dlyS1##T_dly1##T_dlyS2##T_dly2#",
+            "[mLblYearDone]": "#T_yd0##T_ydS1##T_yd1#", "[mLblOfYear]": "#T_oy0##T_oyS1##T_oy1#"}
+
+def apply_texts(text):
+    for k, v in TEXT_MAP.items():
+        text = text.replace(k, v)
+    text = re.sub(r"\[mCalH(\d)\]", r"#CalH\1#", text)
+    text = re.sub(r"\[mWkH(\d)\]", r"#WkH\1#", text)
+    blocks = text.split("\n\n")
+    for n, b in enumerate(blocks):                       # template parts use ~ for spaces
+        if re.search(r"#T_(dl|dly|yd|oy)\d#", b):
+            blocks[n] = b.rstrip("\n") + '\nSubstitute="~":" "'
+    return "\n\n".join(blocks)
+
+open("../AdaptiveClock/AdaptiveClock.ini", "w", encoding="utf-8").write(with_dividers(head + apply_texts("\n\n".join(S)) + "\n"))
+import gen_lang
+gen_lang.write_incs("../AdaptiveClock")
 print(len(S), "meters")
