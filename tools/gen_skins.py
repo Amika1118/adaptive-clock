@@ -58,6 +58,7 @@ PAGES = [
         ("Code colours", "CodeTheme", [("Dark", "Dark"), ("Dracula", "Dracula"), ("Monokai", "Monokai"), ("Light", "Light")]),
         ("Text colour", "ColorMode", [("Invert", "Invert"), ("Accent", "Accent"), ("White", "White"), ("Black", "Black")]),
         ("Style changes", "ShuffleMinutes", [("60 min", "60"), ("30 min", "30"), ("15 min", "15"), ("5 min", "5"), ("Daily", "1440")]),
+        ("On start", "ResumeLast", [("Resume last clock", "1"), ("Follow schedule", "0")]),
     ]),
     ("Language", "plain", [
         ("Language", "Language", [(l, l) for l in LANGS]),

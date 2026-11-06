@@ -1,4 +1,4 @@
--- AdaptiveClock.lua  v4.8   (Rainmeter 4.x, Lua 5.1)
+-- AdaptiveClock.lua  v4.9   (Rainmeter 4.x, Lua 5.1)
 -- Author: Amika Alankara  (MIT License)
 -- This file is plain ASCII and has NO byte-order mark, so it loads everywhere.
 -- Other languages are NOT produced here: the translations are variables in Languages\*.inc (UTF-16 files, which Rainmeter reads natively).
@@ -29,6 +29,7 @@ local interval = 60               -- minutes per style (ShuffleMinutes)
 local locked, lockedStyle = false, 0
 local publishIcons                                -- defined below; showStyle calls it
 local wxLat, lastLocSrc
+local lastManual, stateSlotKey, savedState = false, 0, nil   -- remembered between runs: which clock was showing, and why
 local lblKey = ''
 local logIndex = 0
 local qpool
@@ -337,21 +338,43 @@ end
 
 local coords                                      -- defined below (location helpers)
 
-local function writeState()                       -- read by the Settings window and the gallery
+local function slotKey(t) return t.yday * 10000 + slot(t) end
+
+local function readState()                            -- what the previous run left in state.txt
+  local d = {}
+  local f = io.open(var('CURRENTPATH', '') .. 'state.txt', 'r')
+  if f then
+    for raw in f:lines() do
+      local k, v = raw:gsub('\r', ''):match('^(%w+)=(.*)$')
+      if k then d[k] = v end
+    end
+    f:close()
+  end
+  return d
+end
+
+local function writeState()                           -- read by the Settings window and the gallery, and by the next run to resume
+  if not current then return end                      -- never overwrite the remembered style before this run has chosen one
   local f = io.open(var('CURRENTPATH', '') .. 'state.txt', 'w')
   if not f then return end
   f:write('StyleNo=', tostring(current or 0), '\nStyleName=', NAMES[current or 0] or '', '\nStyleTotal=', tostring(N),
-          '\nLocked=', locked and '1' or '0', '\nLocation=', select(3, coords()) or 'none', '\n')
+          '\nLocked=', locked and '1' or '0', '\nLocation=', select(3, coords()) or 'none',
+          '\nManual=', lastManual and '1' or '0', '\nSlotKey=', tostring(stateSlotKey), '\n')
   f:close()
 end
 
-local function showStyle(n)
-  if n == current then return end
+local function showStyle(n, manual)               -- manual = chosen by you (Next, Random, gallery) rather than by the schedule
+  if n == current then
+    if manual and not lastManual then lastManual = true; writeState() end
+    return
+  end
   if current then setv('H' .. current, 1) end
   setv('H' .. n, 0)
   setv('StyleNo', n)
   setv('StyleName', NAMES[n] or ('Style ' .. n))
   current = n
+  lastManual = manual and true or false
+  stateSlotKey = slotKey(os.date('*t'))
   writeState()
   if publishIcons then publishIcons() end
 end
@@ -373,7 +396,7 @@ end
 function Next()
   local idx = 0
   for i, n in ipairs(pool) do if n == current then idx = i end end
-  showStyle(pool[(idx % #pool) + 1])
+  showStyle(pool[(idx % #pool) + 1], true)
   refresh()
 end
 
@@ -386,7 +409,7 @@ function RandomStyle()
     for i, v in ipairs(pool) do if v == n then idx = i end end
     n = pool[(idx % #pool) + 1]
   end
-  showStyle(n)
+  showStyle(n, true)
   refresh()
 end
 
@@ -411,7 +434,7 @@ end
 -- Used by the Settings skin:  [!CommandMeasure mMain "Set('Theme','Bloom')" "AdaptiveClock"]
 local SETTABLE = { Profile = 1, Theme = 1, ColorMode = 1, ShuffleMinutes = 1, QuoteMinutes = 1, QuoteHidden = 1,
   QuoteStyle = 1, HourFormat = 1, Language = 1, WeekStart = 1, Smooth = 1, TempUnit = 1, WeatherOff = 1,
-  PomoWork = 1, PomoBreak = 1, TimerBeep = 1, CodeTheme = 1 }
+  PomoWork = 1, PomoBreak = 1, TimerBeep = 1, CodeTheme = 1, ResumeLast = 1 }
 
 function Set(name, value)
   if not SETTABLE[name] then return end
@@ -456,7 +479,7 @@ function Unlock()
   locked, lockedStyle = false, 0
   saveVar('LockedStyle', 0)
   setv('LockMark', '')
-  showStyle(styleFor(os.date('*t')))
+  showStyle(styleFor(os.date('*t')), false)
   writeState()
   refresh()
 end
@@ -472,7 +495,7 @@ end
 function GoTo(n)                                  -- used by the style gallery: show a style and keep it
   n = tonumber(n)
   if not n or n < 1 or n > N then return end
-  showStyle(n)
+  showStyle(n, true)
   Lock()
 end
 
@@ -1049,7 +1072,7 @@ end
 local DEFAULTS = { Profile = 'All', Theme = 'Neutral', CodeTheme = 'Dark', ColorMode = 'Invert', ShuffleMinutes = '60',
   QuoteMinutes = '1440', QuoteHidden = '0', QuoteStyle = 'Auto', HourFormat = '%H', Language = 'Windows', WeekStart = '1',
   Smooth = '0', UpdateMs = '1000', Div = '1', TempUnit = 'celsius', WeatherOff = '1', PomoWork = '25', PomoBreak = '5',
-  TimerBeep = '1', SkipStyles = '', LockedStyle = '0', LangInc = 'English' }
+  TimerBeep = '1', SkipStyles = '', LockedStyle = '0', LangInc = 'English', ResumeLast = '1' }
 
 function ResetSettings()                            -- Settings > Actions > Reset all settings
   for k, v in pairs(DEFAULTS) do saveVar(k, v) end
@@ -1193,6 +1216,7 @@ function Initialize()
   if mode:match('^world') then loadCities() end
 
   if mode == 'main' then
+    savedState = readState()
     interval = math.max(1, math.min(1440, tonumber(var('ShuffleMinutes', '60')) or 60))
     local skip = {}
     for n in (var('SkipStyles', '')):gmatch('%d+') do skip[tonumber(n)] = true end
@@ -1235,11 +1259,22 @@ function Update()
     calendar(t)
   end
   if current == nil then
-    showStyle(locked and lockedStyle or styleFor(t))
+    local s, man = nil, false
+    if locked then
+      s = lockedStyle
+    elseif var('ResumeLast', '1') == '1' and savedState then      -- pick up where the last run stopped
+      local n = tonumber(savedState.StyleNo)
+      local inPool = false
+      for _, v in ipairs(pool) do if v == n then inPool = true end end
+      if inPool and (savedState.Manual == '1' or tonumber(savedState.SlotKey) == slotKey(t)) then
+        s, man = n, (savedState.Manual == '1')
+      end
+    end
+    showStyle(s or styleFor(t), man)
     lastSlot, lastYday = slot(t), t.yday
   elseif not locked and (slot(t) ~= lastSlot or t.yday ~= lastYday) then
     lastSlot, lastYday = slot(t), t.yday
-    showStyle(styleFor(t))
+    showStyle(styleFor(t), false)
   end
 
   return 0

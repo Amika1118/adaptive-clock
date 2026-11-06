@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.9
+- **The clock remembers where you were.** The style on screen, and whether you picked it yourself (Next, Random, gallery) or the schedule did, are saved in
+  `state.txt` (not committed to git). After an accidental close, a Rainmeter restart, or a refresh caused by changing a setting, the clock comes back on the same style.
+  A style you chose yourself stays until the next scheduled change; a scheduled style comes back if you return within the same slot, otherwise the schedule
+  moves on. A locked style is still kept. Styles that the current profile or theme no longer allows are skipped.
+- *Settings > Style > On start* (`ResumeLast`): resume the last clock, or follow the schedule.
+
 ## 4.8
 - **Quotes are visible again, in every language.** In 4.6 / 4.7 the quote text depended on a Lua file saved with a BOM, which Rainmeter did not run on
   every PC, so the quote card stayed empty. Nothing in the clock needs a BOM any more: `AdaptiveClock.lua` is plain ASCII, quotes use plain punctuation,

@@ -1420,7 +1420,7 @@ ContextAction15=[!ActivateConfig "#CURRENTCONFIG#\\Gallery" "Gallery.ini"]
 [Metadata]
 Name=Adaptive Clock
 Author=Amika Alankara
-Version=4.8
+Version=4.9
 Description=91 clock styles, coder (19 languages) / everyday profiles, girl / boy themes, 10 languages, weather, timer and more.
 
 [Variables]
@@ -1458,6 +1458,7 @@ Smooth=0
 UpdateMs=1000
 Div=1
 LangInc=English
+ResumeLast=1
 Latitude=
 Longitude=
 WeatherLatitude=
