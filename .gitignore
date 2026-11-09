@@ -1,7 +1,9 @@
 __pycache__/
 .DS_Store
 Thumbs.db
-
+.idea
+.venv
+docs\previews
 
 # written by the clock while it runs
 AdaptiveClock/state.txt

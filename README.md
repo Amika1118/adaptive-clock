@@ -1,6 +1,13 @@
 # Adaptive Clock for Rainmeter
 
-A desktop clock with **106 styles**, built for Rainmeter on Windows. By Amika Alankara.
+A desktop clock with **130 styles**, built for Rainmeter on Windows. By Amika Alankara.
+
+## Download
+1. Install [Rainmeter](https://www.rainmeter.net/) (free).
+2. Go to the **[Releases page](../../releases/latest)** and download the latest `AdaptiveClock-<version>.rmskin`.
+3. Double-click the file and press **Install**. Then right-click the Rainmeter icon in the system tray and choose **Skins > AdaptiveClock > AdaptiveClock.ini > Load**.
+
+Something wrong? Open an [issue](../../issues/new/choose); the form asks for the few details that help most.
 
 ![Coder clocks](docs/contact-sheet-5.png)
 
@@ -21,8 +28,8 @@ A desktop clock with **106 styles**, built for Rainmeter on Windows. By Amika Al
 - **Your location stays on your PC**: sunrise and sunset use the location Windows gives the clock (or your time zone as a fallback) and nothing is sent anywhere. See [Privacy and location](#privacy-and-location).
 - **Adaptive colours**: black or white text chosen from the wallpaper behind the skin, or your Windows accent colour.
 - **Quotes**: a friendly card, or a code-comment style for the Coder profile.
-- **Remembers your clock.** If the skin or Rainmeter is closed by accident (or the clock refreshes after a setting change), it comes back showing the clock you were on, including one you picked yourself with Next, Random or the gallery. *Settings > Style > On start* switches this off.
-- **Settings window** (5 pages, always shows where you are) and a **style gallery** that highlights the style on screen.
+- **Remembers your clock.** If the skin or Rainmeter is closed by accident (or the clock refreshes after a setting change), it comes back showing the clock you were on, including one you picked yourself with Next, Random or the gallery. Scheduled clocks resume only in the same shuffle interval; manually selected clocks stay until the next scheduled change. *Settings > Appearance > On start* switches this off.
+- **Settings window** (7 clear pages, always shows where you are) and a searchable, filterable **style gallery** that highlights the style on screen.
 
 ## Requirements
 Windows 10/11, [Rainmeter 4.x](https://www.rainmeter.net/), PowerShell (built in).
@@ -44,10 +51,11 @@ Next / random style, lock or unlock (kept after a refresh), resume shuffle and r
 colour mode, next quote, show/hide quote, 12/24 h, skip this style, show all styles again, open settings, open style gallery.
 
 ## Settings window
-Five pages: **Style** (profile, theme, code colours, text colour, how often the style changes), **Language** (language, 12/24 h,
-week start), **Quote**, **Extras** (smooth seconds, weather, timer) and **Actions** (next / random / lock / skip, open gallery).
-The top of the window shows the page you are on (`Settings > Style`) and the clock style currently on screen. On every row the
-active choice is highlighted and its name is written next to the setting.
+Seven pages: **Start**, **Appearance** (choose this clock or all clocks, colour mode, custom RGB colour, fonts and code colours),
+**Language**, **Quotes**, **Extras**, **Personal**, and **Actions**. The top of the window shows the page you are on and the
+clock style currently on screen. Settings are grouped into clear cards and active choices are highlighted. The style gallery
+shows 25 clocks per page; search, category filters, recently-used or A-Z sorting, current-style highlighting, and one-click
+selection are available without an oversized window.
 
 ## Options (`[Variables]` in `AdaptiveClock.ini`)
 | Variable | Values | Meaning |
@@ -56,7 +64,9 @@ active choice is highlighted and its name is written next to the setting.
 | `Theme` | `Neutral` (Classic), `Bloom`, `Volt` | Accent palette; Bloom / Volt also add their own styles. The old values `Girl` / `Boy` still work |
 | `CodeTheme` | `Dark`, `Dracula`, `Monokai`, `Light` | Colours of the editor / terminal clocks |
 | `Language` | `Windows`, `English`, `Spanish`, `French`, `German`, `Portuguese`, `Italian`, `Sinhala`, `Tamil`, `Hindi`, `Japanese` | Date names, greetings and labels. The two word-clock styles need English or Windows |
-| `ColorMode` | `Invert`, `Accent`, `White`, `Black` | Text colour |
+| `ColorMode` | `Invert`, `Accent`, `White`, `Black`, `Custom` | Clock accent/text colour mode |
+| `CustomColor` | RGB, e.g. `120,140,255` | Accent colour used by Custom mode |
+| `CustomizeScope` | `Style` / `All` | Apply custom appearance settings to this clock style or all styles |
 | `ShuffleMinutes` | `1` to `1440` | How long each style stays |
 | `SkipStyles` / `LockedStyle` | `3,7,12` / `0` or a style number | Leave styles out / keep one style |
 | `ResumeLast` | `1` / `0` | `1` = after a restart, show the clock you were last on; `0` = follow the schedule |
@@ -79,16 +89,18 @@ Quotes stay in English. Weather descriptions are English.
 ## Customise
 - **Cities**: edit the `Cities=` line in `AdaptiveClock.ini`, format `NAME:offset:RULE|...` (RULE is `US`, `EU`, `AU` or `-`; max 5).
 - **Quotes**: rename `quotes.example.txt` to `quotes.txt` and edit it (`text | author`, one per line). It replaces the built-in quotes for every profile.
-- **Styles**: `AdaptiveClock.ini` is generated by `tools/gen_ini.py`. Edit the style functions there and re-run
-  `python gen_ini.py`, or edit the `.ini` directly.
-- **Style count**: if you add or remove styles, update `StyleCount` in the `.ini`.
+- **Styles**: add a style block to `tools/gen_ini.py` and its matching name to `NAMES` in `AdaptiveClock/AdaptiveClock.lua`.
+  Keep the IDs in order, then update `STYLE_COUNT` in the generator and `local N` in Lua. `StyleCount` and the generated
+  `.ini` files are produced automatically; do not edit those generated files by hand.
 
 ## Developing
 `AdaptiveClock.ini`, `Settings.ini` and `Gallery.ini` are generated: edit `tools/gen_ini.py` / `tools/gen_skins.py`, then run
-`python gen_ini.py && python gen_skins.py && python check_ini.py` from the `tools` folder. `python preview.py` (needs matplotlib and pillow) renders every style to `docs/` and warns about text that overlaps or leaves the clock area. `python build_rmskin.py` builds
+`python gen_ini.py && python gen_skins.py && python check_ini.py` from the `tools` folder. The check verifies the style names,
+IDs, visibility flags and Gallery count stay synchronized. `python preview.py` (needs matplotlib and pillow) renders every
+style to `docs/` and warns about text that overlaps or leaves the clock area. `python build_rmskin.py` builds
 `dist/AdaptiveClock-<version>.rmskin`. To add a language, copy a block in `Languages.lua`, translate it, and add its name to
 `CycleLanguage` in `AdaptiveClock.lua` and to the language list in `tools/gen_skins.py`.
-GitHub Actions checks the generated files on every push and attaches the `.rmskin` to a release when you push a tag like `v4.1`.
+To prepare a release, run the checks above, build the package with `python build_rmskin.py`, and publish the `.rmskin` with a matching version tag.
 
 ## Author
 Created by Amika Alankara.

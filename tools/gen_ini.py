@@ -3,6 +3,7 @@ import math
 from math import cos, sin, pi as PI
 
 S = []          # style sections
+STYLE_COUNT = 130
 CX = CY = 220
 W, H = 440, 520
 
@@ -1150,8 +1151,8 @@ txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 322, 16, DIM)
 
 i = nxt()   # 93 Matrix rain
 shp(i, "Panel", [rrect(14, 70, 412, 362, 12, "2,12,6,235", 1, "0,255,100,70")])
-for k in range(10):
-    txt(i, f"R{k}", f"[mRain{k}]", 38 + k * 40.5, 78, 13, "0,255,110,140", align="CenterTop", face="Consolas")
+for k, x in enumerate((24, 36, 48, 60, 380, 392, 404, 416)):
+    txt(i, f"R{k}", f"[mRain{k}]", x, 78, 13, "0,255,110,140", align="CenterTop", face="Consolas")
 shp(i, "Box", [rrect(66, 180, 308, 124, 14, "0,14,6,225", 2, "0,255,110,210")])
 txt(i, "Time", "[mH]:[mM]:[mS]", 220, 226, 46, "190,255,215", face="Consolas", style="Bold", StringEffect="Border", FontEffectColor="0,255,110,130")
 txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 278, 13, "0,255,110", face="Consolas")
@@ -1239,7 +1240,7 @@ for _nm, _md in [("mQPlain", "quotePlain"), ("mQAuthor", "quoteAuthor"), ("mWkTe
 
 i = nxt()   # 100 Big quote
 txt(i, "Time", "[mH]:[mM]", 220, 100, 30, DIM)
-txt(i, "Mark", "[mQMark]", 44, 118, 64, "#ColorMid#", face="Georgia")
+txt(i, "Mark", "[mQMark]", 44, 110, 56, "#ColorMid#", face="Georgia")
 txt(i, "Body", "[mQPlain]", 220, 150, 22, INK, face="Georgia", style="Italic", W=350, H=190, ClipString=2, align="CenterTop")
 txt(i, "Who", "[mQAuthor]", 220, 372, 16, "#Color#", face="Segoe UI", style="Bold")
 txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 408, 13, DIM)
@@ -1323,6 +1324,253 @@ txt(i, "Text", "[mBdayText]", 220, 285, 18, DIM, W=380, H=60, ClipString=2, alig
 txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 380, 15, DIM)
 assert SEQ[0] == 106, SEQ[0]
 
+# ---- 107-130: additional clocks
+i = nxt()   # 107 Platform board
+shp(i, "Board", [rrect(34, 128, 372, 212, 12, "18,23,32,220", 2, "#ColorMid#"),
+                 rrect(48, 142, 344, 36, 6, "#ColorSoft#"),
+                 rrect(48, 190, 344, 68, 8, "#ColorSoft#"),
+                 rrect(48, 270, 344, 54, 8, "#ColorSoft#")])
+txt(i, "Title", "LOCAL TIME", 70, 160, 12, "#Color#", align="LeftCenter", face="Segoe UI", style="Bold")
+txt(i, "Time", "[mH]:[mM]", 220, 222, 58, INK, face="Segoe UI Semibold")
+txt(i, "Sec", "[mS]", 338, 222, 20, "#Color#", face="Consolas")
+txt(i, "Date", "[mDowS]  [mDnum]  [mMon]", 220, 294, 18, INK, face="Segoe UI")
+txt(i, "Status", "ON TIME  /  PLATFORM 01", 220, 367, 11, DIM, face="Consolas")
+
+i = nxt()   # 108 Meridian
+ring(i, "Day", 220, 204, 158, 152, "mDayF", "#ColorSoft#", start=PI, rot=PI)
+ring(i, "SunArc", 220, 204, 136, 131, "mSunF", "#Color2#")
+shp(i, "Face", [circle(220, 204, 108, "0,0,0,0", 1, "#ColorMid#")] +
+    dial_ticks(220, 204, 88, 102, "#ColorDim#", big=82, n=24))
+hand(i, "Hour", 220, 204, 60, "mHrF", 6, INK)
+hand(i, "Min", 220, 204, 86, "mMinF", 3, "#Color#")
+shp(i, "Hub", [circle(220, 204, 7, "#Color2#")])
+txt(i, "Time", "[mH]:[mM]", 220, 366, 26, INK, face="Segoe UI Semibold")
+txt(i, "Sun", "[mSunRise]  -  [mSunSet]", 220, 398, 12, DIM)
+
+i = nxt()   # 109 Blueprint
+sh = [f"Line {x},80,{x},410 | StrokeWidth 1 | Stroke Color #InkSoft#" for x in range(60, 421, 40)]
+sh += [f"Line 40,{y},400,{y} | StrokeWidth 1 | Stroke Color #InkSoft#" for y in range(100, 401, 40)]
+sh += [circle(220, 220, 166, "0,0,0,0", 2, "#Color#"), circle(220, 220, 132, "0,0,0,0", 1, "#ColorMid#")]
+sh += dial_ticks(220, 220, 140, 158, "#ColorDim#", big=132)
+shp(i, "Grid", sh)
+hand(i, "Hour", 220, 220, 84, "mHrF", 5, "#Color2#")
+hand(i, "Min", 220, 220, 126, "mMinF", 2, "#Color#")
+shp(i, "Hub", [circle(220, 220, 6, "#Color#")])
+txt(i, "Label", "TIME / LOCAL", 220, 398, 12, "#Color#", face="Consolas")
+
+i = nxt()   # 110 Hourglass
+shpx(i, "Glass", ["Path Top | Fill Color #ColorSoft# | StrokeWidth 2 | Stroke Color #Color#",
+                  "Path Bottom | Fill Color #Color2Soft# | StrokeWidth 2 | Stroke Color #Color2#",
+                  "Path Stream | Fill Color #Color2# | StrokeWidth 0",
+                  "Path Sand | Fill Color #Color2# | StrokeWidth 0"],
+     Top="142,125 | LineTo 298,125 | LineTo 220,245 | ClosePath 1",
+     Bottom="220,255 | LineTo 298,375 | LineTo 142,375 | ClosePath 1",
+     Stream="218,238 | LineTo 222,238 | LineTo 222,310 | LineTo 218,310 | ClosePath 1",
+     Sand="190,350 | LineTo 250,350 | LineTo 220,315 | ClosePath 1")
+shp(i, "Frame", [f"Line {x1},{y1},{x2},{y2} | StrokeWidth 3 | Stroke Color #Color#" for x1, y1, x2, y2 in
+                 ((142, 125, 298, 125), (142, 125, 220, 245), (298, 125, 220, 245),
+                  (220, 245, 142, 375), (220, 245, 298, 375), (142, 375, 298, 375))])
+txt(i, "Time", "[mH]:[mM]", 220, 88, 34, INK, face="Segoe UI Semibold")
+txt(i, "Progress", "[mDayF:%]% OF TODAY", 220, 410, 13, DIM, face="Consolas")
+
+i = nxt()   # 111 Timeline
+shp(i, "Tracks", [f"Line 48,{y},392,{y} | StrokeWidth 2 | Stroke Color #InkSoft#" for y in (170, 245, 320)] +
+    [f"Ellipse (48+344*[{measure}]),{y},8 | Fill Color #Color# | StrokeWidth 0" for y, measure in ((170, "mHrF"), (245, "mMinF"), (320, "mSecF"))])
+txt(i, "Hour", "[mH]", 72, 132, 28, INK, align="LeftCenter", face="Segoe UI Semibold")
+txt(i, "HourLbl", "HOUR", 390, 132, 10, DIM, align="RightCenter", face="Consolas")
+txt(i, "Min", "[mM]", 72, 207, 28, INK, align="LeftCenter", face="Segoe UI Semibold")
+txt(i, "MinLbl", "MINUTE", 390, 207, 10, DIM, align="RightCenter", face="Consolas")
+txt(i, "Sec", "[mS]", 72, 282, 28, "#Color#", align="LeftCenter", face="Segoe UI Semibold")
+txt(i, "SecLbl", "SECOND", 390, 282, 10, DIM, align="RightCenter", face="Consolas")
+txt(i, "Date", "[mDow], [mDnum] [mMon]  /  [mYear]", 220, 372, 14, DIM)
+
+i = nxt()   # 112 Orbit desk
+shp(i, "Orbit", [circle(220, 220, 132, "0,0,0,0", 1, "#ColorSoft#"),
+                 f"Ellipse 220,220,210,90 | Fill Color 0,0,0,0 | StrokeWidth 1 | Stroke Color #ColorMid#",
+                 f"Ellipse 220,220,90,210 | Fill Color 0,0,0,0 | StrokeWidth 1 | Stroke Color #ColorSoft#",
+                 mdot(220, 220, 132, "#HourRad#", 7, "#Color#"),
+                 mdot(220, 220, 105, "#MinRad#", 6, "#Color2#"),
+                 mdot(220, 220, 105, "#SecRad#", 3, INK)])
+shp(i, "Core", [circle(220, 220, 70, "#InkSoft#", 1, "#ColorMid#")])
+txt(i, "Time", "[mH]:[mM]", 220, 213, 30, INK, face="Segoe UI Semibold")
+txt(i, "Date", "[mDowS]  [mDnum]", 220, 246, 12, DIM)
+txt(i, "Label", "ORBITAL TIME", 220, 374, 11, "#Color#", face="Consolas")
+
+i = nxt()   # 113 Folio
+shp(i, "Paper", [rrect(65, 110, 310, 278, 14, "245,241,230", 1, "255,255,255,180"),
+                 rrect(84, 132, 272, 42, 4, "218,210,192"),
+                 f"Line 92,330,348,330 | StrokeWidth 1 | Stroke Color 145,135,118"])
+txt(i, "Title", "TODAY'S NOTE", 220, 153, 12, "55,55,50", face="Segoe UI", style="Bold")
+txt(i, "Time", "[mH]:[mM]", 220, 234, 58, "35,38,42", face="Segoe UI Light")
+txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 292, 17, "85,82,75")
+txt(i, "Sec", "A MOMENT AT A TIME  -  [mS]", 220, 356, 11, "95,88,75", face="Consolas")
+
+i = nxt()   # 114 Prism
+shpx(i, "Prism", ["Path Frame | Fill Color #ColorSoft# | StrokeWidth 2 | Stroke Color #Color#",
+                  "Path Beam | Fill Color #Color2Soft# | StrokeWidth 1 | Stroke Color #Color2#"],
+     Frame="220,100 | LineTo 365,350 | LineTo 75,350 | ClosePath 1",
+     Beam="220,100 | LineTo 365,350 | LineTo 220,300 | LineTo 75,350 | ClosePath 1")
+shp(i, "Ticks", [tick(220, 236, 104, 120, k * PI / 6, 2, "#ColorDim#") for k in range(12)])
+hand(i, "Hour", 220, 236, 62, "mHrF", 6, INK)
+hand(i, "Min", 220, 236, 98, "mMinF", 3, "#Color2#")
+txt(i, "Time", "[mH]:[mM]", 220, 384, 26, INK, face="Segoe UI Semibold")
+
+i = nxt()   # 115 Perimeter
+shp(i, "Frame", [rrect(50, 138, 340, 210, 16, "0,0,0,0", 2, "#ColorMid#"),
+                 f"Line 74,166,366,166 | StrokeWidth 3 | Stroke Color #ColorSoft#",
+                 f"Line 74,320,366,320 | StrokeWidth 3 | Stroke Color #ColorSoft#",
+                 f"Ellipse (74+292*#DayF#),166,7 | Fill Color #Color# | StrokeWidth 0",
+                 f"Ellipse (74+292*[mSecF]),320,7 | Fill Color #Color2# | StrokeWidth 0"])
+txt(i, "Time", "[mH]:[mM]", 220, 230, 56, INK, face="Segoe UI Semibold")
+txt(i, "Date", "[mDowS]  [mDnum]  [mMonS]", 220, 276, 14, DIM)
+txt(i, "Top", "DAY", 72, 184, 9, "#Color#", align="LeftCenter", face="Consolas")
+txt(i, "Bottom", "SECONDS", 368, 302, 9, "#Color2#", align="RightCenter", face="Consolas")
+
+i = nxt()   # 116 Moonlit
+moon_icon(i, 220, 190, 88)
+shp(i, "Stars", [circle(x, y, r, "#Color2#") for x, y, r in ((90, 126, 3), (340, 142, 4), (104, 268, 2), (350, 282, 3), (280, 100, 2))])
+txt(i, "Time", "[mH]:[mM]", 220, 316, 44, INK, face="Segoe UI Semibold")
+txt(i, "Phase", "[mMoonName]  /  [mMoonPct]", 220, 362, 13, DIM)
+txt(i, "Date", "[mDowS]  [mDnum] [mMonS]", 220, 394, 12, "#Color#")
+
+i = nxt()   # 117 Sundial
+shp(i, "Horizon", [f"Line 68,{y},372,{y} | StrokeWidth 1 | Stroke Color #InkSoft#" for y in (230, 238, 246)])
+hand(i, "SunTrack", 220, 238, 128, "mOne", 2, "#ColorSoft#", start=PI, rot=PI, lstart=124, solid=1)
+hand(i, "SunProgress", 220, 238, 128, "mSunF", 4, "#Color#", start=PI, rot=PI, lstart=120, solid=1)
+shp(i, "Sun", [mdot(220, 238, 120, "#SunRad#", 9, "#Color2#")])
+txt(i, "RiseLabel", "[mLblSunrise]", 112, 292, 11, DIM)
+txt(i, "Rise", "[mSunRise]", 112, 320, 25, INK, face="Segoe UI Semibold")
+txt(i, "SetLabel", "[mLblSunset]", 328, 292, 11, DIM)
+txt(i, "Set", "[mSunSet]", 328, 320, 25, INK, face="Segoe UI Semibold")
+txt(i, "Day", "[mDayLen]  [mLblDaylight]", 220, 375, 14, "#Color#")
+
+i = nxt()   # 118 Constellation
+shp(i, "Sky", [circle(220, 210, 150, "0,0,0,0", 1, "#ColorSoft#"),
+               "Line 92,300,142,180 | StrokeWidth 1 | Stroke Color #ColorMid#",
+               "Line 142,180,236,136 | StrokeWidth 1 | Stroke Color #ColorMid#",
+               "Line 236,136,316,220 | StrokeWidth 1 | Stroke Color #ColorMid#",
+               "Line 316,220,350,312 | StrokeWidth 1 | Stroke Color #ColorMid#"] +
+    [circle(x, y, r, "#Color2#") for x, y, r in ((92, 300, 6), (142, 180, 8), (236, 136, 5), (316, 220, 7), (350, 312, 4))] +
+    [mdot(220, 210, 130, "#SecRad#", 4, INK)])
+txt(i, "Time", "[mH]:[mM]:[mS]", 220, 362, 32, INK, face="Consolas")
+txt(i, "Date", "[mDow]  [mDnum] [mMon]", 220, 402, 13, DIM)
+
+i = nxt()   # 119 World cards
+shp(i, "Cards", [rrect(42, 151 + k * 20, 356, 18, 5, "#InkSoft#", 1, "#ColorSoft#") for k in range(5)])
+txt(i, "Names", "[mWName]", 78, 160, 12, INK, align="LeftTop", face="Segoe UI Semibold", H=110, ClipString=2)
+txt(i, "Days", "[mWDay]", 220, 160, 10, DIM, align="CenterTop", face="Consolas", H=110, ClipString=2)
+txt(i, "Times", "[mWTime]", 356, 160, 15, "#Color#", align="RightTop", face="Consolas", H=110, ClipString=2)
+txt(i, "Title", "WORLD CLOCKS", 220, 100, 13, "#Color#", face="Segoe UI", style="Bold")
+txt(i, "Local", "[mH]:[mM]  LOCAL", 220, 330, 24, INK, face="Segoe UI Semibold")
+txt(i, "Date", "[mDowS]  [mDnum] [mMonS]", 220, 365, 12, DIM)
+
+i = nxt()   # 120 Week ring
+ring(i, "Week", 220, 220, 158, 148, "mWkF", "#Color#")
+for k in range(7):
+    a = k * 2 * PI / 7 - PI / 2
+    shp(i, f"Day{k}", [circle(220 + 128 * cos(a), 220 + 128 * sin(a), 7, "#ColorSoft#")])
+txt(i, "Count", "[mWkText]", 220, 210, 48, INK, face="Segoe UI Semibold")
+txt(i, "Title", "UNTIL THE WEEKEND", 220, 254, 11, DIM, face="Consolas")
+txt(i, "Date", "[mDow]  [mDnum] [mMon]", 220, 385, 14, "#Color#")
+
+i = nxt()   # 121 Pendulum
+shp(i, "Case", [rrect(92, 110, 256, 220, 18, "#InkSoft#", 2, "#ColorMid#"),
+                circle(220, 220, 92, "0,0,0,0", 1, "#ColorSoft#")] + dial_ticks(220, 220, 78, 87, "#ColorDim#", n=12, w2=2))
+hand(i, "Hour", 220, 220, 54, "mHrF", 5, INK)
+hand(i, "Min", 220, 220, 76, "mMinF", 3, "#Color#")
+shp(i, "Hub", [circle(220, 220, 6, "#Color2#")])
+hand(i, "Pendulum", 220, 340, 72, "mSecF", 2, "#Color2#", start=-PI / 3, rot=2 * PI / 3)
+shp(i, "Bob", [circle(220, 412, 10, "#Color2#")])
+txt(i, "Date", "[mDowS]  [mDnum] [mMonS]", 220, 376, 12, DIM)
+
+i = nxt()   # 122 24-hour sector
+shp(i, "Dial", [circle(220, 220, 170, "0,0,0,0", 1, "#ColorMid#")] + dial_ticks(220, 220, 144, 164, "#ColorDim#", n=24))
+ring(i, "Sector", 220, 220, 132, 124, "mDayF", "#ColorSoft#", start=-PI / 2, rot=2 * PI)
+hand(i, "Hour", 220, 220, 116, "mDayF", 4, "#Color#")
+for k in range(24):
+    a = k * 2 * PI / 24 - PI / 2
+    if k % 2 == 0:
+        txt(i, f"H{k}", str(k).zfill(2), f"{220 + 178 * cos(a):.1f}", f"{220 + 178 * sin(a):.1f}", 9, DIM, face="Consolas")
+txt(i, "Time", "[mH]:[mM]", 220, 218, 32, INK, face="Segoe UI Semibold")
+txt(i, "Date", "[mDowS]  [mDnum] [mMonS]", 220, 250, 12, DIM)
+
+i = nxt()   # 123 Ocean
+shpx(i, "Waves", ["Line 44,220,396,220 | StrokeWidth 1 | Stroke Color #ColorSoft#",
+                  "Path W1 | Fill Color 0,0,0,0 | StrokeWidth 3 | Stroke Color #Color#",
+                  "Path W2 | Fill Color 0,0,0,0 | StrokeWidth 2 | Stroke Color #Color2#"],
+     W1="44,250 | CurveTo 130,210,130,210,220,250 | CurveTo 310,290,310,290,396,250",
+     W2="44,282 | CurveTo 130,242,130,242,220,282 | CurveTo 310,322,310,322,396,282")
+txt(i, "Time", "[mH]:[mM]", 220, 158, 62, INK, face="Segoe UI Light")
+txt(i, "Seconds", "[mS] s", 220, 325, 16, "#Color2#", face="Consolas")
+txt(i, "Date", "[mDow], [mDnum] [mMon]", 220, 370, 14, DIM)
+
+i = nxt()   # 124 Date rail
+shp(i, "Rail", [rrect(78, 130, 284, 250, 12, "#InkSoft#", 1, "#ColorSoft#"),
+                rrect(78, 130, 284, 48, 12, "#ColorSoft#"),
+                f"Line 78,178,362,178 | StrokeWidth 1 | Stroke Color #ColorMid#"])
+txt(i, "Month", "[mMon]", 220, 154, 17, INK, face="Segoe UI Semibold")
+txt(i, "Day", "[mDnum]", 220, 266, 96, "#Color#", face="Segoe UI Semibold")
+txt(i, "Dow", "[mDow]", 220, 330, 17, INK)
+txt(i, "Time", "[mH]:[mM]:[mS]", 220, 402, 16, DIM, face="Consolas")
+
+i = nxt()   # 125 Daylight
+ring(i, "YearArc", 220, 220, 166, 160, "mYearF", "#ColorSoft#")
+ring(i, "Day", 220, 220, 142, 134, "mSunF", "#Color#")
+shp(i, "Center", [circle(220, 220, 105, "#InkSoft#", 1, "#ColorMid#")])
+txt(i, "Pct", "[mYearPct]", 220, 194, 44, INK, face="Segoe UI Semibold")
+txt(i, "YearLabel", "[mLblYearDone]", 220, 230, 12, DIM)
+txt(i, "Rise", "[mSunRise]  -  [mSunSet]", 220, 267, 14, "#Color#")
+txt(i, "Date", "[mDnum] [mMon]  /  [mDayLen]", 220, 374, 13, DIM)
+
+i = nxt()   # 126 Quarter dial
+shp(i, "Face", [circle(220, 220, 160, "#InkSoft#", 1, "#ColorMid#"),
+                circle(220, 220, 118, "0,0,0,0", 1, "#ColorSoft#")] + dial_ticks(220, 220, 130, 152, "#ColorDim#", big=120, n=60))
+for k in range(4):
+    a = k * PI / 2 - PI / 2
+    txt(i, f"Q{k}", str(k * 3 or 12), f"{220 + 105 * cos(a):.1f}", f"{220 + 105 * sin(a):.1f}", 16, INK, face="Segoe UI Semibold")
+hand(i, "Hour", 220, 220, 76, "mHrF", 7, "#Color2#")
+hand(i, "Min", 220, 220, 114, "mMinF", 3, "#Color#")
+shp(i, "Hub", [circle(220, 220, 7, INK)])
+txt(i, "Date", "[mDowS]  [mDnum] [mMonS]", 220, 402, 12, DIM)
+
+i = nxt()   # 127 Signal
+shp(i, "Bars", [rrect(68, 150, 304, 170, 14, "#InkSoft#", 1, "#ColorSoft#")] +
+    [rrect(92 + k * 40, 267 - k * 17, 24, 36 + k * 17, 5, "#ColorSoft#") for k in range(7)] +
+    [f"Rectangle {92 + k * 40},({267 - k * 17}),24,(([mSecN]>{k * 8})*{36 + k * 17}) | Fill Color #Color# | StrokeWidth 0" for k in range(7)])
+txt(i, "Time", "[mH]:[mM]", 220, 205, 48, INK, face="Segoe UI Semibold")
+txt(i, "Label", "SIGNAL / [mS]", 220, 355, 12, "#Color#", face="Consolas")
+
+i = nxt()   # 128 Year path
+shp(i, "Path", [circle(220, 220, 166, "0,0,0,0", 1, "#ColorSoft#")] + [
+    f"Ellipse {220 + 166 * cos(k * 2 * PI / 12 - PI / 2):.1f},{220 + 166 * sin(k * 2 * PI / 12 - PI / 2):.1f},(([mYearF]>{k / 12:.4f})*7) | Fill Color #Color# | StrokeWidth 0"
+    for k in range(12)])
+txt(i, "Quarter", "YEAR / WEEK", 220, 145, 12, DIM, face="Consolas")
+txt(i, "Week", "[mWeekNo]", 220, 220, 78, INK, face="Segoe UI Semibold")
+txt(i, "Label", "WEEK OF 52", 220, 270, 12, "#Color#", face="Consolas")
+txt(i, "Time", "[mH]:[mM]", 220, 330, 24, INK)
+txt(i, "Date", "[mDowS]  [mDnum] [mMonS]", 220, 370, 12, DIM)
+
+i = nxt()   # 129 Nightrail
+shpx(i, "Scene", [circle(220, 180, 116, "20,27,42,210", 1, "#ColorSoft#"),
+                  f"Line 60,278,380,278 | StrokeWidth 2 | Stroke Color #ColorMid#",
+                  f"Path Hill | Fill Color #ColorSoft# | StrokeWidth 0"],
+     Hill="60,278 | LineTo 130,246 | LineTo 185,270 | LineTo 270,230 | LineTo 380,278 | ClosePath 1")
+moon_icon(i, 220, 176, 30)
+shp(i, "Stars", [circle(x, y, r, "#Color2#") for x, y, r in ((102, 150, 2), (320, 130, 3), (350, 194, 2), (140, 120, 2))])
+txt(i, "Time", "[mH]:[mM]", 220, 340, 42, INK, face="Segoe UI Semibold")
+txt(i, "Phase", "[mMoonName]  /  [mMoonPct]", 220, 385, 12, DIM)
+
+i = nxt()   # 130 Triptych
+shp(i, "Cards", [rrect(48, 168 + k * 68, 344, 56, 10, "#InkSoft#", 1, "#ColorSoft#") for k in range(3)])
+txt(i, "Hours", "[mH]", 100, 196, 24, "#Color#", align="LeftCenter", face="Consolas")
+txt(i, "Minutes", "[mM]", 220, 196, 24, INK, face="Consolas")
+txt(i, "Seconds", "[mS]", 340, 196, 24, "#Color2#", align="RightCenter", face="Consolas")
+txt(i, "H", "HOUR", 100, 264, 9, DIM, align="LeftCenter", face="Consolas")
+txt(i, "M", "MINUTE", 220, 264, 9, DIM, face="Consolas")
+txt(i, "S", "SECOND", 340, 264, 9, DIM, align="RightCenter", face="Consolas")
+txt(i, "Date", "[mDow]  [mDnum] [mMon]", 220, 332, 16, INK)
+txt(i, "Year", "[mYear]  /  LOCAL TIME", 220, 396, 11, "#Color#", face="Consolas")
+assert SEQ[0] == STYLE_COUNT, SEQ[0]
 
 
 # ---- extras for older styles: AM/PM markers for the 12-hour clock
@@ -1369,17 +1617,17 @@ def lbl(name, key):
 
 DATE_M = ""
 _flags = ([f"F{s}_g{k}=1" for s in (32, 47) for k in (1, 2)] + [f"F49_w{k}=1" for k in range(1, 7)] +
-          [f"F{s}_m{k}=1" for s in (90, 103) for k in range(1, 9)])
+          [f"F{s}_m{k}=1" for s in (90, 103, 116, 129) for k in range(1, 9)])
 TXTV = "\n".join(["DowText=#Dow1#", "DowSText=#DowS1#", "MonText=#Mon1#", "MonSText=#MonS1#", "GreetText=#GreetMorning#"]
                  + [f"CalH{c}=#DowH{c}#" for c in range(1, 8)] + [f"WkH{c}=#DowH{c}#" for c in range(1, 8)]
                  + ["PomoLabel=#T_focus#", "AlarmText=#T_alarm# 07:00  OFF", "BatText=#T_battery#"] + _flags)
-HV = ("\n".join(f"H{n}=1" for n in range(1, 107)) + "\nQHf=1\nQHc=1\n" + "\n".join(f"CalD{n}=" for n in range(1, 43)) + "\n"
+HV = ("\n".join(f"H{n}=1" for n in range(1, STYLE_COUNT + 1)) + "\nQHf=1\nQHc=1\n" + "\n".join(f"CalD{n}=" for n in range(1, 43)) + "\n"
       + "\n".join(f"PX{n}=40" for n in range(1, 83)))
 
 def tm(name, fmt):
     return f"[{name}]\nMeasure=Time\nFormat={fmt}"
 
-head = f"""; AdaptiveClock.ini  by Amika Alankara  -  106 clock styles driven by AdaptiveClock.lua (same folder)
+head = f"""; AdaptiveClock.ini  by Amika Alankara  -  {STYLE_COUNT} clock styles driven by AdaptiveClock.lua (same folder)
 ; Right-click the skin: Next / Random style, resume hourly shuffle, 12/24h, quote options.
 
 [Rainmeter]
@@ -1420,11 +1668,11 @@ ContextAction15=[!ActivateConfig "#CURRENTCONFIG#\\Gallery" "Gallery.ini"]
 [Metadata]
 Name=Adaptive Clock
 Author=Amika Alankara
-Version=4.9
-Description=91 clock styles, coder (19 languages) / everyday profiles, girl / boy themes, 10 languages, weather, timer and more.
+Version=5.0
+Description={STYLE_COUNT} clock styles, coder (19 languages) / everyday profiles, Bloom / Volt themes, 11 languages, weather, timer and more.
 
 [Variables]
-StyleCount=106
+StyleCount={STYLE_COUNT}
 HourFormat=%H
 QuoteHidden=0
 QuoteMinutes=1440

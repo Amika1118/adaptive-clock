@@ -2,7 +2,7 @@
 
 Welcome to **Adaptive Clock for Rainmeter!**
 
-This guide explains how to install Rainmeter, install Adaptive Clock, explore its 106 clock styles, customise its appearance, configure additional features and troubleshoot common problems.
+This guide explains how to install Rainmeter, install Adaptive Clock, explore its 130 clock styles, customise its appearance, configure additional features and troubleshoot common problems.
 
 No previous Rainmeter experience is required.
 
@@ -17,7 +17,7 @@ No previous Rainmeter experience is required.
 5. [Installing Adaptive Clock](#5-installing-adaptive-clock)
 6. [Loading Your First Clock](#6-loading-your-first-clock)
 7. [Understanding the Clock Controls](#7-understanding-the-clock-controls)
-8. [Exploring the 106 Styles](#8-exploring-the-106-styles)
+8. [Exploring the 130 Styles](#8-exploring-the-130-styles)
 9. [Profiles and Themes](#9-profiles-and-themes)
 10. [Using the Settings Window](#10-using-the-settings-window)
 11. [Changing Languages](#11-changing-languages)
@@ -42,7 +42,7 @@ No previous Rainmeter experience is required.
 
 Adaptive Clock is a custom desktop clock developed for Rainmeter on Windows.
 
-Instead of displaying just one traditional clock, it offers **106 different clock styles** that can be changed manually or automatically.
+Instead of displaying just one traditional clock, it offers **130 different clock styles** that can be changed manually or automatically.
 
 It includes:
 
@@ -298,7 +298,7 @@ Alternatively, load:
 
 `AdaptiveClock > Gallery > Gallery.ini`
 
-The gallery allows you to browse and preview available clock styles.
+The gallery lets you search by style name or number, filter by collection, sort by recent use or name, and select a style. Selecting a style displays it immediately and locks it until you resume shuffle.
 
 ---
 
@@ -315,6 +315,8 @@ Adaptive Clock includes mouse controls and a right-click menu.
 | Right-click | Open the context menu |
 
 The hover information also indicates whether the current style is locked.
+
+The clock remembers its selected style after a Rainmeter restart or skin refresh. A manually selected style stays until the next scheduled change; an automatically selected style resumes only if you return during the same shuffle interval. The saved interval includes the year, so a date from a previous year cannot be mistaken for today's interval.
 
 ## Right-Click Menu
 
@@ -360,9 +362,9 @@ To restore all excluded styles, select **Show All Styles Again**.
 
 ---
 
-# 8. Exploring the 106 Styles
+# 8. Exploring the 130 Styles
 
-Adaptive Clock contains a collection of 106 styles.
+Adaptive Clock contains a collection of 130 styles.
 
 The styles include several categories.
 
@@ -451,7 +453,9 @@ Additional styles are available through the Classic, Bloom and Volt themes.
 
 Open the Style Gallery from the right-click menu.
 
-The gallery helps you explore styles without having to manually cycle through every clock.
+The gallery shows 25 styles per page, with Previous and Next controls. Search by style name or number, filter by collection,
+sort by recently used or name, and use Clear to reset the search. The selected style is highlighted; clicking a style displays
+it and locks it until you resume shuffle.
 
 ---
 
@@ -522,31 +526,31 @@ Bloom and Volt introduce their own styles and accent colours.
 
 # 10. Using the Settings Window
 
-Adaptive Clock includes a five-page Settings interface.
+Adaptive Clock includes a seven-page Settings interface.
 
 Open it from the clock's right-click menu.
 
-## Page 1 - Style
+## Page 1 - Start
 
-This page controls the visual appearance and behaviour of the clock.
+Choose a profile and theme, then use Surprise me, Next style or open the gallery.
 
-Available settings include:
+## Page 2 - Appearance
 
-- Profile.
-- Theme.
-- Code colour theme.
-- Text colour mode.
-- Automatic style rotation interval.
+Choose whether appearance changes apply to the current clock style or all styles.
+Choose adaptive, Windows accent, white, black or custom colour. Custom colour uses
+three RGB values from 0 to 255 (for example `120,140,255`). Font and code-editor
+colours are available on the same page.
+
+The page also controls automatic style rotation and whether the last clock is restored on startup.
 
 ### Shuffle Duration
 
 The shuffle duration determines how long a style remains active before another style is selected.
-
 The supported range is 1–1440 minutes.
 
 If you prefer a permanent clock, lock the current style instead.
 
-## Page 2 - Language
+## Page 3 - Language
 
 Configure:
 
@@ -554,7 +558,7 @@ Configure:
 - 12-hour or 24-hour format.
 - First day of the week.
 
-## Page 3 - Quote
+## Page 4 - Quotes
 
 Configure the quote display.
 
@@ -565,7 +569,7 @@ Available options include:
 - Quote text size.
 - Quote rotation behaviour.
 
-## Page 4 - Extras
+## Page 5 - Extras
 
 Configure additional features.
 
@@ -575,7 +579,12 @@ These include:
 - Weather.
 - Focus timer.
 
-## Page 5 - Actions
+## Page 6 - Personal
+
+Set or update your greeting name, birthday, city and optional location coordinates.
+Click a field to edit it; clear the value and save to remove it. These values stay on this PC.
+
+## Page 7 - Actions
 
 Quick access to:
 
@@ -667,7 +676,7 @@ The Coder collection supports four editor themes:
 - Monokai
 - Light
 
-Change the editor theme through Settings → Style → Code Theme.
+Change the editor theme through Settings → Appearance → Code colours.
 
 ### Custom Fonts
 
@@ -1153,6 +1162,10 @@ Check:
 
 You can resume automatic rotation through the right-click menu.
 
+## Alarm does not sound
+
+Check that the skin is loaded, `AlarmOn=1`, and `AlarmTime` is set to the intended local time in 24-hour `HH:MM` format. The alarm is checked while the skin is running; an alarm time that has already passed is not replayed after the fact. The alarm's fired marker includes the year, so the same date and time can trigger again in a later year.
+
 ## Still having problems?
 
 Visit the project's GitHub Issues page and create a report.
@@ -1255,7 +1268,7 @@ No. Adaptive Clock is designed for Rainmeter on Windows.
 
 ### How many clock styles are available?
 
-The project includes 106 styles.
+The project includes 130 styles.
 
 ### Can I use only programming-themed clocks?
 
@@ -1330,7 +1343,7 @@ For general Rainmeter questions, you can also visit:
 
 **Adaptive Clock for Rainmeter**
 
-106 styles. One desktop. Your way.
+130 styles. One desktop. Your way.
 
 Created by **Amika Alankara**
 

@@ -41,6 +41,31 @@ def check_files():
         if any(b > 127 for b in raw):
             print(f"{rel}: must be plain ASCII (translations live in Languages/*.inc)"); bad += 1
     t = open(os.path.join(SKIN, "AdaptiveClock.ini"), encoding="utf-8").read()
+    variables = t.split("[Variables]", 1)[1].split("\n[", 1)[0] if "[Variables]" in t else ""
+    count_match = re.search(r"^StyleCount=(\d+)$", variables, re.M)
+    lua_text = open(os.path.join(SKIN, "AdaptiveClock.lua"), encoding="utf-8").read()
+    lua_count = re.search(r"^local N\s*=\s*(\d+)", lua_text, re.M)
+    names_block = re.search(r"local NAMES = \{(.*?)\n\}", lua_text, re.S)
+    style_names = re.findall(r"'([^']+)'", names_block.group(1)) if names_block else []
+    if not count_match:
+        print("AdaptiveClock.ini: missing StyleCount in [Variables]"); bad += 1
+    elif not lua_count or int(count_match.group(1)) != int(lua_count.group(1)) or int(count_match.group(1)) != len(style_names):
+        print(f"Style registry mismatch: INI={count_match.group(1)}, Lua={lua_count.group(1) if lua_count else 'missing'}, names={len(style_names)}"); bad += 1
+    elif len({name.lower() for name in style_names}) != len(style_names):
+        print("AdaptiveClock.lua: duplicate style names"); bad += 1
+    else:
+        count = int(count_match.group(1))
+        style_ids = {int(value) for value in re.findall(r"^\[S(\d+)_", t, re.M)}
+        missing_styles = sorted(set(range(1, count + 1)) - style_ids)
+        if missing_styles:
+            print("AdaptiveClock.ini: missing generated styles:", missing_styles[:10]); bad += len(missing_styles)
+        missing_flags = sorted(set(range(1, count + 1)) - {int(value) for value in re.findall(r"^H(\d+)=", variables, re.M)})
+        if missing_flags:
+            print("AdaptiveClock.ini: missing style visibility flags:", missing_flags[:10]); bad += len(missing_flags)
+        gallery = open(os.path.join(SKIN, "Gallery", "Gallery.ini"), encoding="utf-8").read()
+        gallery_count = re.search(r"^BtnCount=(\d+)$", gallery, re.M)
+        if not gallery_count or int(gallery_count.group(1)) != count:
+            print(f"Gallery.ini: style count does not match ({gallery_count.group(1) if gallery_count else 'missing'} != {count})"); bad += 1
     anchors = re.findall(r"Rotate -?[\d.]+,", t)
     if anchors:
         print(f"AdaptiveClock.ini: {len(anchors)} Rotate shapes have an anchor; rotate around the centre (no anchor)"); bad += len(anchors)

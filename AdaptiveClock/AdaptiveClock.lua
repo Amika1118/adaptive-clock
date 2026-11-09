@@ -1,4 +1,4 @@
--- AdaptiveClock.lua  v4.9   (Rainmeter 4.x, Lua 5.1)
+-- AdaptiveClock.lua  v5.0   (Rainmeter 4.x, Lua 5.1)
 -- Author: Amika Alankara  (MIT License)
 -- This file is plain ASCII and has NO byte-order mark, so it loads everywhere.
 -- Other languages are NOT produced here: the translations are variables in Languages\*.inc (UTF-16 files, which Rainmeter reads natively).
@@ -22,7 +22,7 @@
 --   wxTemp wxText                     weather text
 
 local mode = 'main'
-local N = 106                       -- number of styles (the .ini sets StyleCount)
+local N = 130                       -- number of styles (the .ini sets StyleCount)
 local current, lastSlot, lastYday, lastKey, lastLuma, wasBright, lastCalDay, lastQKey
 local pool = {}                    -- style numbers that take part in the shuffle
 local interval = 60               -- minutes per style (ShuffleMinutes)
@@ -33,6 +33,7 @@ local lastManual, stateSlotKey, savedState = false, 0, nil   -- remembered betwe
 local lblKey = ''
 local logIndex = 0
 local qpool
+local recentStyles, baseStyleOptions = {}, {}
 
 local NAMES = {
   'Chronograph', 'Grey bubbles', 'World time', 'Halo', 'Roman dial', 'Bubble rings', 'Words', 'Digital',
@@ -51,6 +52,9 @@ local NAMES = {
   'Nixie', 'Vinyl', 'Compass', 'Waves', 'Zen circle', 'Day bar', 'Moon phase', 'Skyline',
   'Dot matrix', 'Matrix rain', 'CI pipeline', 'Stack trace', 'Hexdump', 'Neofetch', 'htop', 'Test runner',
   'Big quote', 'Weekend', 'Year grid', 'Sun and moon', 'Sparkle Pop', 'Pulse Line', 'Birthday',
+  'Platform board', 'Meridian', 'Blueprint', 'Hourglass', 'Timeline', 'Orbit desk', 'Folio', 'Prism',
+  'Perimeter', 'Moonlit', 'Sundial', 'Constellation', 'World cards', 'Week ring', 'Pendulum', '24-hour sector',
+  'Ocean', 'Date rail', 'Daylight', 'Quarter dial', 'Signal', 'Year path', 'Nightrail', 'Triptych',
 }
 
 -- Styles that only appear for a profile / theme (all others always appear)
@@ -223,6 +227,7 @@ local function accent()
   local cm     = var('ColorMode', 'Invert')            -- Invert | Accent | White | Black   (text / ink colour)
   local th     = theme()                               -- Neutral | Bloom | Volt             (accent palette)
   local pal    = PAL[th]
+  local custom = var('CustomColor', '120,140,255')
   local bright = wasBright or false                    -- small hysteresis so a mid-grey wallpaper does not flicker
   if luma then
     if bright then bright = luma > 0.48 else bright = luma > 0.55 end
@@ -231,7 +236,7 @@ local function accent()
   if cm == 'White' then bright = false elseif cm == 'Black' then bright = true end
 
   local ct  = var('CodeTheme', 'Dark')
-  local key = v .. '|' .. tostring(bright) .. '|' .. cm .. '|' .. th .. '|' .. ct
+  local key = v .. '|' .. tostring(bright) .. '|' .. cm .. '|' .. th .. '|' .. ct .. '|' .. custom
   if key == lastKey then return end
   lastKey = key
 
@@ -242,8 +247,8 @@ local function accent()
   setv('InkSoft', ink .. ',60')
 
   local rgb = ink                               -- Invert / White / Black: accent colour = ink
-  if pal then
-    rgb = pal.c
+  if cm == 'Custom' then
+    rgb = custom
   elseif cm == 'Accent' then                    -- Windows accent colour (ABGR DWORD)
     local r, g, b = 255, 255, 255
     if v > 0 then
@@ -252,8 +257,10 @@ local function accent()
       b = math.floor(v / 65536) % 256
     end
     rgb = string.format('%d,%d,%d', r, g, b)
+  elseif pal then
+    rgb = pal.c
   end
-  local rgb2 = pal and pal.c2 or rgb
+  local rgb2 = (cm ~= 'Custom' and pal) and pal.c2 or rgb
   setv('Color',      rgb)
   setv('ColorDim',   rgb .. ',190')
   setv('ColorMid',   rgb .. ',120')
@@ -338,7 +345,7 @@ end
 
 local coords                                      -- defined below (location helpers)
 
-local function slotKey(t) return t.yday * 10000 + slot(t) end
+local function slotKey(t) return t.year * 10000000 + t.yday * 10000 + slot(t) end
 
 local function readState()                            -- what the previous run left in state.txt
   local d = {}
@@ -359,13 +366,34 @@ local function writeState()                           -- read by the Settings wi
   if not f then return end
   f:write('StyleNo=', tostring(current or 0), '\nStyleName=', NAMES[current or 0] or '', '\nStyleTotal=', tostring(N),
           '\nLocked=', locked and '1' or '0', '\nLocation=', select(3, coords()) or 'none',
-          '\nManual=', lastManual and '1' or '0', '\nSlotKey=', tostring(stateSlotKey), '\n')
+          '\nManual=', lastManual and '1' or '0', '\nSlotKey=', tostring(stateSlotKey),
+          '\nRecentStyles=', table.concat(recentStyles, ','), '\n')
   f:close()
+end
+
+local STYLE_OPTIONS = { 'ColorMode', 'CustomColor', 'FontText', 'FontMono', 'QuoteHidden', 'QuoteMinutes', 'QuoteStyle' }
+
+local function rememberStyle(n)
+  local nextRecent = { n }
+  for _, old in ipairs(recentStyles) do
+    if old ~= n and #nextRecent < N then nextRecent[#nextRecent + 1] = old end
+  end
+  recentStyles = nextRecent
+end
+
+local function applyStyleOptions(n)
+  for _, name in ipairs(STYLE_OPTIONS) do
+    local value = var('Style' .. n .. name, '')
+    if value == '' then value = baseStyleOptions[name] or var(name, '') end
+    setv(name, value)
+  end
 end
 
 local function showStyle(n, manual)               -- manual = chosen by you (Next, Random, gallery) rather than by the schedule
   if n == current then
-    if manual and not lastManual then lastManual = true; writeState() end
+    if manual and not lastManual then lastManual = true end
+    rememberStyle(n)
+    writeState()
     return
   end
   if current then setv('H' .. current, 1) end
@@ -373,6 +401,8 @@ local function showStyle(n, manual)               -- manual = chosen by you (Nex
   setv('StyleNo', n)
   setv('StyleName', NAMES[n] or ('Style ' .. n))
   current = n
+  rememberStyle(n)
+  applyStyleOptions(n)
   lastManual = manual and true or false
   stateSlotKey = slotKey(os.date('*t'))
   writeState()
@@ -434,7 +464,7 @@ end
 -- Used by the Settings skin:  [!CommandMeasure mMain "Set('Theme','Bloom')" "AdaptiveClock"]
 local SETTABLE = { Profile = 1, Theme = 1, ColorMode = 1, ShuffleMinutes = 1, QuoteMinutes = 1, QuoteHidden = 1,
   QuoteStyle = 1, HourFormat = 1, Language = 1, WeekStart = 1, Smooth = 1, TempUnit = 1, WeatherOff = 1,
-  PomoWork = 1, PomoBreak = 1, TimerBeep = 1, CodeTheme = 1, ResumeLast = 1 }
+  PomoWork = 1, PomoBreak = 1, TimerBeep = 1, CodeTheme = 1, ResumeLast = 1, AlarmOn = 1, CustomizeScope = 1 }
 
 function Set(name, value)
   if not SETTABLE[name] then return end
@@ -445,6 +475,29 @@ function Set(name, value)
   if name == 'Smooth' then
     saveVar('UpdateMs', value == '1' and 100 or 1000)
     saveVar('Div', value == '1' and 10 or 1)
+  end
+  SKIN:Bang('!Refresh')
+end
+
+function SetStyleOption(name, value)
+  local allowed = false
+  for _, option in ipairs(STYLE_OPTIONS) do if option == name then allowed = true; break end end
+  if not allowed or not current then return end
+  value = tostring(value)
+  if name == 'QuoteHidden' and value ~= '0' and value ~= '1' then return end
+  if name == 'QuoteMinutes' and value ~= '10' and value ~= '30' and value ~= '60' and value ~= '1440' then return end
+  if name == 'QuoteStyle' and value ~= 'Auto' and value ~= 'Friendly' and value ~= 'Terminal' then return end
+  if name == 'ColorMode' and value ~= 'Invert' and value ~= 'Accent' and value ~= 'White' and value ~= 'Black' and value ~= 'Custom' then return end
+  if name == 'CustomColor' then
+    local r, g, b = value:match('^(%d+),(%d+),(%d+)$')
+    if not r or tonumber(r) > 255 or tonumber(g) > 255 or tonumber(b) > 255 then return end
+  end
+  local path = var('CURRENTPATH', '') .. var('CURRENTFILE', '')
+  if var('CustomizeScope', 'Style') == 'All' then
+    saveVar(name, value)
+    for n = 1, N do SKIN:Bang('!WriteKeyValue', 'Variables', 'Style' .. n .. name, '', path) end
+  else
+    saveVar('Style' .. current .. name, value)
   end
   SKIN:Bang('!Refresh')
 end
@@ -515,7 +568,7 @@ local function loadQuotes()
     end
   end
   f:close()
-  if #list > 0 then QUOTES = list end
+  for _, quote in ipairs(list) do QUOTES[#QUOTES + 1] = quote end
 end
 
 local function buildQuotePool()
@@ -937,7 +990,7 @@ local function tickTimers(t)
       beep()
     end
   end
-  local stamp = t.yday * 100000 + t.hour * 60 + t.min
+  local stamp = string.format('%04d:%03d:%02d:%02d', t.year, t.yday, t.hour, t.min)
   if var('AlarmOn', '0') == '1' and string.format('%02d:%02d', t.hour, t.min) == var('AlarmTime', '07:00') and alarmFired ~= stamp then
     alarmFired, ringing, ringCount = stamp, true, 0
   end
@@ -1072,7 +1125,9 @@ end
 local DEFAULTS = { Profile = 'All', Theme = 'Neutral', CodeTheme = 'Dark', ColorMode = 'Invert', ShuffleMinutes = '60',
   QuoteMinutes = '1440', QuoteHidden = '0', QuoteStyle = 'Auto', HourFormat = '%H', Language = 'Windows', WeekStart = '1',
   Smooth = '0', UpdateMs = '1000', Div = '1', TempUnit = 'celsius', WeatherOff = '1', PomoWork = '25', PomoBreak = '5',
-  TimerBeep = '1', SkipStyles = '', LockedStyle = '0', LangInc = 'English', ResumeLast = '1' }
+  TimerBeep = '1', SkipStyles = '', LockedStyle = '0', LangInc = 'English', ResumeLast = '1',
+  GreetingName = '', City = '', Birthday = '', CustomColor = '120,140,255', CustomizeScope = 'Style',
+  AlarmTime = '07:00', AlarmOn = '0', FontText = 'Segoe UI', FontMono = 'Consolas' }
 
 function ResetSettings()                            -- Settings > Actions > Reset all settings
   for k, v in pairs(DEFAULTS) do saveVar(k, v) end
@@ -1087,7 +1142,8 @@ local function publishTexts(t)                       -- #DowText# and friends po
   local lg = var('Language', 'Windows')
   local ws = tonumber(var('WeekStart', '1')) or 1
   local g = greetKey(t.hour)
-  local key = lg .. '|' .. t.wday .. '|' .. t.month .. '|' .. g .. '|' .. ws
+  local name, city = var('GreetingName', ''), var('City', '')
+  local key = lg .. '|' .. t.wday .. '|' .. t.month .. '|' .. g .. '|' .. ws .. '|' .. name .. '|' .. city
   if key == lastTextKey then return end
   lastTextKey = key
   local win = (lg == 'Windows')                      -- Windows: the .ini asks Windows itself for the names
@@ -1095,7 +1151,10 @@ local function publishTexts(t)                       -- #DowText# and friends po
   setv('DowSText', win and '[mDowSW]' or ('#DowS' .. t.wday  .. '#'))
   setv('MonText',  win and '[mMonW]'  or ('#Mon'  .. t.month .. '#'))
   setv('MonSText', win and '[mMonSW]' or ('#MonS' .. t.month .. '#'))
-  setv('GreetText', '#Greet' .. g .. '#')
+  local greeting = var('Greet' .. g, '#Greet' .. g .. '#')
+  if name ~= '' then greeting = greeting .. ', ' .. name end
+  if city ~= '' then greeting = greeting .. ' - ' .. city end
+  setv('GreetText', greeting)
   for c = 1, 7 do setv('CalH' .. c, '#DowH' .. (((c - 1 + ws) % 7) + 1) .. '#') end
   for i = 1, 7 do setv('WkH' .. i, '#DowH' .. ((i % 7) + 1) .. '#') end
 end
@@ -1205,7 +1264,7 @@ local MODES = {
 
 function Initialize()
   mode = SELF:GetOption('Mode', 'main')
-  N = tonumber(var('StyleCount', '106')) or 106
+  N = tonumber(var('StyleCount', '130')) or 130
   lblKey = SELF:GetOption('Key', '')
   logIndex = tonumber(SELF:GetOption('Index', '0')) or 0
 
@@ -1217,6 +1276,14 @@ function Initialize()
 
   if mode == 'main' then
     savedState = readState()
+    recentStyles = {}
+    if savedState and savedState.RecentStyles then
+      for value in savedState.RecentStyles:gmatch('%d+') do
+        local n = tonumber(value)
+        if n and n >= 1 and n <= N then recentStyles[#recentStyles + 1] = n end
+      end
+    end
+    for _, name in ipairs(STYLE_OPTIONS) do baseStyleOptions[name] = var(name, '') end
     interval = math.max(1, math.min(1440, tonumber(var('ShuffleMinutes', '60')) or 60))
     local skip = {}
     for n in (var('SkipStyles', '')):gmatch('%d+') do skip[tonumber(n)] = true end

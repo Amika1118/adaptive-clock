@@ -1,5 +1,30 @@
 # Changelog
 
+## Unreleased
+- Expanded the collection from 106 to **130 clocks**, including Platform board, Meridian, Blueprint, Hourglass, Orbit desk,
+  Sundial, Constellation, Pendulum, 24-hour sector, and Triptych.
+- Refined Settings with clearer page guidance and grouped controls. Rebuilt the Gallery as a paged 25-style grid with search,
+  category filters, sorting, a clear-search action, and a visible current-style selection.
+- Improved generator checks so clock names, IDs, visibility flags, and Gallery entries cannot silently drift out of sync.
+- Fixed visual crowding in Matrix Rain, Big Quote, Meridian, Hourglass, World Cards, Nightrail and Triptych.
+- Fixed yearly clock-state matching and alarm deduplication so the same calendar date in a later year is not mistaken for an
+  already-active schedule slot or alarm.
+
+## 5.0
+**Adaptive Clock 5.0: the first public release.** A desktop clock for Rainmeter that changes style through the day.
+
+- **106 clocks**: 19 coding-language IDE clocks (Python, JavaScript, TypeScript, Java, C, C++, C#, Go, Rust, PHP, Ruby, Swift, Kotlin, SQL, HTML, Bash,
+  PowerShell, Lua, Dart), terminal, git log, matrix rain, CI pipeline and more for coders; greeting, calendar, year progress, sticky note and week
+  strip for everyday use; and many classic clocks (chronograph, flip, nixie, vinyl, compass, aurora...).
+- **Themes**: Classic, **Bloom** (pink and lilac) and **Volt** (electric blue and cyan), each with its own clocks.
+- **10 languages**: Windows, English, Spanish, French, German, Portuguese, Italian, Sinhala, Tamil, Hindi, Japanese.
+- **Settings window** (6 pages, always shows where you are) and a **style gallery** that highlights the clock on screen.
+- **Remembers your clock** after an accidental close, a restart or a refresh.
+- **Sunrise, sunset, moon phase, weather (optional), battery, focus timer and alarm.** Your location is found on your PC and never leaves it
+  (weather is the only online feature, off by default).
+- Text colour adapts to your wallpaper; four code-editor colour themes; smooth seconds option; quotes for coders and everyone.
+- Everything from 4.0 to 4.9 is included; the notes for those versions are below.
+
 ## 4.9
 - **The clock remembers where you were.** The style on screen, and whether you picked it yourself (Next, Random, gallery) or the schedule did, are saved in
   `state.txt` (not committed to git). After an accidental close, a Rainmeter restart, or a refresh caused by changing a setting, the clock comes back on the same style.
