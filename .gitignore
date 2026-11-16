@@ -4,6 +4,9 @@ Thumbs.db
 .idea
 .venv
 docs\previews
+docs\ui-screenshots
+tools\capture_ui.py
+docs\previews-by-category
 
 # written by the clock while it runs
 AdaptiveClock/state.txt

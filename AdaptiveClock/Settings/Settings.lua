@@ -69,7 +69,22 @@ local function status(text)
   statusText = text
   setv('InputStatusPersonal', text)
   setv('InputStatusFonts', text)
+  setv('InputStatusTimers', text)
   setv('QuoteStatus', text)
+end
+
+function OpenQuotes()
+  local f = io.open(paths.quotes, 'r')
+  if not f then
+    local ex = io.open(paths.clock:gsub('AdaptiveClock%.ini$', 'quotes.example.txt'), 'r')
+    local content = ex and ex:read('*a') or ''
+    if ex then ex:close() end
+    local wf = io.open(paths.quotes, 'w')
+    if wf then wf:write(content); wf:close() end
+  else
+    f:close()
+  end
+  SKIN:Bang('"' .. paths.quotes .. '"')
 end
 
 local function trim(s) return (s:gsub('^%s+', ''):gsub('%s+$', '')) end
@@ -88,7 +103,7 @@ local function setStyleValue(name, value)
   if not style then return false end
   if vars.CustomizeScope == 'All' then
     SKIN:Bang('!WriteKeyValue', 'Variables', name, value, paths.clock)
-    for n = 1, tonumber(vars.StyleCount or '130') do
+    for n = 1, tonumber(vars.StyleCount or '153') do
       SKIN:Bang('!WriteKeyValue', 'Variables', 'Style' .. n .. name, '', paths.clock)
     end
   else
@@ -114,7 +129,11 @@ function SaveInput(name)
     if not f then status('Could not save quote: ' .. tostring(err)); SKIN:Bang('!Log', 'Adaptive Clock: ' .. tostring(err), 'Error'); return end
     f:write(text:gsub('|', '/'), author ~= '' and (' | ' .. author:gsub('|', '/')) or '', '\n')
     f:close()
-    status('Quote added.')
+    setv('InputQuoteDraft', '')
+    setv('InputQuoteDraftLabel', '(click to add quote text | author)')
+    setv('InputDraft', '')
+    inputCache.QuoteLabel = nil
+    status('Quote added to quotes.txt.')
     SKIN:Bang('!Refresh', '#Main#')
     return
   end

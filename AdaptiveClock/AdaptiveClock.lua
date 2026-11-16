@@ -22,7 +22,7 @@
 --   wxTemp wxText                     weather text
 
 local mode = 'main'
-local N = 130                       -- number of styles (the .ini sets StyleCount)
+local N = 153                       -- number of styles (the .ini sets StyleCount)
 local current, lastSlot, lastYday, lastKey, lastLuma, wasBright, lastCalDay, lastQKey
 local pool = {}                    -- style numbers that take part in the shuffle
 local interval = 60               -- minutes per style (ShuffleMinutes)
@@ -55,6 +55,9 @@ local NAMES = {
   'Platform board', 'Meridian', 'Blueprint', 'Hourglass', 'Timeline', 'Orbit desk', 'Folio', 'Prism',
   'Perimeter', 'Moonlit', 'Sundial', 'Constellation', 'World cards', 'Week ring', 'Pendulum', '24-hour sector',
   'Ocean', 'Date rail', 'Daylight', 'Quarter dial', 'Signal', 'Year path', 'Nightrail', 'Triptych',
+  'Aviator', 'Elegant', 'Encompassed', 'Hybrid', 'KitKat', 'Mond', 'NeoClock', 'Digital console',
+  'Celestia', 'Firewatch peak', 'Cyber night', 'Flip flap', 'Nordic desk', 'Sizy0', 'Restona',
+  'Rising reflection', 'Simple time', 'Someday', 'SP_CE', 'Summit', 'Sundays', 'TextTime', 'Neon radial',
 }
 
 -- Styles that only appear for a profile / theme (all others always appear)
@@ -71,7 +74,7 @@ for i = 100, 102 do TAGS[i] = 'easy' end
 for i = 106, 106 do TAGS[i] = 'easy' end
 for i = 104, 104 do TAGS[i] = 'girl' end
 for i = 105, 105 do TAGS[i] = 'boy' end
-TAGS[7], TAGS[23] = 'en', 'en'              -- word clocks: English only
+TAGS[7], TAGS[23], TAGS[152] = 'en', 'en', 'en'  -- word clocks: English only
 
 local D  = '-'                      -- plain ASCII punctuation: always readable
 local LQ = '"'

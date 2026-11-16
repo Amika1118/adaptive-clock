@@ -1,6 +1,6 @@
 # Adaptive Clock for Rainmeter
 
-A desktop clock with **130 styles**, built for Rainmeter on Windows. By Amika Alankara.
+A desktop clock with **153 styles**, built for Rainmeter on Windows. By Amika Alankara.
 
 ## Download
 1. Install [Rainmeter](https://www.rainmeter.net/) (free).
@@ -100,6 +100,14 @@ IDs, visibility flags and Gallery count stay synchronized. `python preview.py` (
 style to `docs/` and warns about text that overlaps or leaves the clock area. `python build_rmskin.py` builds
 `dist/AdaptiveClock-<version>.rmskin`. To add a language, copy a block in `Languages.lua`, translate it, and add its name to
 `CycleLanguage` in `AdaptiveClock.lua` and to the language list in `tools/gen_skins.py`.
+`python tools/sort_previews.py` copies the clock previews into `docs/previews-by-category/`, with folders for All, Classic
+(base styles), Coder, Everyday, Bloom, Volt, and English. It uses the Gallery tags in `AdaptiveClock.lua`; the original
+images in `docs/previews/` are left untouched. Run `python preview.py` first if the preview images have not been generated yet.
+`python tools/capture_ui.py` creates static PNG mockups of all seven Settings pages and every Gallery page for each
+category, in both Recently used and A-Z order. It reads the generated skin files and does not need Rainmeter. Install
+Pillow first with `python -m pip install pillow`; output goes to `docs/ui-screenshots/` by default, or use
+`python tools/capture_ui.py --output <folder>` to choose another folder. Since the script runs without the live skin,
+Recently used uses the styles' original order rather than Rainmeter's runtime history.
 To prepare a release, run the checks above, build the package with `python build_rmskin.py`, and publish the `.rmskin` with a matching version tag.
 
 ## Author
