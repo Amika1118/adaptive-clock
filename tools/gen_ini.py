@@ -3,7 +3,7 @@ import math
 from math import cos, sin, pi as PI
 
 S = []          # style sections
-STYLE_COUNT = 153
+STYLE_COUNT = 159
 CX = CY = 220
 W, H = 440, 520
 
@@ -1770,6 +1770,81 @@ hand(i, "Hour", 220, 220, 80, "mHrF", 5, "#Color#")
 hand(i, "Min", 220, 220, 125, "mMinF", 3, "#Color#")
 hand(i, "Sec", 220, 220, 148, "mSecF", 2, "255,45,45")
 shp(i, "Hub", [circle(220, 220, 7, "255,45,45")])
+
+# ---- 154-159: new styles from reference images + originals
+
+i = nxt()   # 154 Neon watch  (teal analog with numerals, day/date/digital time inside)
+sh = [circle(220, 220, 185, "0,0,0,0", 2, "#Color#")]
+sh += dial_ticks(220, 220, 170, 183, "#Color#", big=162, n=60, w1=1, w2=2)
+shp(i, "Dial", sh)
+for k in range(1, 13):
+    a = k / 12 * 2 * PI - PI / 2
+    txt(i, f"N{k}", str(k), f"{220+148*cos(a):.1f}", f"{220+148*sin(a):.1f}", 18,
+        "#Color#", face="Consolas", style="Bold")
+txt(i, "Dow",  "[mDowS]", 100, 220, 15, "#Color#", face="Consolas", style="Bold", StringCase="Upper")
+txt(i, "Date", "[mDnum] [mMonS]", 325, 220, 15, "#Color#", face="Consolas", style="Bold", StringCase="Upper")
+txt(i, "Time", "[mH]:[mM] [mAmPm]", 220, 318, 17, INK, face="Consolas")
+hand(i, "Hour", 220, 220, 90, "mHrF", 5, "#Color#")
+hand(i, "Min",  220, 220, 135, "mMinF", 3, "#Color#")
+hand(i, "Sec",  220, 220, 162, "mSecF", 2, "255,50,80")
+shp(i, "Hub", [circle(220, 220, 6, "255,50,80")])
+
+i = nxt()   # 155 LED alarm  (retro LED segment clock - ghost dim digits behind bright ones)
+shp(i, "Bg", [rrect(30, 155, 380, 130, 10, "14,16,22,230", 2, "#ColorSoft#")])
+txt(i, "Shadow", "88:88", 220, 215, 92, "#ColorSoft#", face="Consolas", style="Bold")
+txt(i, "Time",   "[mH]:[mM]", 220, 215, 92, "#Color#", face="Consolas", style="Bold")
+txt(i, "Sec",    "[mAmPm]  [mS]s", 345, 152, 11, "#ColorDim#", face="Consolas", align="RightCenter", style="Bold")
+txt(i, "Dow",    "[mDowS]", 220, 316, 24, "#ColorMid#", face="Consolas", style="Bold", StringCase="Upper")
+txt(i, "Date",   "[mDnum] [mMonS] [mYear]", 220, 346, 13, DIM, face="Consolas")
+
+i = nxt()   # 156 Block clock  (three dark pill panels side by side: HH / MM / SS with labels below)
+bw, bh, gap = 110, 118, 10
+bx = [220 - (bw + gap) - bw // 2, 220 - bw // 2, 220 + gap + bw // 2]
+for n, (lbl, val) in enumerate([("HOURS", "[mH]"), ("MINUTES", "[mM]"), ("SECONDS", "[mS]")]):
+    shp(i, f"Bg{n}", [rrect(bx[n] - bw // 2, 148, bw, bh, 10, "24,26,36,220", 2, "#ColorSoft#")])
+    txt(i, f"V{n}", val, bx[n], 148 + bh // 2 - 10, 50, INK, face="Segoe UI Semibold")
+    txt(i, f"L{n}", lbl, bx[n], 148 + bh + 8, 10, DIM, face="Segoe UI", StringCase="Upper")
+txt(i, "Date", "[mDnum] [mMon] [mYear]", 220, 310, 14, DIM, face="Segoe UI")
+txt(i, "Dow",  "[mDow]", 220, 332, 11, "#ColorDim#", face="Segoe UI Light", StringCase="Upper")
+
+i = nxt()   # 157 Segment board  (full dashboard: year/month/day top, giant H:M center, sec + date labels)
+shp(i, "Bg", [rrect(0, 0, 440, 440, 0, "10,10,14,220")])
+# top row: year / month / day
+for xc, lbl, val in [(88, "YEAR", "[mYear]"), (220, "MONTH", "[mDnum]"), (340, "DAY", "[mMonS]")]:
+    txt(i, f"TL{lbl}", lbl, xc, 55, 9, DIM, face="Consolas", StringCase="Upper")
+    txt(i, f"TV{lbl}", val, xc, 85, 36, "#Color#", face="Consolas", style="Bold")
+txt(i, "DOW", "[mDowS]", 390, 55, 20, "#ColorMid#", face="Consolas", style="Bold", StringCase="Upper",
+    align="RightCenter")
+# center: big H:M
+txt(i, "Time", "[mH]:[mM]", 220, 230, 110, INK, face="Consolas", style="Bold")
+# bottom row: sec label + seconds
+txt(i, "SecLbl", "SECOND", 90, 350, 9, DIM, face="Consolas", StringCase="Upper")
+txt(i, "Sec",    "[mS]", 90, 378, 36, "#Color#", face="Consolas", style="Bold")
+txt(i, "DOWLbl", "[mDow]", 300, 365, 14, DIM, face="Consolas", StringCase="Upper")
+
+i = nxt()   # 158 Cassette  (retro tape cassette shape with two reels, time on the shell label)
+cx1, cx2, cy = 148, 292, 240
+# cassette shell
+shp(i, "Shell", [rrect(40, 130, 360, 220, 18, "28,22,18,230", 2, "#ColorSoft#"),
+                 rrect(70, 150, 300, 110, 10, "16,12,10,200"),
+                 circle(cx1, cy, 44, "12,10,8,230", 2, "#ColorSoft#"),
+                 circle(cx2, cy, 44, "12,10,8,230", 2, "#ColorSoft#"),
+                 circle(cx1, cy, 14, "#ColorSoft#"),
+                 circle(cx2, cy, 14, "#ColorSoft#")])
+# reels spin with time
+hand(i, "Reel1", cx1, cy, 32, "mMinF", 2, "#ColorMid#", rot=2*PI)
+hand(i, "Reel2", cx2, cy, 32, "mSecF", 2, "#ColorDim#", rot=2*PI)
+txt(i, "Time", "[mH]:[mM]", 220, 193, 26, INK, face="Segoe UI", style="Bold")
+txt(i, "Date", "[mDow]  [mDnum] [mMonS]", 220, 215, 11, DIM, face="Segoe UI")
+txt(i, "Side", "SIDE A", 220, 338, 11, "#ColorDim#", face="Segoe UI", style="Bold", StringCase="Upper")
+
+i = nxt()   # 159 Chalk board  (blackboard green background, rough chalk-style large date/time)
+shp(i, "Board", [rrect(0, 0, 440, 440, 0, "22,38,28,235")])
+shp(i, "Ruler", [rrect(0, 400, 440, 4, 0, "#ColorSoft#")])
+txt(i, "Dow",  "[mDow]", 220, 100, 44, "#Color#", face="Segoe UI Light", StringCase="Upper")
+txt(i, "Time", "[mH]:[mM]", 220, 210, 86, INK, face="Segoe UI Light")
+txt(i, "Date", "[mDnum] [mMon] [mYear]", 220, 310, 20, DIM, face="Segoe UI Light")
+txt(i, "Sec",  "[mS]", 380, 350, 16, "#ColorDim#", face="Segoe UI Light")
 
 assert SEQ[0] == STYLE_COUNT, SEQ[0]
 

@@ -198,9 +198,35 @@ for p, (pname, kind, groups) in enumerate(PAGES, start=1):
         y += 32
     if kind == "appearance":
         y += 4
-        meters.append(note("AppearanceHint", "Choose whether appearance changes apply to this clock style or every style. For Custom, enter RGB values such as 120,140,255.", 18, y, SW - 36, 36, 9, hide=hide))
+        meters.append(note("AppearanceHint", "Choose whether appearance changes apply to this clock style or every style. Pick a colour preset below or enter a custom RGB code.", 18, y, SW - 36, 36, 9, hide=hide))
         y += 40
-        y = input_field("CustomColor", "Custom RGB colour", y, hide, "120,140,255")
+        meters.append(note("SwatchTitle", "COLOUR PRESETS", 18, y, SW - 36, 14, 8, "90,100,130", hide))
+        y += 18
+        swatches = [
+            ("Sky", "77,142,255", "255,255,255"),
+            ("Teal", "0,210,210", "15,20,25"),
+            ("Emerald", "46,204,113", "15,20,25"),
+            ("Gold", "255,185,40", "20,20,20"),
+            ("Coral", "255,110,70", "255,255,255"),
+            ("Rose", "255,80,150", "255,255,255"),
+            ("Purple", "168,85,247", "255,255,255"),
+            ("White", "240,240,245", "20,20,20"),
+        ]
+        sw_w = int((SW - 36 - 7 * 6) / 8)
+        for j, (sname, srgb, stext) in enumerate(swatches):
+            sx = 18 + j * (sw_w + 6)
+            sid = unique_button_id()
+            meters += [
+                sec(f"Swatch{sid}", Meter="Shape", X=sx, Y=y, W=sw_w, H=28,
+                    Shape=f"Rectangle 0,0,{sw_w},28,6 | Fill Color {srgb},220 | StrokeWidth 1 | Stroke Color 255,255,255,50",
+                    LeftMouseUpAction=f'[!CommandMeasure mSettings "PickColor(\'{srgb}\')"]',
+                    Hidden=f"#{hide}#", DynamicVariables=1),
+                sec(f"Swatch{sid}T", Meter="String", X=sx + sw_w // 2, Y=y + 14, Text=sname,
+                    StringAlign="CenterCenter", FontFace=FONT, FontSize=9, StringStyle="Bold",
+                    FontColor=stext, AntiAlias=1, Hidden=f"#{hide}#", DynamicVariables=1)
+            ]
+        y += 36
+        y = input_field("CustomColor", "Custom RGB code", y, hide, "120,140,255")
         y = input_field("FontText", "Clock font", y, hide)
         y = input_field("FontMono", "Monospace font", y, hide)
         meters.append(note("InputStatusFonts", "#InputStatusFonts#", 18, y, SW - 36, 28, 9, "110,170,255", hide=hide))
@@ -220,7 +246,7 @@ for p, (pname, kind, groups) in enumerate(PAGES, start=1):
         y += 84
     if kind == "personal":
         y += 4
-        meters.append(note("PersonalHint", "These details stay on this PC. Click a field to edit it; click Clear to remove it.", 18, y, SW - 36, 28, 9, hide=hide))
+        meters.append(note("PersonalHint", "These details stay on this PC and are saved directly into profile.json. Click a field to edit; click Clear to remove.", 18, y, SW - 36, 28, 9, hide=hide))
         y += 32
         meters.append(note("PersonalNameHdr", "NAME", 18, y, SW - 36, 14, 8, "90,100,130", hide))
         y += 16
@@ -328,14 +354,33 @@ function Initialize()
   count = tonumber(SKIN:GetVariable('BtnCount', '0')) or 0
   pages = tonumber(SKIN:GetVariable('PageCount', '0')) or 0
   local here = SKIN:GetVariable('CURRENTPATH', '')
-  paths = { clock = here .. '..\\AdaptiveClock.ini', state = here .. '..\\state.txt', quotes = here .. '..\\quotes.txt' }
+  paths = {
+    clock = here .. '..\\AdaptiveClock.ini',
+    state = here .. '..\\state.txt',
+    quotes = here .. '..\\quotes.txt',
+    profile = here .. '..\\State\\profile.json'
+  }
   gallery = pages == 0
   if pages > 0 then
     local clockVars = readVars(paths.clock, true)
-    for _, name in ipairs({ 'GreetingName', 'Birthday', 'City', 'Latitude', 'Longitude', 'AlarmTime', 'FontText', 'FontMono', 'CustomColor' }) do
-      setv('Input' .. name, clockVars[name] or '')
+    local prof = readProfile()
+    for _, name in ipairs({ 'GreetingName', 'Birthday', 'City', 'Latitude', 'Longitude' }) do
+      local val = prof[name] ~= '' and prof[name] or (clockVars[name] or '')
+      setv('Input' .. name, val)
+      local lbl = val ~= '' and val or '(click to enter)'
+      setv('Input' .. name .. 'Label', lbl)
+      inputCache[name] = val
+      inputCache[name .. 'Label'] = lbl
     end
-    updatePersonalInfo(clockVars)
+    for _, name in ipairs({ 'AlarmTime', 'FontText', 'FontMono', 'CustomColor' }) do
+      local val = clockVars[name] or ''
+      setv('Input' .. name, val)
+      local lbl = val ~= '' and val or '(click to enter)'
+      setv('Input' .. name .. 'Label', lbl)
+      inputCache[name] = val
+      inputCache[name .. 'Label'] = lbl
+    end
+    updatePersonalInfo(prof)
     Page(1)
   end
 end
@@ -402,11 +447,51 @@ local function syncStoredInput(name, value)
   inputCache[name .. 'Label'] = display
 end
 
-local PERSONAL_FIELDS = { 'GreetingName', 'Birthday', 'City', 'Latitude', 'Longitude' }
+local function profilePath()
+  return paths.profile or (paths.clock:gsub('AdaptiveClock%.ini$', 'State\\profile.json'))
+end
 
-local function updatePersonalInfo(clockVars)
+local function readProfile()
+  local p = { GreetingName = '', City = '', Birthday = '', Latitude = '', Longitude = '' }
+  local f = io.open(profilePath(), 'r')
+  if not f then f = io.open(paths.clock:gsub('AdaptiveClock%.ini$', 'profile.json'), 'r') end
+  if f then
+    local content = f:read('*a')
+    f:close()
+    if content then
+      for k, v in content:gmatch('"([%w_]+)"%s*:%s*"([^"]*)"') do
+        p[k] = v:gsub('\\"', '"'):gsub('\\\\', '\\')
+      end
+    end
+  end
+  return p
+end
+
+local function writeProfile(p)
+  local path = profilePath()
+  local f = io.open(path, 'w')
+  if not f then
+    path = paths.clock:gsub('AdaptiveClock%.ini$', 'profile.json')
+    f = io.open(path, 'w')
+  end
+  if not f then return false end
+  f:write('{\n')
+  local keys = { 'GreetingName', 'City', 'Birthday', 'Latitude', 'Longitude' }
+  for idx, k in ipairs(keys) do
+    local v = p[k] or ''
+    local clean = tostring(v):gsub('[\r\n]', ' '):gsub('"', '\\"')
+    local comma = (idx < #keys) and ',' or ''
+    f:write(string.format('  "%s": "%s"%s\n', k, clean, comma))
+  end
+  f:write('}\n')
+  f:close()
+  return true
+end
+
+local function updatePersonalInfo(prof)
+  prof = prof or readProfile()
   -- Birthday info line
-  local bday = clockVars and clockVars.Birthday or ''
+  local bday = prof.Birthday or ''
   local bdayInfo = ''
   if bday ~= '' then
     local m, d = bday:match('^(%d+)%-(%d+)$')
@@ -423,10 +508,10 @@ local function updatePersonalInfo(clockVars)
   end
   setv('InputBirthdayInfo', bdayInfo)
   -- Coordinate info line
-  local lat = clockVars and clockVars.Latitude or ''
-  local lon = clockVars and clockVars.Longitude or ''
+  local lat = prof.Latitude or ''
+  local lon = prof.Longitude or ''
   local coordInfo = ''
-  if lat ~= '' and lon ~= '' then coordInfo = 'Manual coords active - sunrise/sunset uses these'
+  if lat ~= '' and lon ~= '' then coordInfo = 'Manual coords active (saved in profile.json)'
   elseif lat ~= '' or lon ~= '' then coordInfo = 'Enter both Latitude and Longitude for manual location'
   end
   setv('InputCoordInfo', coordInfo)
@@ -435,13 +520,17 @@ end
 function ClearInput(name)
   local allowed = { GreetingName = true, Birthday = true, City = true, Latitude = true, Longitude = true }
   if not allowed[name] then return end
-  SKIN:Bang('!WriteKeyValue', 'Variables', name, '', paths.clock)
+  local prof = readProfile()
+  prof[name] = ''
+  writeProfile(prof)
   syncStoredInput(name, '')
-  updatePersonalInfo(readVars(paths.clock, true))
-  status('Cleared.')
+  updatePersonalInfo(prof)
+  SKIN:Bang('!WriteKeyValue', 'Variables', name, '', paths.clock)
+  SKIN:Bang('!CommandMeasure', 'mMain', 'ReloadProfile()', '#Main#')
+  SKIN:Bang('!Refresh', '#Main#')
+  status('Cleared ' .. name .. '.')
   SKIN:Bang('!UpdateMeter', '*')
   SKIN:Bang('!Redraw')
-  SKIN:Bang('!Refresh', '#Main#')
 end
 
 local function setStyleValue(name, value)
@@ -453,13 +542,31 @@ local function setStyleValue(name, value)
   if not style then return false end
   if vars.CustomizeScope == 'All' then
     SKIN:Bang('!WriteKeyValue', 'Variables', name, value, paths.clock)
-    for n = 1, tonumber(vars.StyleCount or '153') do
+    for n = 1, tonumber(vars.StyleCount or '159') do
       SKIN:Bang('!WriteKeyValue', 'Variables', 'Style' .. n .. name, '', paths.clock)
     end
   else
     SKIN:Bang('!WriteKeyValue', 'Variables', 'Style' .. style .. name, value, paths.clock)
   end
   return true
+end
+
+function PickColor(rgb)
+  local r, g, b = rgb:match('^(%d+),(%d+),(%d+)$')
+  if not r then return end
+  local cleanRgb = table.concat({ tonumber(r), tonumber(g), tonumber(b) }, ',')
+  setStyleValue('ColorMode', 'Custom')
+  setStyleValue('CustomColor', cleanRgb)
+  SKIN:Bang('!CommandMeasure', 'mMain', "SetStyleOption('ColorMode','Custom')", '#Main#')
+  SKIN:Bang('!CommandMeasure', 'mMain', "SetStyleOption('CustomColor','" .. cleanRgb .. "')", '#Main#')
+  setv('InputCustomColor', cleanRgb)
+  setv('InputCustomColorLabel', cleanRgb)
+  inputCache.CustomColor = cleanRgb
+  inputCache.CustomColorLabel = cleanRgb
+  status('Applied colour: ' .. cleanRgb)
+  SKIN:Bang('!UpdateMeter', '*')
+  SKIN:Bang('!Redraw')
+  SKIN:Bang('!Refresh', '#Main#')
 end
 
 function SaveInput(name)
@@ -518,16 +625,26 @@ function SaveInput(name)
     return
   end
 
+  local personalKeys = { GreetingName = true, Birthday = true, City = true, Latitude = true, Longitude = true }
+  if personalKeys[name] then
+    local prof = readProfile()
+    prof[name] = value
+    writeProfile(prof)
+    syncStoredInput(name, value)
+    updatePersonalInfo(prof)
+    SKIN:Bang('!WriteKeyValue', 'Variables', name, value, paths.clock)
+    SKIN:Bang('!CommandMeasure', 'mMain', 'ReloadProfile()', '#Main#')
+    SKIN:Bang('!Refresh', '#Main#')
+    status('Saved to profile.json.')
+    SKIN:Bang('!UpdateMeter', '*')
+    SKIN:Bang('!Redraw')
+    return
+  end
+
   if name == 'CustomColor' or name == 'FontText' or name == 'FontMono' then
     if not setStyleValue(name, value) then status('Load a clock before saving this style option.'); return end
   else
     SKIN:Bang('!WriteKeyValue', 'Variables', name, value, paths.clock)
-  end
-  if name == 'GreetingName' or name == 'Birthday' or name == 'City' or name == 'Latitude' or name == 'Longitude' then
-    syncStoredInput(name, value)
-    updatePersonalInfo(readVars(paths.clock, true))
-    SKIN:Bang('!UpdateMeter', '*')
-    SKIN:Bang('!Redraw')
   end
   status('Saved on this PC.')
   SKIN:Bang('!Refresh', '#Main#')
@@ -652,7 +769,14 @@ function Update()
   if now ~= lastNow then lastNow = now; setv('NowShowing', now) end
   local loc = LOC[st.Location or 'none'] or LOC.none
   if loc ~= lastLoc then lastLoc = loc; setv('LocStatus', loc) end
-  for _, name in ipairs({ 'GreetingName', 'Birthday', 'City', 'Latitude', 'Longitude', 'FontText', 'FontMono', 'CustomColor', 'AlarmTime' }) do
+  local prof = readProfile()
+  for _, name in ipairs({ 'GreetingName', 'Birthday', 'City', 'Latitude', 'Longitude' }) do
+    local value = prof[name] ~= '' and prof[name] or (files.clock[name] or '')
+    local fieldValue, displayValue = value, value ~= '' and value or '(click to enter)'
+    if inputCache[name] ~= fieldValue then setv('Input' .. name, fieldValue); inputCache[name] = fieldValue end
+    if inputCache[name .. 'Label'] ~= displayValue then setv('Input' .. name .. 'Label', displayValue); inputCache[name .. 'Label'] = displayValue end
+  end
+  for _, name in ipairs({ 'FontText', 'FontMono', 'CustomColor', 'AlarmTime' }) do
     local value = files.clock[name] or ''
     local style = tonumber(st.StyleNo)
     if style and ({ FontText = true, FontMono = true, CustomColor = true })[name] then
@@ -665,7 +789,7 @@ function Update()
   if inputCache.QuoteLabel ~= true then setv('InputQuoteDraftLabel', '(click to add quote text | author)'); inputCache.QuoteLabel = true end
   local searchLabel = SKIN:GetVariable('GallerySearch', '') ~= '' and SKIN:GetVariable('GallerySearch', '') or 'Search styles...'
   if inputCache.GallerySearchLabel ~= searchLabel then setv('GallerySearchLabel', searchLabel); inputCache.GallerySearchLabel = searchLabel end
-  updatePersonalInfo(files.clock)
+  updatePersonalInfo(prof)
   if statusText ~= '' then status(statusText) end
   if gallery then updateGallery(st) end
   if count == 0 then return 0 end

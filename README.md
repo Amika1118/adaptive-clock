@@ -1,6 +1,6 @@
 # Adaptive Clock for Rainmeter
 
-A desktop clock with **153 styles**, built for Rainmeter on Windows. By Amika Alankara.
+A desktop clock with **159 styles**, built for Rainmeter on Windows. By Amika Alankara.
 
 ## Download
 1. Install [Rainmeter](https://www.rainmeter.net/) (free).

@@ -22,7 +22,7 @@
 --   wxTemp wxText                     weather text
 
 local mode = 'main'
-local N = 153                       -- number of styles (the .ini sets StyleCount)
+local N = 159                       -- number of styles (the .ini sets StyleCount)
 local current, lastSlot, lastYday, lastKey, lastLuma, wasBright, lastCalDay, lastQKey
 local pool = {}                    -- style numbers that take part in the shuffle
 local interval = 60               -- minutes per style (ShuffleMinutes)
@@ -58,6 +58,7 @@ local NAMES = {
   'Aviator', 'Elegant', 'Encompassed', 'Hybrid', 'KitKat', 'Mond', 'NeoClock', 'Digital console',
   'Celestia', 'Firewatch peak', 'Cyber night', 'Flip flap', 'Nordic desk', 'Sizy0', 'Restona',
   'Rising reflection', 'Simple time', 'Someday', 'SP_CE', 'Summit', 'Sundays', 'TextTime', 'Neon radial',
+  'Neon watch', 'LED alarm', 'Block clock', 'Segment board', 'Cassette', 'Chalk board',
 }
 
 -- Styles that only appear for a profile / theme (all others always appear)
@@ -831,8 +832,49 @@ local function readLocation()                      -- State\location.txt is writ
   return locCache
 end
 
-coords = function()                            -- typed in the .ini, or found on this PC. Never looked up online.
-  local la, lo = tonumber(var('Latitude', '')), tonumber(var('Longitude', ''))
+-- ---------------------------------------------------------------- personal profile (State\profile.json)
+
+local profileCache, profileReadTime = nil, 0
+
+local function getProfile()
+  local now = os.time()
+  if profileCache and (now - profileReadTime < 2) then return profileCache end
+  profileReadTime = now
+  local p = { GreetingName = '', City = '', Birthday = '', Latitude = '', Longitude = '' }
+  local here = var('CURRENTPATH', '')
+  local f = io.open(here .. 'State\\profile.json', 'r') or io.open(here .. 'profile.json', 'r')
+  if f then
+    local content = f:read('*a')
+    f:close()
+    if content then
+      for k, v in content:gmatch('"([%w_]+)"%s*:%s*"([^"]*)"') do
+        p[k] = v:gsub('\\"', '"'):gsub('\\\\', '\\')
+      end
+    end
+  end
+  profileCache = p
+  return p
+end
+
+function ReloadProfile()
+  profileCache = nil
+  profileReadTime = 0
+  lastTextKey = nil
+  local p = getProfile()
+  setv('GreetingName', p.GreetingName)
+  setv('City', p.City)
+  setv('Birthday', p.Birthday)
+  setv('Latitude', p.Latitude)
+  setv('Longitude', p.Longitude)
+  safe(publishTexts, os.date('*t'))
+  SKIN:Bang('!UpdateMeter', '*')
+  SKIN:Bang('!Redraw')
+end
+
+coords = function()                            -- typed in profile.json / the .ini, or found on this PC. Never looked up online.
+  local p = getProfile()
+  local la = tonumber(p.Latitude ~= '' and p.Latitude or var('Latitude', ''))
+  local lo = tonumber(p.Longitude ~= '' and p.Longitude or var('Longitude', ''))
   if la and lo then return la, lo, 'manual' end
   local c = readLocation()
   if c then return c.lat, c.lon, c.source end
@@ -1091,7 +1133,9 @@ local function untilWeekend()                       -- seconds until Saturday 00
 end
 
 local function birthdayDays()
-  local m, d = (var('Birthday', '')):match('^(%d+)%-(%d+)$')
+  local p = getProfile()
+  local bday = (p.Birthday ~= '' and p.Birthday) or var('Birthday', '')
+  local m, d = bday:match('^(%d+)%-(%d+)$')
   if not m then return nil end
   local t = os.date('*t')
   local today = os.time({ year = t.year, month = t.month, day = t.day, hour = 12 })
@@ -1134,6 +1178,13 @@ local DEFAULTS = { Profile = 'All', Theme = 'Neutral', CodeTheme = 'Dark', Color
 
 function ResetSettings()                            -- Settings > Actions > Reset all settings
   for k, v in pairs(DEFAULTS) do saveVar(k, v) end
+  local here = var('CURRENTPATH', '')
+  local f = io.open(here .. 'State\\profile.json', 'w') or io.open(here .. 'profile.json', 'w')
+  if f then
+    f:write('{\n  "GreetingName": "",\n  "City": "",\n  "Birthday": "",\n  "Latitude": "",\n  "Longitude": ""\n}\n')
+    f:close()
+  end
+  ReloadProfile()
   SKIN:Bang('!Refresh')
 end
 
@@ -1145,7 +1196,9 @@ local function publishTexts(t)                       -- #DowText# and friends po
   local lg = var('Language', 'Windows')
   local ws = tonumber(var('WeekStart', '1')) or 1
   local g = greetKey(t.hour)
-  local name, city = var('GreetingName', ''), var('City', '')
+  local p = getProfile()
+  local name = (p.GreetingName ~= '' and p.GreetingName) or var('GreetingName', '')
+  local city = (p.City ~= '' and p.City) or var('City', '')
   local key = lg .. '|' .. t.wday .. '|' .. t.month .. '|' .. g .. '|' .. ws .. '|' .. name .. '|' .. city
   if key == lastTextKey then return end
   lastTextKey = key
@@ -1278,6 +1331,12 @@ function Initialize()
   if mode:match('^world') then loadCities() end
 
   if mode == 'main' then
+    local p = getProfile()
+    setv('GreetingName', p.GreetingName)
+    setv('City', p.City)
+    setv('Birthday', p.Birthday)
+    setv('Latitude', p.Latitude)
+    setv('Longitude', p.Longitude)
     savedState = readState()
     recentStyles = {}
     if savedState and savedState.RecentStyles then
