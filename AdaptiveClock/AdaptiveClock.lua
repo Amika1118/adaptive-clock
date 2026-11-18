@@ -652,7 +652,7 @@ local EN = {
         nothing = 'Nothing playing', battery = 'Battery', charging = 'Charging',
         setLocation = 'Location not found - see Settings > Extras', weatherOff = 'Weather is off - enable it in Settings',
         loading = 'Loading...', itsWeekend = "It's the weekend!", weekendLeft = 'until the weekend',
-        daylight = 'of daylight', bdayUnset = 'Set Birthday=MM-DD in AdaptiveClock.ini', bdayToday = 'Happy birthday!', bdayLeft = 'days until your birthday' },
+        daylight = 'of daylight', bdayUnset = 'Set your birthday in Settings > Personal', bdayToday = 'Happy birthday!', bdayLeft = 'days until your birthday' },
 }
 local function lang() return EN, 'English' end    -- translations come from Languages\*.inc variables, not from Lua
 

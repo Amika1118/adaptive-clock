@@ -119,18 +119,33 @@ def note(name, text, x, y, w, h, size=9, color="140,146,165", hide=None, bold=Fa
     if hide: o.update(Hidden=f"#{hide}#", DynamicVariables=1)
     return sec(name, **o)
 
-def input_field(key, label, y, hide, default=""):
+def input_field(key, label, y, hide, default="", clearable=False):
     var_name = "Input" + key
     label_name = var_name + "Label"
+    clear_var = var_name + "ClearC"
     variables.extend([f"{var_name}={default}", f"{label_name}="])
     meters.append(note(var_name + "Title", label, 18, y, 150, 24, 10, "200,205,220", hide))
-    meters.extend(button(1100 + len(input_sections), 174, y - 2, SW - 192, 28, f"#{label_name}#",
-                         f'[!CommandMeasure {var_name} "ExecuteBatch 1"]',
-                         fill="255,255,255,36", hide=hide, fs=9))
-    input_sections.append(sec(var_name, Measure="Plugin", Plugin="InputText", DefaultValue=f"#{var_name}#",
+    if clearable:
+        variables.append(f"{clear_var}=255,255,255,22")
+        edit_w = SW - 192 - 60
+        meters.extend(button(1100 + len(input_sections), 174, y - 2, edit_w, 28, f"#{label_name}#",
+                             f'[!CommandMeasure {var_name} "ExecuteBatch 1"]',
+                             fill="255,255,255,36", hide=hide, fs=9))
+        clear_id = unique_button_id()
+        meters.extend(button(clear_id, 174 + edit_w + 4, y - 2, 54, 28, "Clear",
+                             f'[!CommandMeasure mSettings "ClearInput(\'{key}\')"]',
+                             color_var=clear_var, hide=hide, fs=9))
+    else:
+        edit_w = SW - 192
+        meters.extend(button(1100 + len(input_sections), 174, y - 2, edit_w, 28, f"#{label_name}#",
+                             f'[!CommandMeasure {var_name} "ExecuteBatch 1"]',
+                             fill="255,255,255,36", hide=hide, fs=9))
+    input_sections.append(sec(var_name, Measure="Plugin", Plugin="InputText",
+                              X=174, Y=y - 2, W=edit_w, H=28,
+                              DefaultValue=f"#{var_name}#",
                               Command1=f"""[!SetVariable InputDraft "$UserInput$"][!CommandMeasure mSettings "SaveInput('{key}')"]""",
-                              FocusDismiss=1, SolidColor="22,25,33,255", FontColor="245,245,250",
-                              FontFace=FONT, FontSize=10, W=SW - 192, H=28, DynamicVariables=1))
+                              FocusDismiss=1, SolidColor="26,30,42", FontColor="245,245,250",
+                              FontFace=FONT, FontSize=10, DynamicVariables=1))
     return y + 34
 
 for p, (pname, kind, groups) in enumerate(PAGES, start=1):
@@ -173,9 +188,10 @@ for p, (pname, kind, groups) in enumerate(PAGES, start=1):
         y += 44
     if kind == "quotes":
         y += 4
-        meters += button(unique_button_id(), 18, y, 170, 28, "Show next quote", act("NextQuote()"), fill="255,255,255,36", hide=hide)
+        meters += button(unique_button_id(), 18, y, 160, 28, "Show next quote", act("NextQuote()"), fill="255,255,255,36", hide=hide)
+        meters += button(unique_button_id(), 186, y, 160, 28, "Open quotes file", '[!CommandMeasure mSettings "OpenQuotes()"]', fill="255,255,255,36", hide=hide)
         y += 38
-        meters.append(note("QuoteHint", "Add a quote as: quote text | author. Custom quotes stay on this PC.", 18, y, SW - 36, 28, 9, hide=hide))
+        meters.append(note("QuoteHint", "Add a quote as: quote text | author. Or click 'Open quotes file' to edit in Notepad.", 18, y, SW - 36, 28, 9, hide=hide))
         y += 32
         y = input_field("QuoteDraft", "New quote", y, hide)
         meters.append(note("QuoteStatus", "#QuoteStatus#", 18, y, SW - 36, 28, 9, "110,170,255", hide=hide))
@@ -195,6 +211,8 @@ for p, (pname, kind, groups) in enumerate(PAGES, start=1):
         meters += button(unique_button_id(), 18, y + 22, 200, 28, "Find my location again", act("RefreshLocation()"), fill="255,255,255,36", hide=hide)
         y += 58
         y = input_field("AlarmTime", "Alarm time (HH:MM)", y, hide, "07:00")
+        meters.append(note("InputStatusTimers", "#InputStatusTimers#", 18, y, SW - 36, 20, 9, "110,170,255", hide=hide))
+        y += 24
         meters.append(note("Privacy", "Privacy: your location is found on this PC (Windows location, or your time zone) and used only for sunrise and sunset. "
                                       "Weather is the one feature that uses the internet: when you turn it on, it sends your position rounded to about 11 km "
                                       "to open-meteo.com. Weather is off by default; you can type a different place in AdaptiveClock.ini "
@@ -202,15 +220,24 @@ for p, (pname, kind, groups) in enumerate(PAGES, start=1):
         y += 84
     if kind == "personal":
         y += 4
-        meters.append(note("PersonalHint", "These details stay on this PC. Birthday uses month and day only. City personalizes the greeting; it does not enable weather.", 18, y, SW - 36, 44, 9, hide=hide))
-        y += 48
-        y = input_field("GreetingName", "Name for greeting", y, hide)
-        y = input_field("Birthday", "Birthday (MM-DD)", y, hide)
-        y = input_field("City", "City", y, hide)
-        y = input_field("Latitude", "Latitude (optional)", y, hide)
-        y = input_field("Longitude", "Longitude (optional)", y, hide)
+        meters.append(note("PersonalHint", "These details stay on this PC. Click a field to edit it; click Clear to remove it.", 18, y, SW - 36, 28, 9, hide=hide))
+        y += 32
+        meters.append(note("PersonalNameHdr", "NAME", 18, y, SW - 36, 14, 8, "90,100,130", hide))
+        y += 16
+        y = input_field("GreetingName", "Greeting name", y, hide, clearable=True)
+        meters.append(note("PersonalBdayHdr", "BIRTHDAY", 18, y, SW - 36, 14, 8, "90,100,130", hide))
+        y += 16
+        y = input_field("Birthday", "Birthday (MM-DD)", y, hide, clearable=True)
+        meters.append(note("PersonalBdayInfo", "#InputBirthdayInfo#", 18 + 174, y - 32, SW - 36 - 174, 28, 8, "110,170,255", hide))
+        meters.append(note("PersonalLocHdr", "LOCATION", 18, y, SW - 36, 14, 8, "90,100,130", hide))
+        y += 16
+        y = input_field("City", "City (for greeting)", y, hide, clearable=True)
+        y = input_field("Latitude", "Latitude (optional)", y, hide, clearable=True)
+        y = input_field("Longitude", "Longitude (optional)", y, hide, clearable=True)
+        meters.append(note("PersonalCoordInfo", "#InputCoordInfo#", 18 + 174, y - 32, SW - 36 - 174, 28, 8, "110,170,255", hide))
         meters.append(note("InputStatusPersonal", "#InputStatusPersonal#", 18, y, SW - 36, 28, 9, "110,170,255", hide=hide))
         y += 32
+        variables += ["InputBirthdayInfo=", "InputCoordInfo="]
     if kind == "appearance":
         meters += button(unique_button_id(), 18, y, SW - 36, 30, "Open Adaptive Clock User Guide",
                          '[!OpenURL "https://adaptive-clock-help-page.vercel.app/"]',
@@ -250,7 +277,7 @@ variables.append("CrumbPage=Start")
 variables.append(f"PageHint={PAGE_HINTS['start']}")
 variables.append("NowShowing=")
 variables.append("LocStatus=")
-variables += ["InputStatusPersonal=", "InputStatusFonts=", "QuoteStatus="]
+variables += ["InputStatusPersonal=", "InputStatusFonts=", "InputStatusTimers=", "QuoteStatus="]
 shead = f"""; Settings.ini  -  settings window for Adaptive Clock   (generated by tools/gen_skins.py)
 ; Author: Amika Alankara  (MIT License)
 
@@ -308,6 +335,7 @@ function Initialize()
     for _, name in ipairs({ 'GreetingName', 'Birthday', 'City', 'Latitude', 'Longitude', 'AlarmTime', 'FontText', 'FontMono', 'CustomColor' }) do
       setv('Input' .. name, clockVars[name] or '')
     end
+    updatePersonalInfo(clockVars)
     Page(1)
   end
 end
@@ -345,14 +373,75 @@ local function status(text)
   statusText = text
   setv('InputStatusPersonal', text)
   setv('InputStatusFonts', text)
+  setv('InputStatusTimers', text)
   setv('QuoteStatus', text)
+end
+
+function OpenQuotes()
+  local f = io.open(paths.quotes, 'r')
+  if not f then
+    local ex = io.open(paths.clock:gsub('AdaptiveClock%.ini$', 'quotes.example.txt'), 'r')
+    local content = ex and ex:read('*a') or ''
+    if ex then ex:close() end
+    local wf = io.open(paths.quotes, 'w')
+    if wf then wf:write(content); wf:close() end
+  else
+    f:close()
+  end
+  SKIN:Bang('"' .. paths.quotes .. '"')
 end
 
 local function trim(s) return (s:gsub('^%s+', ''):gsub('%s+$', '')) end
 
 local function syncStoredInput(name, value)
   local key = 'Input' .. name
+  local display = (value and value ~= '') and value or '(click to enter)'
   setv(key, value or '')
+  setv(key .. 'Label', display)
+  inputCache[name] = value or ''
+  inputCache[name .. 'Label'] = display
+end
+
+local PERSONAL_FIELDS = { 'GreetingName', 'Birthday', 'City', 'Latitude', 'Longitude' }
+
+local function updatePersonalInfo(clockVars)
+  -- Birthday info line
+  local bday = clockVars and clockVars.Birthday or ''
+  local bdayInfo = ''
+  if bday ~= '' then
+    local m, d = bday:match('^(%d+)%-(%d+)$')
+    if m then
+      local t = os.date('*t')
+      local today  = os.time({ year = t.year, month = t.month, day = t.day, hour = 12 })
+      local target = os.time({ year = t.year, month = tonumber(m), day = tonumber(d), hour = 12 })
+      if target < today then target = os.time({ year = t.year + 1, month = tonumber(m), day = tonumber(d), hour = 12 }) end
+      local days = math.floor((target - today) / 86400 + 0.5)
+      if days == 0 then bdayInfo = 'Happy birthday today!'
+      elseif days == 1 then bdayInfo = 'Tomorrow!'
+      else bdayInfo = days .. ' days away' end
+    end
+  end
+  setv('InputBirthdayInfo', bdayInfo)
+  -- Coordinate info line
+  local lat = clockVars and clockVars.Latitude or ''
+  local lon = clockVars and clockVars.Longitude or ''
+  local coordInfo = ''
+  if lat ~= '' and lon ~= '' then coordInfo = 'Manual coords active - sunrise/sunset uses these'
+  elseif lat ~= '' or lon ~= '' then coordInfo = 'Enter both Latitude and Longitude for manual location'
+  end
+  setv('InputCoordInfo', coordInfo)
+end
+
+function ClearInput(name)
+  local allowed = { GreetingName = true, Birthday = true, City = true, Latitude = true, Longitude = true }
+  if not allowed[name] then return end
+  SKIN:Bang('!WriteKeyValue', 'Variables', name, '', paths.clock)
+  syncStoredInput(name, '')
+  updatePersonalInfo(readVars(paths.clock, true))
+  status('Cleared.')
+  SKIN:Bang('!UpdateMeter', '*')
+  SKIN:Bang('!Redraw')
+  SKIN:Bang('!Refresh', '#Main#')
 end
 
 local function setStyleValue(name, value)
@@ -364,7 +453,7 @@ local function setStyleValue(name, value)
   if not style then return false end
   if vars.CustomizeScope == 'All' then
     SKIN:Bang('!WriteKeyValue', 'Variables', name, value, paths.clock)
-    for n = 1, tonumber(vars.StyleCount or '130') do
+    for n = 1, tonumber(vars.StyleCount or '153') do
       SKIN:Bang('!WriteKeyValue', 'Variables', 'Style' .. n .. name, '', paths.clock)
     end
   else
@@ -390,7 +479,11 @@ function SaveInput(name)
     if not f then status('Could not save quote: ' .. tostring(err)); SKIN:Bang('!Log', 'Adaptive Clock: ' .. tostring(err), 'Error'); return end
     f:write(text:gsub('|', '/'), author ~= '' and (' | ' .. author:gsub('|', '/')) or '', '\n')
     f:close()
-    status('Quote added.')
+    setv('InputQuoteDraft', '')
+    setv('InputQuoteDraftLabel', '(click to add quote text | author)')
+    setv('InputDraft', '')
+    inputCache.QuoteLabel = nil
+    status('Quote added to quotes.txt.')
     SKIN:Bang('!Refresh', '#Main#')
     return
   end
@@ -432,6 +525,9 @@ function SaveInput(name)
   end
   if name == 'GreetingName' or name == 'Birthday' or name == 'City' or name == 'Latitude' or name == 'Longitude' then
     syncStoredInput(name, value)
+    updatePersonalInfo(readVars(paths.clock, true))
+    SKIN:Bang('!UpdateMeter', '*')
+    SKIN:Bang('!Redraw')
   end
   status('Saved on this PC.')
   SKIN:Bang('!Refresh', '#Main#')
@@ -569,6 +665,7 @@ function Update()
   if inputCache.QuoteLabel ~= true then setv('InputQuoteDraftLabel', '(click to add quote text | author)'); inputCache.QuoteLabel = true end
   local searchLabel = SKIN:GetVariable('GallerySearch', '') ~= '' and SKIN:GetVariable('GallerySearch', '') or 'Search styles...'
   if inputCache.GallerySearchLabel ~= searchLabel then setv('GallerySearchLabel', searchLabel); inputCache.GallerySearchLabel = searchLabel end
+  updatePersonalInfo(files.clock)
   if statusText ~= '' then status(statusText) end
   if gallery then updateGallery(st) end
   if count == 0 then return 0 end
@@ -632,10 +729,12 @@ gm += button(820, 18, 164, 112, 26, "Recently used",
              '[!CommandMeasure mSettings "SortGallery(\'recent\')"]', color_var="SortRecentC", fs=9)
 gm += button(821, 136, 164, 132, 26, "A - Z",
              '[!CommandMeasure mSettings "SortGallery(\'name\')"]', color_var="SortNameC", fs=9)
-search_section = sec("GallerySearchInput", Measure="Plugin", Plugin="InputText", DefaultValue="#GallerySearch#",
+search_section = sec("GallerySearchInput", Measure="Plugin", Plugin="InputText",
+                     X=276, Y=164, W=GW - 364, H=26,
+                     DefaultValue="#GallerySearch#",
                      Command1="""[!SetVariable InputDraft "$UserInput$"][!CommandMeasure mSettings "SaveInput('GallerySearch')"]""",
-                     FocusDismiss=1, SolidColor="22,25,33,255", FontColor="245,245,250",
-                     FontFace=FONT, FontSize=10, W=GW - 364, H=26, DynamicVariables=1)
+                     FocusDismiss=1, SolidColor="26,30,42", FontColor="245,245,250",
+                     FontFace=FONT, FontSize=10, DynamicVariables=1)
 variables.append("GallerySearchLabel=Search styles...")
 gm += button(822, 276, 164, GW - 364, 26, "#GallerySearchLabel#",
              '[!CommandMeasure GallerySearchInput "ExecuteBatch 1"]', fill="255,255,255,36", fs=9)

@@ -32,6 +32,7 @@ function Initialize()
     for _, name in ipairs({ 'GreetingName', 'Birthday', 'City', 'Latitude', 'Longitude', 'AlarmTime', 'FontText', 'FontMono', 'CustomColor' }) do
       setv('Input' .. name, clockVars[name] or '')
     end
+    updatePersonalInfo(clockVars)
     Page(1)
   end
 end
@@ -91,7 +92,53 @@ local function trim(s) return (s:gsub('^%s+', ''):gsub('%s+$', '')) end
 
 local function syncStoredInput(name, value)
   local key = 'Input' .. name
+  local display = (value and value ~= '') and value or '(click to enter)'
   setv(key, value or '')
+  setv(key .. 'Label', display)
+  inputCache[name] = value or ''
+  inputCache[name .. 'Label'] = display
+end
+
+local PERSONAL_FIELDS = { 'GreetingName', 'Birthday', 'City', 'Latitude', 'Longitude' }
+
+local function updatePersonalInfo(clockVars)
+  -- Birthday info line
+  local bday = clockVars and clockVars.Birthday or ''
+  local bdayInfo = ''
+  if bday ~= '' then
+    local m, d = bday:match('^(%d+)%-(%d+)$')
+    if m then
+      local t = os.date('*t')
+      local today  = os.time({ year = t.year, month = t.month, day = t.day, hour = 12 })
+      local target = os.time({ year = t.year, month = tonumber(m), day = tonumber(d), hour = 12 })
+      if target < today then target = os.time({ year = t.year + 1, month = tonumber(m), day = tonumber(d), hour = 12 }) end
+      local days = math.floor((target - today) / 86400 + 0.5)
+      if days == 0 then bdayInfo = 'Happy birthday today!'
+      elseif days == 1 then bdayInfo = 'Tomorrow!'
+      else bdayInfo = days .. ' days away' end
+    end
+  end
+  setv('InputBirthdayInfo', bdayInfo)
+  -- Coordinate info line
+  local lat = clockVars and clockVars.Latitude or ''
+  local lon = clockVars and clockVars.Longitude or ''
+  local coordInfo = ''
+  if lat ~= '' and lon ~= '' then coordInfo = 'Manual coords active - sunrise/sunset uses these'
+  elseif lat ~= '' or lon ~= '' then coordInfo = 'Enter both Latitude and Longitude for manual location'
+  end
+  setv('InputCoordInfo', coordInfo)
+end
+
+function ClearInput(name)
+  local allowed = { GreetingName = true, Birthday = true, City = true, Latitude = true, Longitude = true }
+  if not allowed[name] then return end
+  SKIN:Bang('!WriteKeyValue', 'Variables', name, '', paths.clock)
+  syncStoredInput(name, '')
+  updatePersonalInfo(readVars(paths.clock, true))
+  status('Cleared.')
+  SKIN:Bang('!UpdateMeter', '*')
+  SKIN:Bang('!Redraw')
+  SKIN:Bang('!Refresh', '#Main#')
 end
 
 local function setStyleValue(name, value)
@@ -175,6 +222,9 @@ function SaveInput(name)
   end
   if name == 'GreetingName' or name == 'Birthday' or name == 'City' or name == 'Latitude' or name == 'Longitude' then
     syncStoredInput(name, value)
+    updatePersonalInfo(readVars(paths.clock, true))
+    SKIN:Bang('!UpdateMeter', '*')
+    SKIN:Bang('!Redraw')
   end
   status('Saved on this PC.')
   SKIN:Bang('!Refresh', '#Main#')
@@ -312,6 +362,7 @@ function Update()
   if inputCache.QuoteLabel ~= true then setv('InputQuoteDraftLabel', '(click to add quote text | author)'); inputCache.QuoteLabel = true end
   local searchLabel = SKIN:GetVariable('GallerySearch', '') ~= '' and SKIN:GetVariable('GallerySearch', '') or 'Search styles...'
   if inputCache.GallerySearchLabel ~= searchLabel then setv('GallerySearchLabel', searchLabel); inputCache.GallerySearchLabel = searchLabel end
+  updatePersonalInfo(files.clock)
   if statusText ~= '' then status(statusText) end
   if gallery then updateGallery(st) end
   if count == 0 then return 0 end
